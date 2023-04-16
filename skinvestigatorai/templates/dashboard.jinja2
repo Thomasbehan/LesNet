@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Cancer Detector Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-form {
+            text-align: center;
+        }
+        .result {
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Skin Cancer Detector Dashboard</h1>
+    <div class="container">
+        <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
+            <label for="image">Upload an image:</label>
+            <input type="file" name="image" id="image" accept="image/*">
+            <button type="submit">Analyze</button>
+        </form>
+        {% if prediction %}
+            <div class="result">
+                <p>Predicted Class: {{ prediction }}</p>
+                <p>Confidence: {{ confidence|round(2) }}</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
