@@ -42,11 +42,11 @@ button, input, optgroup, select, textarea {
 }
 .starter-template .content h1 .smaller {
   font-size: 40px;
-  color: #f2b7bd;
+  color: #ffffffd1;
 }
 .starter-template .content .lead {
   font-size: 25px;
-  color: #f2b7bd;
+  color: #ffffffd1;
 }
 .starter-template .content .lead .font-normal {
   color: #ffffff;
@@ -73,11 +73,11 @@ button, input, optgroup, select, textarea {
   margin-right: 0;
 }
 .starter-template .links ul li.current-version {
-  color: #f2b7bd;
+  color: #ffffffd1;
   font-weight: 400;
 }
 .starter-template .links ul li a, a {
-  color: #f2b7bd;
+  color: #ffffffd1;
   text-decoration: underline;
 }
 .starter-template .links ul li a:hover, a:hover {
@@ -85,7 +85,7 @@ button, input, optgroup, select, textarea {
   text-decoration: underline;
 }
 .starter-template .links ul li .icon-muted {
-  color: #eb8b95;
+  color: #ffffffe1;
   margin-right: 5px;
 }
 .starter-template .links ul li:hover .icon-muted {
@@ -94,7 +94,7 @@ button, input, optgroup, select, textarea {
 .starter-template .copyright {
   margin-top: 10px;
   font-size: 0.9em;
-  color: #f2b7bd;
+  color: #ffffffd1;
   text-transform: lowercase;
   float: right;
   right: 0;
