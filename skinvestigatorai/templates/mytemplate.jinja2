@@ -1,0 +1,21 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="content">
+    <h1><span class="smaller">SkinVestigator<span class="font-semi-bold">AI</span></span></h1>
+    <p class="lead">Welcome to <span class="font-normal">{{project}}</span>, a&nbsp;Pyramid application generated&nbsp;by<br><span class="font-normal">Cookiecutter</span>.</p>
+
+    <h2>Image Analysis Dashboard</h2>
+    <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
+        <label for="image">Upload an image:</label>
+        <input type="file" name="image" id="image" accept="image/*">
+        <button type="submit">Analyze</button>
+    </form>
+    {% if prediction %}
+        <div class="result">
+            <p>Predicted Class: {{ prediction }}</p>
+            <p>Confidence: {{ confidence|round(2) }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}
