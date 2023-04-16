@@ -9,4 +9,4 @@ def train_model(request):
     train_generator, val_generator, test_datagen = detector.preprocess_data()
     detector.build_model(num_classes=len(train_generator.class_indices))
     history = detector.train_model(train_generator, val_generator)
-    return {'status': 'success', 'message': 'Model trained successfully'}
+    return {'status': 'success', 'message': 'Model trained successfully \n\n ' + str(history)}

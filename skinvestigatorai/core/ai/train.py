@@ -1,10 +1,17 @@
 import os
 from skinvestigatorai.core.ai.detector import SkinCancerDetector
 from skinvestigatorai.core.ai.config import train_dir, val_dir, test_dir
-import skinvestigatorai.core.data_scraper as data_scraper
+from skinvestigatorai.core.data_scraper import DataScraper
 
 
-def main(filename='skin_cancer_detection_model.h5'):
+def main(filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
+    # check if data is downloaded and if not download it
+    if not os.path.exists(train_dir):
+        print('Downloading data...')
+        downloader = DataScraper()
+        downloader.download_images(-1)
+        print('Done downloading data')
+
     # Print count of files in each directory
     print('Train:', len(os.listdir(train_dir + '/benign')), 'benign,', len(os.listdir(train_dir + '/malignant')),
           'malignant')
@@ -19,8 +26,8 @@ def main(filename='skin_cancer_detection_model.h5'):
 
 if __name__ == '__main__':
 
-    # downloader = data_scraper.DataScraper()
+    downloader = DataScraper()
     print('Done training models')
     print('Training model with all data')
-    # downloader.download_images()
+    downloader.download_images(-1)
     main('skin_cancer_detection_model_all_GPU.h5')

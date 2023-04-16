@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: skinvestigatorai:0.0.3
+    image: skinvestigatorai:0.0.4
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
