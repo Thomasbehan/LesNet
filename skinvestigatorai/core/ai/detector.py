@@ -104,7 +104,7 @@ class SkinCancerDetector:
         print('Test accuracy:', test_acc)
         return test_loss, test_acc
 
-    def save_model(self, filename='skin_cancer_detection_model.h5'):
+    def save_model(self, filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
 

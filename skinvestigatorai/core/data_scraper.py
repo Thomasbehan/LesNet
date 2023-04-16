@@ -1,7 +1,6 @@
 import os
 import json
 import requests
-from tqdm import tqdm
 import concurrent.futures
 import mimetypes
 import tensorflow.keras.preprocessing.image as image_utils
@@ -32,7 +31,7 @@ class DataScraper:
 
     def _image_safe_check(self, path):
         try:
-            img = image_utils.load_img(path)
+            image_utils.load_img(path)
         except UnidentifiedImageError:
             print(f"Skipping corrupted image: {path}")
             return False
