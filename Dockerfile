@@ -30,5 +30,4 @@ ENV NAME World
 ENV PATH="/app/.local/bin:${PATH}"
 
 # Run command when the container launches
-#CMD ["pserve", "development.ini", "--reload"]
-CMD ["tail", "-f", "/dev/null"]
+CMD ["pserve", "development.ini", "--reload"]

@@ -12,6 +12,6 @@ def tensorboard_view(request):
 
     # Start TensorBoard as a background process
     command = f"tensorboard --logdir {log_dir} --host 0.0.0.0 --port 6006"
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    return f"TensorBoard is running on http://0.0.0.0:6006"
+    return "TensorBoard is running on http://localhost:6006"

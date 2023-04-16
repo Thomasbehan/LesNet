@@ -1,10 +1,9 @@
 import os
 from skinvestigatorai.core.ai.detector import SkinCancerDetector
 from skinvestigatorai.core.ai.config import train_dir, val_dir, test_dir
-import skinvestigatorai.core.data_scraper as data_scraper
 
 
-def main(filename='skin_cancer_detection_model.h5'):
+def main(filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
     # Print count of files in each directory
     print('Train:', len(os.listdir(train_dir + '/benign')), 'benign,', len(os.listdir(train_dir + '/malignant')),
           'malignant')
