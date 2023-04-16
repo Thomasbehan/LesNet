@@ -1,5 +1,3 @@
-import os
-import io
 import numpy as np
 from PIL import Image
 from pyramid.view import view_config
@@ -8,11 +6,11 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 
 # Load your trained model
-model_path = 'skin_cancer_detection_model.h5'
+model_path = 'models/skinvestigator_nano_40MB_91_38_acc.h5'
 model = load_model(model_path)
 
 # Define the class labels
-class_labels = ['benign', 'malignant']
+class_labels = ['benign', 'malignant', 'unknown']
 
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
