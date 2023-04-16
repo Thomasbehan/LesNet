@@ -8,13 +8,17 @@ with open(os.path.join(here, 'README.md')) as f:
 with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
-requires = [
+# read the contents of requirements.txt and put in a list to be used by setup
+with open(os.path.join(here, 'requirements.txt')) as f:
+    requires = f.read().splitlines()
+
+requires.extend([
     'plaster_pastedeploy',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'waitress',
-]
+])
 
 tests_require = [
     'WebTest',
