@@ -39,6 +39,9 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install -e ".[testing]"
           python setup.py install
+      - name: Download latest h5 model from GitHub Releases
+        run: |
+          curl -L -o models/skinvestigator_nano_40MB_91_38_acc.h5 https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.0.3/skinvestigator_nano_40MB_91_38_acc.h5
       - name: Lint with ruff
         run: |
           # stop the build if there are Python syntax errors or undefined names
