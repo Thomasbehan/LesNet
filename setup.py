@@ -1,5 +1,4 @@
 import os
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -14,6 +13,17 @@ requires = [
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'waitress',
+    'Pillow==9.5.0',
+    'requests==2.28.2',
+    'scipy==1.10.1',
+    'sympy==1.11.1',
+    'tensorboard==2.12.2',
+    'termcolor==2.2.0',
+    'tensorflow==2.12.0',
+    'torch==2.0.0',
+    'torchvision==0.15.1',
+    'tqdm==4.65.0',
+    'albumentations',
 ]
 
 tests_require = [

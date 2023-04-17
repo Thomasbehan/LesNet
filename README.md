@@ -32,8 +32,8 @@ These instructions will get you a copy of the project up and running on your loc
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/your_username/your_project.git
-    cd your_project
+    git clone https://github.com/Thomasbehan/SkinVestigatorAI.git
+    cd SkinVestigatorAI
     ```
 2. Build the Docker image:
     ```bash
@@ -92,6 +92,59 @@ These instructions will get you a copy of the project up and running on your loc
     ```bash
     env/bin/pserve development.ini
     ```
+
+## Running the Application If you have an Apple Silicon arm64 CPU
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/Thomasbehan/SkinVestigatorAI.git
+    cd SkinVestigatorAI
+    ```
+2. Download the latest version of Conda for Apple Silicon from [here](https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh)
+
+3. using that shell script, install miniconda3
+   ```bash
+   bash ~/miniconda.sh -b -p $HOME/miniconda
+   ```
+   
+4. Activate the conda environment
+   ```bash
+   source ~/miniconda/bin/activate
+   ```
+
+5. Install apple and tensorflow-deps packages
+   ```bash
+   conda install -c apple tensorflow-deps
+   ```
+
+6. Install tensorflow
+   ```bash
+   python -m pip install tensorflow
+   ```
+   
+7. Install tensorflow-metal
+   ```bash  
+   python -m pip install tensorflow-metal
+   ```
+
+8. Upgrade packaging tools, if necessary.
+    ```bash
+    python -m pip install --upgrade pip setuptools
+    ```
+   
+9. Install the project in editable mode with its testing requirements.
+    ```bash
+    python -m pip install -e ".[testing]"
+    ```
+   
+10. Run your project's tests.
+     ```bash
+     python -m pytest
+     ```
+    
+11. Run your project.
+     ```bash
+     python -m pserve development.ini --reload
+     ```
 
 ## Running the Tests and Linting
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
