@@ -1,7 +1,5 @@
 import os
-import platform
 from setuptools import setup, find_packages
-
 
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as f:
@@ -9,20 +7,7 @@ with open(os.path.join(here, 'README.md')) as f:
 with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
-# Check if the system is MacOS with ARM processor
-is_macos_arm = platform.system() == 'Darwin' and platform.processor() == 'arm'
-
-# Specify the packages based on the system
-if is_macos_arm:
-    requires = [
-        'tensorflow-macos==2.12.0',
-    ]
-else:
-    requires = [
-        'tensorflow==2.12.0',
-    ]
-
-requires.extend([
+requires = [
     'plaster_pastedeploy',
     'pyramid',
     'pyramid_jinja2',
@@ -34,12 +19,12 @@ requires.extend([
     'sympy==1.11.1',
     'tensorboard==2.12.2',
     'termcolor==2.2.0',
+    'tensorflow==2.12.0',
     'torch==2.0.0',
     'torchvision==0.15.1',
     'tqdm==4.65.0',
     'albumentations',
-
-])
+]
 
 tests_require = [
     'WebTest',
