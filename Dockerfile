@@ -11,7 +11,6 @@ COPY . /app/
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends python3.9 python3-pip python3.9-dev
 RUN python3.9 -m pip install --upgrade pip
-RUN python3.9 -m pip install --trusted-host pypi.python.org -r requirements.txt
 RUN python3.9 setup.py install
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
