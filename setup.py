@@ -18,7 +18,7 @@ requires = [
     'scipy==1.10.1',
     'sympy==1.11.1',
     'tensorboard==2.12.2',
-    'termcolor==2.2.0',
+    'termcolor==2.3.0',
     'tensorflow==2.12.0',
     'torch==2.0.0',
     'torchvision==0.15.1',
