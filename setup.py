@@ -14,7 +14,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'Pillow==9.5.0',
-    'requests==2.28.2',
+    'requests==2.29.0',
     'scipy==1.10.1',
     'sympy==1.11.1',
     'tensorboard==2.12.2',
