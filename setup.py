@@ -20,7 +20,7 @@ requires = [
     'tensorboard==2.12.2',
     'termcolor==2.3.0',
     'tensorflow==2.12.0',
-    'torch==2.0.0',
+    'torch==2.0.1',
     'torchvision==0.15.1',
     'tqdm==4.65.0',
     'albumentations',
