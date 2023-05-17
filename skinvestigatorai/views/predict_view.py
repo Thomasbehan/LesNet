@@ -33,7 +33,7 @@ def predict_view(request):
         # Return the prediction result
         return {
             'prediction': predicted_class,
-            'confidence': float(predictions[0][np.argmax(predictions)])
+            'confidence': float(predictions[0][np.argmax(predictions)]) * 100
         }
     except Exception as e:
         return HTTPBadRequest(reason=str(e))
