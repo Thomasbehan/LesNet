@@ -21,7 +21,7 @@ def test_predict_view():
     assert 'prediction' in response
     assert 'confidence' in response
     assert response['prediction'] in ['benign', 'malignant']
-    assert 0 <= response['confidence'] <= 1
+    assert 0 <= response['confidence'] <= 100
 
 
 def test_dashboard_view():
