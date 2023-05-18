@@ -23,7 +23,7 @@ RUN useradd -ms /bin/bash appuser
 USER appuser
 
 # Make port 6543 available to the world outside this container and 6006 for TensorBoard
-EXPOSE 6543 6006
+EXPOSE 6543 6006 443
 
 # Define environment variable
 ENV NAME World
