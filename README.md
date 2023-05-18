@@ -1,9 +1,11 @@
 
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
-# SkinVestigatorAI [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
+# SkinVestigatorAI  [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
 ![Accuracy Score](https://img.shields.io/badge/Accuracy-91-green) ![Loss Score](https://img.shields.io/badge/Loss-22-red) ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI)
 > SkinVestigatorAI is an open-source project for deep learning-based skin cancer detection. It aims to create a reliable tool and foster community involvement in critical AI problems. The repository includes code for data preprocessing, model building, and performance evaluation. Contribute and shape the future of skin cancer detection.
+
+Try it out here: [![Demo](https://img.shields.io/badge/-Demo-black?style=for-the-badge)](https://skinvestigator.onrender.com/) (If nobody uses this service, it will power off until the next user, if it's loading slow at first this is normal)
 
 ## Table of Contents
 - [Getting Started](#getting-started)

@@ -1,4 +1,5 @@
 import os
+import argparse
 import json
 import requests
 import concurrent.futures
@@ -105,5 +106,8 @@ class DataScraper:
 
 
 if __name__ == "__main__":
+    argParser = argparse.ArgumentParser()
+    argParser.add_argument("-p", "--pages", help="Number of pages to download")
+    args = argParser.parse_args()
     downloader = DataScraper()
-    downloader.download_images(1)
+    downloader.download_images(int(args.pages or 10))

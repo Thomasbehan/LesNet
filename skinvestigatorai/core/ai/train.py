@@ -4,7 +4,7 @@ from skinvestigatorai.core.ai.config import train_dir, val_dir, test_dir
 from skinvestigatorai.core.data_scraper import DataScraper
 
 
-def main(filename='models/skinvestigator_micro_*****.h5'):
+def main(filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
     # check if data is downloaded and if not download it
     if not os.path.exists(train_dir):
         print('Downloading data...')
