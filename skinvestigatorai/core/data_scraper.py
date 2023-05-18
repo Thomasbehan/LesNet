@@ -40,7 +40,8 @@ class DataScraper:
 
     def _download_and_save_image(self, image_metadata, output_folder):
         image_id = image_metadata["isic_id"]
-        image_url = image_metadata["files"]["full"]["url"]
+        # image_url = image_metadata["files"]["full"]["url"]
+        image_url = image_metadata["files"]["thumbnail_256"]["url"]
         response = requests.get(image_url)
 
         # Get the file extension based on the MIME type
@@ -69,7 +70,7 @@ class DataScraper:
 
         count = 0
         while next_url and (count < limit or limit == -1):
-            print("CURRENT URL: ", next_url)
+            print(str(count) + " CURRENT URL: ", next_url)
             response = requests.get(next_url)
             print("RESPONSE: ", response)
             response_data = json.loads(response.content.decode("utf-8"))
