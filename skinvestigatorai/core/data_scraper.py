@@ -106,4 +106,4 @@ class DataScraper:
 
 if __name__ == "__main__":
     downloader = DataScraper()
-    downloader.download_images()
+    downloader.download_images(10)
