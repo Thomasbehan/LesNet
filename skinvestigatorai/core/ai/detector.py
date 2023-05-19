@@ -1,6 +1,5 @@
 import os
 import datetime
-import numpy as np
 import albumentations as A
 import tensorflow as tf
 from tensorflow.keras import layers, models
