@@ -17,14 +17,6 @@ class DataScraper:
         self.image_list_url = f"{self.base_url}/images/?format=json"
 
     def _create_output_folders(self):
-        # Delete the output folders if they exist
-        if os.path.exists(self.train_dir):
-            os.system("rm -r " + self.train_dir)
-        if os.path.exists(self.val_dir):
-            os.system("rm -r " + self.val_dir)
-        if os.path.exists(self.test_dir):
-            os.system("rm -r " + self.test_dir)
-
         # Create the output folders if they don't exist
         os.makedirs(self.train_dir, exist_ok=True)
         os.makedirs(self.val_dir, exist_ok=True)
@@ -40,7 +32,8 @@ class DataScraper:
 
     def _download_and_save_image(self, image_metadata, output_folder):
         image_id = image_metadata["isic_id"]
-        image_url = image_metadata["files"]["full"]["url"]
+        # image_url = image_metadata["files"]["full"]["url"]
+        image_url = image_metadata["files"]["thumbnail_256"]["url"]
         response = requests.get(image_url)
 
         # Get the file extension based on the MIME type
@@ -52,6 +45,11 @@ class DataScraper:
             os.makedirs(output_folder)
 
         file_path = os.path.join(output_folder, f"{image_id}{ext}")
+        # Skip download if file already exists
+        if os.path.exists(file_path):
+            print(f"File {file_path} already exists, skipping download.")
+            return
+
         with open(file_path, "wb") as f:
             f.write(response.content)
 
@@ -69,7 +67,7 @@ class DataScraper:
 
         count = 0
         while next_url and (count < limit or limit == -1):
-            print("CURRENT URL: ", next_url)
+            print(str(count) + " CURRENT URL: ", next_url)
             response = requests.get(next_url)
             print("RESPONSE: ", response)
             response_data = json.loads(response.content.decode("utf-8"))

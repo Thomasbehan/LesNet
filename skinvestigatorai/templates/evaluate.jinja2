@@ -9,7 +9,7 @@
 <section class="evaluation">
 	<div class="evaluation__photo">
 		<div class="photo-container">
-            <img src="{{request.static_url('skinvestigatorai:static/img.png') }}" alt="Your Skinvestigator Image">
+            <img src="{{ request.static_url('skinvestigatorai:static/img.png') }}" alt="Your Skinvestigator Image">
 		</div>
 	</div>
 	<div class="evaluation__info">
@@ -25,20 +25,78 @@
     			</div>
             {% endif %}
         </div>
-        <h2>Image Analysis Dashboard</h2>
         <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
             <label for="image">Upload an image:</label>
-            <input type="file" name="image" id="image" accept="image/*"><br>
+
+            <div class="custom-file-upload">
+                <input type="file" name="image" id="image" accept="image/*" onchange="updateFileName(this)">
+                <label for="image">
+                    <i class="fa fa-cloud-upload"></i> Choose File
+                </label>
+                <span id="file-name"></span>
+            </div>
+
+            <br>
+
             <button class="analyse--btn" type="submit">Analyze</button>
         </form>
 	</div>
 </section>
 
 <style>
+.custom-file-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    background-image: url({{ request.static_url('skinvestigatorai:static/camera.png') }});
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 120%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.custom-file-upload input[type='file'] {
+    display: none;
+}
+
+.custom-file-upload label {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #000;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.5em;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.custom-file-upload label:hover {
+    background-color: #444;
+    transform: scale(1.05);
+}
+
+.custom-file-upload i.fa {
+    margin-right: 10px;
+}
+</style>
+
+<style>
 /* ----- Variables ----- */
 /* ----- Global ----- */
 * {
   box-sizing: border-box;
+}
+
+#file-name {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 10px;
+    color: #000;
 }
 
 h3 {
@@ -58,7 +116,6 @@ img {
   grid-template-columns: 0.9fr 1fr;
   margin: auto;
   padding: 2.5em 0;
-  min-width: 600px;
   background-color: white;
   border-radius: 5px;
 }
@@ -69,27 +126,27 @@ img {
 }
 
 .photo-container {
-  position: absolute;
-  left: -2.5em;
-  display: grid;
-  grid-template-rows: 1fr;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  position: relative;
+  left: -2.5em;
+  grid-template-rows: 1fr;
   border-radius: 6px;
   box-shadow: 4px 4px 25px -2px rgba(0, 0, 0, 0.3);
 }
 
 .photo-container img {
-    max-width: 100%;
-    max-height: 100%;
-    left: 0;
-    right: 0;
-    top: 0;
-    margin: auto;
-    border-radius: 6px 6px 0 0;
-    <!-- image to cover available space of the parent div-->
-    object-fit: cover;
-
+  position: absolute;
+  min-width: 100%;
+  min-height: 100%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
 }
 
 .photo-album {
@@ -244,5 +301,10 @@ footer a:hover {
             });
         });
     });
+    function updateFileName(inputElement) {
+        var fileName = inputElement.files[0].name;
+        document.getElementById('file-name').innerText = " " + fileName;
+    }
+
 </script>
 {% endblock content %}

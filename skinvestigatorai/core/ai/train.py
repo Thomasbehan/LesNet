@@ -26,8 +26,9 @@ def main(filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
 
 if __name__ == '__main__':
 
-    downloader = DataScraper()
-    print('Done training models')
-    print('Training model with all data')
-    downloader.download_images(-1)
+    if not os.path.exists('data/train/benign'):
+        downloader = DataScraper()
+        print('Done training models')
+        print('Training model with all data')
+        downloader.download_images(-1)
     main('skin_cancer_detection_model_all_GPU.h5')

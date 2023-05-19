@@ -2,10 +2,15 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
 # SkinVestigatorAI  [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
-![Accuracy Score](https://img.shields.io/badge/Accuracy-91-green) ![Loss Score](https://img.shields.io/badge/Loss-22-red) ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-91-green) ![Loss Score](https://img.shields.io/badge/Loss-22-red) ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+[![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+
 > SkinVestigatorAI is an open-source project for deep learning-based skin cancer detection. It aims to create a reliable tool and foster community involvement in critical AI problems. The repository includes code for data preprocessing, model building, and performance evaluation. Contribute and shape the future of skin cancer detection.
 
-Try it out here: [![Demo](https://img.shields.io/badge/-Demo-black?style=for-the-badge)](https://skinvestigator.onrender.com/) (If nobody uses this service, it will power off until the next user, if it's loading slow at first this is normal)
+[![Demo](https://img.shields.io/badge/-Live_Demo-black?style=for-the-badge&logo=render)](https://skinvestigator.onrender.com/) 
+
+Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Rest assured, any initial slow loading is completely normal and the app will run smoothly after this brief wake-up period. Your patience is appreciated!
+
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -152,6 +157,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Running the Tests and Linting
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+[![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 
 ### Running the Tests
 To run the tests, run the following command:
@@ -167,6 +173,10 @@ docker exec -ti skinvestigatorai-app-1 python3.9 -m ruff --format=github --targe
 
 ## Data
 The DataScraper tool within this application is designed to download and preprocess skin lesion images from the ISIC Archive for use in machine learning projects. The images are stored in three separate directories for training, validation, and testing.
+The data is organised as follows:
+- Train: 42504 benign, 5138 malignant
+- 47742 images belonging to 3 classes.
+- 13647 images belonging to 3 classes.
 
 ### Data Source
 The data is fetched from the ISIC Archive using their API. The base URL for the API is https://api.isic-archive.com/api/v2. The code makes use of the /images/ endpoint to fetch a list of images in JSON format. Each image's metadata contains information about the image, including its URL, ISIC ID, and clinical information (benign/malignant).
