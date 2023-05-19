@@ -2,7 +2,6 @@ from pyramid.view import view_config
 from skinvestigatorai.core.ai.detector import SkinCancerDetector
 from skinvestigatorai.core.ai.config import train_dir, val_dir, test_dir
 
-
 @view_config(route_name='train', renderer='json')
 def train_model(request):
     detector = SkinCancerDetector(train_dir, val_dir, test_dir)
