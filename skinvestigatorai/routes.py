@@ -1,4 +1,3 @@
-import os
 from skinvestigatorai.core.route_generator import generate_route_name
 
 
