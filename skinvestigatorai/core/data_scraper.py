@@ -17,14 +17,6 @@ class DataScraper:
         self.image_list_url = f"{self.base_url}/images/?format=json"
 
     def _create_output_folders(self):
-        # Delete the output folders if they exist
-        if os.path.exists(self.train_dir):
-            os.system("rm -r " + self.train_dir)
-        if os.path.exists(self.val_dir):
-            os.system("rm -r " + self.val_dir)
-        if os.path.exists(self.test_dir):
-            os.system("rm -r " + self.test_dir)
-
         # Create the output folders if they don't exist
         os.makedirs(self.train_dir, exist_ok=True)
         os.makedirs(self.val_dir, exist_ok=True)
@@ -53,6 +45,11 @@ class DataScraper:
             os.makedirs(output_folder)
 
         file_path = os.path.join(output_folder, f"{image_id}{ext}")
+        # Skip download if file already exists
+        if os.path.exists(file_path):
+            print(f"File {file_path} already exists, skipping download.")
+            return
+
         with open(file_path, "wb") as f:
             f.write(response.content)
 
