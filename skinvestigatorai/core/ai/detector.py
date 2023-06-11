@@ -21,7 +21,7 @@ class SkinCancerDetector:
         self.model = None
 
         # Enable mixed precision training
-        tf.keras.mixed_precision.experimental.set_policy('mixed_float16')
+        tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
@@ -83,7 +83,7 @@ class SkinCancerDetector:
                       metrics=['accuracy'])
 
         self.model = model
-        
+
     def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=50, min_lr=1e-6,
                     min_delta=1e-4):
         """Train the model with callbacks."""
