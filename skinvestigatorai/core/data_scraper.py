@@ -6,6 +6,7 @@ import concurrent.futures
 import mimetypes
 import tensorflow.keras.preprocessing.image as image_utils
 from PIL import UnidentifiedImageError
+from collections import defaultdict
 
 
 class DataScraper:
@@ -61,11 +62,16 @@ class DataScraper:
 
         next_url = self.image_list_url
 
-        def process_image(idx, image_metadata, directory):
-            self._download_and_save_image(image_metadata,
-                                          directory + "/" + image_metadata["metadata"]["clinical"]["benign_malignant"])
+        def process_image(image_metadata, output_folder):
+            if "benign_malignant" in image_metadata["metadata"]["clinical"]:
+                self._download_and_save_image(image_metadata,
+                                              output_folder + "/" + image_metadata["metadata"]["clinical"][
+                                                  "benign_malignant"])
+            else:
+                print(f"Skipping image {image_metadata['isic_id']} due to missing category information.")
 
         count = 0
+        image_metadata_dict = defaultdict(list)
         while next_url and (count < limit or limit == -1):
             print(str(count) + " CURRENT URL: ", next_url)
             response = requests.get(next_url)
@@ -74,24 +80,41 @@ class DataScraper:
             next_url = response_data["next"]
             image_metadata_list = response_data["results"]
 
-            total_images = len(image_metadata_list)
-            train_size = int(0.7 * total_images)
-            val_size = int(0.2 * total_images)
+            # Grouping the images by their classification
+            for image_metadata in image_metadata_list:
+                if "benign_malignant" in image_metadata["metadata"]["clinical"]:
+                    category = image_metadata["metadata"]["clinical"]["benign_malignant"]
+                    image_metadata_dict[category].append(image_metadata)
+                else:
+                    print(f"Skipping image {image_metadata['isic_id']} due to missing category information.")
 
-            print("Downloading " + str(total_images) + " images...")
+            count += 1
+
+        # Achieving balance by taking the min number of images in each category
+        min_images = min(len(image_metadata_dict["benign"]), len(image_metadata_dict["malignant"]))
+        print("Achieving balance with " + str(min_images) + " images per category...")
+
+        # Define distribution for train, validation, and test sets
+        train_ratio = 0.7
+        val_ratio = 0.2
+        test_ratio = 0.1
+
+        for category, image_metadata_list in image_metadata_dict.items():
+            total_images = len(image_metadata_list)
+            train_size = int(train_ratio * total_images)
+            val_size = int(val_ratio * total_images)
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = []
-                for idx, image_metadata in enumerate(image_metadata_list):
-                    print("IMAGE: ", image_metadata)
-                    if idx < train_size:
+                for i in range(min_images):
+                    if i < train_size:
                         directory = self.train_dir
-                    elif idx < train_size + val_size:
+                    elif i < train_size + val_size:
                         directory = self.val_dir
                     else:
                         directory = self.test_dir
 
-                    futures.append(executor.submit(process_image, idx, image_metadata, directory))
+                    futures.append(executor.submit(process_image, image_metadata_list[i], directory))
 
                 for future in concurrent.futures.as_completed(futures):
                     try:
@@ -99,8 +122,7 @@ class DataScraper:
                     except Exception as e:
                         print(f"Error downloading image: {e}")
 
-            count += 1
-            print("Images downloaded and saved.")
+        print("Images downloaded and saved.")
 
 
 if __name__ == "__main__":
@@ -108,4 +130,4 @@ if __name__ == "__main__":
     argParser.add_argument("-p", "--pages", help="Number of pages to download")
     args = argParser.parse_args()
     downloader = DataScraper()
-    downloader.download_images(int(args.pages or 10))
+    downloader.download_images(int(args.pages or -1))
