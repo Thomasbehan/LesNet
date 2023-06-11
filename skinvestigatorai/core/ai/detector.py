@@ -4,14 +4,13 @@ import albumentations as A
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from skinvestigatorai.core.data_gen import DataGen
 from vit_keras import vit, utils
 
 
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=128, model_dir='models/v1.5',
-                 img_size=(160, 160)):
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=64, model_dir='models/v1.5',
+                 img_size=(128, 128)):
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
@@ -20,6 +19,9 @@ class SkinCancerDetector:
         self.img_size = img_size
         self.model_dir = model_dir
         self.model = None
+
+        # Enable mixed precision training
+        tf.keras.mixed_precision.experimental.set_policy('mixed_float16')
 
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
@@ -81,7 +83,7 @@ class SkinCancerDetector:
                       metrics=['accuracy'])
 
         self.model = model
-
+        
     def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=50, min_lr=1e-6,
                     min_delta=1e-4):
         """Train the model with callbacks."""
