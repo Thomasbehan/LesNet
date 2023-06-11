@@ -27,9 +27,10 @@ class SkinCancerDetector:
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
         aug = A.Compose([
-            A.Rotate(limit=40),
+            A.Rotate(limit=60),
             A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2),
             A.HorizontalFlip(),
+            A.VerticalFlip(),
             A.RandomBrightnessContrast(),
             A.CoarseDropout(max_holes=8),
         ])
@@ -75,7 +76,7 @@ class SkinCancerDetector:
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(1024, activation=tf.nn.relu),
             tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dropout(0.6),
             tf.keras.layers.Dense(num_classes, activation='softmax', dtype=tf.float32)
         ])
 
@@ -85,8 +86,8 @@ class SkinCancerDetector:
 
         self.model = model
 
-    def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=50, min_lr=1e-6,
-                    min_delta=1e-4):
+    def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=300, min_lr=1e-6,
+                    min_delta=1e-4, cooldown_lr=100):
         """Train the model with callbacks."""
         self._check_model()
 
@@ -95,7 +96,7 @@ class SkinCancerDetector:
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
 
-        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es)
+        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr)
 
         history = self.model.fit(
             train_generator,
@@ -104,12 +105,12 @@ class SkinCancerDetector:
             callbacks=callbacks)
         return history
 
-    def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es):
+    def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
         """Create Keras callbacks."""
         tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
                                            update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
-                                               min_delta=min_delta)
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr,
+                                               min_delta=min_delta, cooldown=cooldown_lr)
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.model_dir, "{}_best_model.h5".format(current_time)),
             save_best_only=True, monitor='val_loss', mode='min', verbose=1)
