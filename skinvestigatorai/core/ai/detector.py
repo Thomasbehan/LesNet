@@ -6,6 +6,7 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from skinvestigatorai.core.data_gen import DataGen
+from vit_keras import vit, utils
 
 
 class SkinCancerDetector:
@@ -45,27 +46,24 @@ class SkinCancerDetector:
         return train_generator, val_generator, test_datagen
 
     def build_model(self, num_classes):
-        model = models.Sequential()
-        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3)))
-        model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-        model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(128, (3, 3), activation='relu'))
-        model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(256, (3, 3), activation='relu'))
-        model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(256, (3, 3), activation='relu'))
-        model.add(layers.BatchNormalization())
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Flatten())
-        model.add(layers.Dense(1024, activation='relu'))
-        model.add(layers.BatchNormalization())
-        model.add(layers.Dropout(0.5))
-        model.add(layers.Dense(num_classes, activation='softmax', dtype=tf.float32))
+        image_size = 256
+        vit_model = vit.vit_b32(
+            image_size=image_size,
+            activation='softmax',
+            pretrained=True,
+            include_top=False,
+            pretrained_top=False,
+            classes=num_classes)
+
+        model = tf.keras.Sequential([
+            vit_model,
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.Dense(1024, activation=tf.nn.relu),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dense(num_classes, activation='softmax', dtype=tf.float32)
+        ])
 
         model.compile(optimizer='adam',
                       loss='categorical_crossentropy',
@@ -85,9 +83,11 @@ class SkinCancerDetector:
         # Set up the TensorBoard callback
         tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
                                            update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=5)
-        model_checkpoint_callback = ModelCheckpoint(filepath=os.path.join(log_dir, "best_model.h5"),
-                                                    save_best_only=True, monitor='val_loss', mode='min', verbose=1)
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=160, min_lr=1e-6,
+                                               min_delta=1e-4)
+        model_checkpoint_callback = ModelCheckpoint(
+            filepath=os.path.join(log_dir, "{}_best_model.h5".format(current_time)),
+            save_best_only=True, monitor='val_loss', mode='min', verbose=1)
         early_stopping_callback = EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True)
 
         history = self.model.fit(
