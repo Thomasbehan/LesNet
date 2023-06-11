@@ -30,14 +30,14 @@ class SkinCancerDetector:
         train_generator = DataGen(
             self.train_dir,
             batch_size=self.batch_size,
-            img_height=150,
-            img_width=150,
+            img_height=160,
+            img_width=160,
             augmentations=aug)
 
         val_datagen = ImageDataGenerator(rescale=1. / 255)
         val_generator = val_datagen.flow_from_directory(
             self.val_dir,
-            target_size=(150, 150),
+            target_size=(160, 160),
             batch_size=self.batch_size,
             class_mode='categorical')
 
@@ -46,7 +46,7 @@ class SkinCancerDetector:
         return train_generator, val_generator, test_datagen
 
     def build_model(self, num_classes):
-        image_size = 256
+        image_size = 160
         vit_model = vit.vit_b32(
             image_size=image_size,
             activation='softmax',
