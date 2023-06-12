@@ -22,9 +22,6 @@ class SkinCancerDetector:
         self.model_dir = model_dir
         self.model = None
 
-        # Enable mixed precision training
-        tf.keras.mixed_precision.set_global_policy('mixed_float16')
-
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
         aug = A.Compose([
