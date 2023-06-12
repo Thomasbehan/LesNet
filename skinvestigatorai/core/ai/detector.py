@@ -143,11 +143,11 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc, test_sensitivity, test_specificity = self.model.evaluate(test_generator)
+        test_loss, test_acc, test_sensitivity, test_precision = self.model.evaluate(test_generator)
         print('Test accuracy:', test_acc)
         print('Test sensitivity:', test_sensitivity)
-        print('Test specificity:', test_specificity)
-        return test_loss, test_acc, test_sensitivity, test_specificity
+        print('Test precision:', test_precision)
+        return test_loss, test_acc, test_sensitivity, test_precision
 
     def save_model(self, filename='models/skinvestigator.h5'):
         """Save the model."""
@@ -162,7 +162,7 @@ class SkinCancerDetector:
             filename,
             custom_objects={
                 'sensitivity': self.sensitivity,
-                'specificity': self.precision
+                'precision': self.precision
             })
 
     def _check_model(self):
