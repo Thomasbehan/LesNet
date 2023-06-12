@@ -74,6 +74,7 @@ class SkinCancerDetector:
         tflite_quant_model = converter.convert()
 
         return tflite_quant_model
+
     def build_model(self, num_classes):
         """Build the ViT model."""
         vit_model = vit.vit_b32(
