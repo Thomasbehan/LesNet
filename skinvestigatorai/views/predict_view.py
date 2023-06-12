@@ -12,7 +12,6 @@ model = load_model(model_path)
 
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
-tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
