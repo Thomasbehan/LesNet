@@ -3,6 +3,7 @@ import datetime
 import albumentations as A
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from tensorflow.keras import backend as KerasBackend
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from skinvestigatorai.core.data_gen import DataGen
@@ -60,6 +61,22 @@ class SkinCancerDetector:
 
         return datagen
 
+    def sensitivity(self, y_true, y_pred):
+        true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
+        possible_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true, 0, 1)))
+        return true_positives / (possible_positives + KerasBackend.epsilon())
+
+    def specificity(self, y_true, y_pred):
+        true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
+        possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
+        return true_negatives / (possible_negatives + KerasBackend.epsilon())
+
+    def quantize_model(self, model):
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_quant_model = converter.convert()
+
+        return tflite_quant_model
     def build_model(self, num_classes):
         """Build the ViT model."""
         vit_model = vit.vit_b32(
@@ -70,24 +87,22 @@ class SkinCancerDetector:
             pretrained_top=False,
             classes=num_classes)
 
-        model = tf.keras.Sequential([
+        self.model = tf.keras.Sequential([
             vit_model,
             tf.keras.layers.Flatten(),
             tf.keras.layers.BatchNormalization(),
             tf.keras.layers.Dense(1024, activation=tf.nn.relu),
             tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.6),
+            tf.keras.layers.Dropout(0.25),
             tf.keras.layers.Dense(num_classes, activation='softmax', dtype=tf.float32)
         ])
 
-        model.compile(optimizer='adam',
-                      loss='categorical_crossentropy',
-                      metrics=['accuracy'])
+        self.model.compile(optimizer='adam',
+                           loss='categorical_crossentropy',
+                           metrics=['accuracy', self.sensitivity, self.specificity])
 
-        self.model = model
-
-    def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=300, min_lr=1e-6,
-                    min_delta=1e-4, cooldown_lr=100):
+    def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=30, min_lr=1e-6,
+                    min_delta=1e-4, cooldown_lr=30):
         """Train the model with callbacks."""
         self._check_model()
 
@@ -96,7 +111,8 @@ class SkinCancerDetector:
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
 
-        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr)
+        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
+                                           cooldown_lr)
 
         history = self.model.fit(
             train_generator,
@@ -128,16 +144,29 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc = self.model.evaluate(test_generator)
+        test_loss, test_acc, test_sensitivity, test_specificity = self.model.evaluate(test_generator)
         print('Test accuracy:', test_acc)
-        return test_loss, test_acc
+        print('Test sensitivity:', test_sensitivity)
+        print('Test specificity:', test_specificity)
+        return test_loss, test_acc, test_sensitivity, test_specificity
 
-    def save_model(self, filename='models/skinvestigator_nano_40MB_91_38_acc.h5'):
+    def save_model(self, filename='models/skinvestigator.h5'):
         """Save the model."""
         self._check_model()
         self.model.save(filename)
+        self.model = self.quantize_model(self.model)
+        self.model.save('models/skinvestigator-quantized.h5')
+
+    def load_model(self, filename):
+        """Load the model."""
+        self.model = tf.keras.models.load_model(
+            filename,
+            custom_objects={
+                'sensitivity': self.sensitivity,
+                'specificity': self.specificity
+            })
 
     def _check_model(self):
-        """Check if model has been built."""
+        """Check if model has not been built."""
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
