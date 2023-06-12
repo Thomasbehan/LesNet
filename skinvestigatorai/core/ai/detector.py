@@ -3,6 +3,7 @@ import datetime
 import albumentations as A
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from tensorflow.keras.metrics import AUC
 from tensorflow.keras import backend as KerasBackend
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -107,7 +108,7 @@ class SkinCancerDetector:
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
-                           metrics=['accuracy', self.sensitivity, self.precision, self.f1_score, self.specificity])
+                           metrics=['accuracy', self.sensitivity, self.precision, self.f1_score, self.specificity, AUC(name='auc')])
 
     def train_model(self, train_generator, val_generator, epochs=150, patience_lr=50, patience_es=30, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=20):
@@ -152,14 +153,14 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity = self.model.evaluate(
-            test_generator)
+        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc = self.model.evaluate(test_generator)
         print('Test accuracy:', test_acc)
         print('Test sensitivity:', test_sensitivity)
         print('Test precision:', test_precision)
         print('Test F1-score:', test_f1)
         print('Test specificity:', test_specificity)
-        return test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity
+        print('Test AUC-ROC:', test_auc)
+        return test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc
 
     def save_model(self, filename='models/skinvestigator.h5'):
         """Save the model."""
