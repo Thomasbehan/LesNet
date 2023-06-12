@@ -22,6 +22,8 @@ class SkinCancerDetector:
         self.img_size = img_size
         self.model_dir = model_dir
         self.model = None
+        self.precision = Precision()
+        self.recall = Recall()
 
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
@@ -60,8 +62,8 @@ class SkinCancerDetector:
         return datagen
 
     def f1_score(self, y_true, y_pred):
-        prec = Precision()(y_true, y_pred)
-        rec = Recall()(y_true, y_pred)
+        prec = self.precision(y_true, y_pred)
+        rec = self.recall(y_true, y_pred)
         return 2 * ((prec * rec) / (prec + rec + KerasBackend.epsilon()))
 
     def specificity(self, y_true, y_pred):
@@ -70,6 +72,9 @@ class SkinCancerDetector:
         return true_negatives / (possible_negatives + KerasBackend.epsilon())
 
     def build_model(self, num_classes):
+        self.precision = Precision(name='precision')
+        self.recall = Recall(name='sensitivity')
+
         vit_model = vit.vit_b32(
             image_size=self.img_size[0],
             activation='softmax',
@@ -90,7 +95,8 @@ class SkinCancerDetector:
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
-                           metrics=['accuracy', Recall(name='sensitivity'), Precision(name='precision'), self.f1_score, self.specificity, AUC(name='auc')])
+                           metrics=['accuracy', self.recall, self.precision, self.f1_score, self.specificity,
+                                    AUC(name='auc')])
 
     def train_model(self, train_generator, val_generator, epochs=150, patience_lr=50, patience_es=30, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=20):
@@ -156,8 +162,8 @@ class SkinCancerDetector:
         self.model = tf.keras.models.load_model(
             filename,
             custom_objects={
-                'sensitivity': self.sensitivity,
-                'precision': self.precision
+                'f1_score': self.f1_score,
+                'specificity': self.specificity
             })
 
     def _check_model(self):
