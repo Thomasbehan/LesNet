@@ -63,10 +63,11 @@ class SkinCancerDetector:
         possible_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true, 0, 1)))
         return true_positives / (possible_positives + KerasBackend.epsilon())
 
-    def specificity(self, y_true, y_pred):
-        true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
-        possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
-        return true_negatives / (possible_negatives + KerasBackend.epsilon())
+    def precision(self, y_true, y_pred):
+        true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + KerasBackend.epsilon())
+        return precision
 
     def quantize_model(self, model):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
@@ -97,7 +98,7 @@ class SkinCancerDetector:
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
-                           metrics=['accuracy', self.sensitivity, self.specificity])
+                           metrics=['accuracy', self.sensitivity, self.precision])
 
     def train_model(self, train_generator, val_generator, epochs=3000, patience_lr=160, patience_es=30, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=30):
@@ -161,7 +162,7 @@ class SkinCancerDetector:
             filename,
             custom_objects={
                 'sensitivity': self.sensitivity,
-                'specificity': self.specificity
+                'specificity': self.precision
             })
 
     def _check_model(self):
