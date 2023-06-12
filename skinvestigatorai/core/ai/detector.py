@@ -3,7 +3,7 @@ import datetime
 import albumentations as A
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.metrics import AUC
+from tensorflow.keras.metrics import AUC, Precision, Recall
 from tensorflow.keras import backend as KerasBackend
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -60,8 +60,8 @@ class SkinCancerDetector:
         return datagen
 
     def f1_score(self, y_true, y_pred):
-        prec = self.precision(y_true, y_pred)
-        rec = self.sensitivity(y_true, y_pred)
+        prec = Precision()(y_true, y_pred)
+        rec = Recall()(y_true, y_pred)
         return 2 * ((prec * rec) / (prec + rec + KerasBackend.epsilon()))
 
     def specificity(self, y_true, y_pred):
@@ -69,25 +69,7 @@ class SkinCancerDetector:
         possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
         return true_negatives / (possible_negatives + KerasBackend.epsilon())
 
-    def sensitivity(self, y_true, y_pred):
-        true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
-        possible_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true, 0, 1)))
-        return true_positives / (possible_positives + KerasBackend.epsilon())
-
-    def precision(self, y_true, y_pred):
-        true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_pred, 0, 1)))
-        return true_positives / (predicted_positives + KerasBackend.epsilon())
-
-    def quantize_model(self, model):
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        tflite_quant_model = converter.convert()
-
-        return tflite_quant_model
-
     def build_model(self, num_classes):
-        """Build the ViT model."""
         vit_model = vit.vit_b32(
             image_size=self.img_size[0],
             activation='softmax',
@@ -108,7 +90,7 @@ class SkinCancerDetector:
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
-                           metrics=['accuracy', self.sensitivity, self.precision, self.f1_score, self.specificity, AUC(name='auc')])
+                           metrics=['accuracy', Recall(name='sensitivity'), Precision(name='precision'), self.f1_score, self.specificity, AUC(name='auc')])
 
     def train_model(self, train_generator, val_generator, epochs=150, patience_lr=50, patience_es=30, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=20):
