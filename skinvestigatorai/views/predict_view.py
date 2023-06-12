@@ -4,11 +4,15 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
-import tensorflow as tf
+from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
 # Load your trained model
 model_path = 'models/best_model.h5'
-model = load_model(model_path)
+custom_metrics = {
+    'f1_score': SkinCancerDetector.f1_score,
+    'specificity': SkinCancerDetector.specificity
+}
+model = load_model(model_path, custom_objects=custom_metrics)
 
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
