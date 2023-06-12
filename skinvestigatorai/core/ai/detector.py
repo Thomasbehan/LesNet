@@ -44,7 +44,7 @@ class SkinCancerDetector:
             augmentations=aug)
 
         val_generator = self.create_data_generator(self.val_dir)
-        test_datagen = self.create_data_generator(self.test_dir)
+        test_datagen = self.create_data_generator()
 
         return train_generator, val_generator, test_datagen
 
@@ -70,6 +70,13 @@ class SkinCancerDetector:
         true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
         possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
         return true_negatives / (possible_negatives + KerasBackend.epsilon())
+
+    def quantize_model(self, model):
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_quant_model = converter.convert()
+
+        return tflite_quant_model
 
     def build_model(self, num_classes):
         self.precision = Precision(name='precision')
@@ -141,7 +148,8 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc = self.model.evaluate(test_generator)
+        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc = self.model.evaluate(
+            test_generator)
         print('Test accuracy:', test_acc)
         print('Test sensitivity:', test_sensitivity)
         print('Test precision:', test_precision)
