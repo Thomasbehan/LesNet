@@ -4,13 +4,15 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
+import tensorflow as tf
 
 # Load your trained model
-model_path = 'models/skinvestigator_nano_40MB_91_38_acc.h5'
+model_path = 'models/best_model.h5'
 model = load_model(model_path)
 
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
+tf.keras.mixed_precision.set_global_policy('mixed_float16')
 
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
@@ -21,7 +23,7 @@ def predict_view(request):
     try:
         # Open and preprocess the image
         image = Image.open(image_file).convert('RGB')
-        image = image.resize((150, 150))
+        image = image.resize((128, 128))
         image_array = img_to_array(image)
         image_array = image_array / 255.0
         image_array = np.expand_dims(image_array, axis=0)
