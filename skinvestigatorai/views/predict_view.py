@@ -13,6 +13,8 @@ custom_metrics = {
     'specificity': SkinCancerDetector.specificity
 }
 model = load_model(model_path, custom_objects=custom_metrics)
+print('Model loaded. Start serving...')
+print(model.summary())
 
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
