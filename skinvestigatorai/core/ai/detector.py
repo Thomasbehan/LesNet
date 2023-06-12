@@ -58,6 +58,16 @@ class SkinCancerDetector:
 
         return datagen
 
+    def f1_score(self, y_true, y_pred):
+        prec = self.precision(y_true, y_pred)
+        rec = self.sensitivity(y_true, y_pred)
+        return 2 * ((prec * rec) / (prec + rec + KerasBackend.epsilon()))
+
+    def specificity(self, y_true, y_pred):
+        true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
+        possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
+        return true_negatives / (possible_negatives + KerasBackend.epsilon())
+
     def sensitivity(self, y_true, y_pred):
         true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
         possible_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true, 0, 1)))
@@ -97,7 +107,7 @@ class SkinCancerDetector:
 
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
-                           metrics=['accuracy', self.sensitivity, self.precision])
+                           metrics=['accuracy', self.sensitivity, self.precision, self.f1_score, self.specificity])
 
     def train_model(self, train_generator, val_generator, epochs=150, patience_lr=50, patience_es=30, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=20):
@@ -142,11 +152,14 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc, test_sensitivity, test_precision = self.model.evaluate(test_generator)
+        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity = self.model.evaluate(
+            test_generator)
         print('Test accuracy:', test_acc)
         print('Test sensitivity:', test_sensitivity)
         print('Test precision:', test_precision)
-        return test_loss, test_acc, test_sensitivity, test_precision
+        print('Test F1-score:', test_f1)
+        print('Test specificity:', test_specificity)
+        return test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity
 
     def save_model(self, filename='models/skinvestigator.h5'):
         """Save the model."""
