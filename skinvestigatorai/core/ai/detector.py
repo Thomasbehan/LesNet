@@ -66,8 +66,7 @@ class SkinCancerDetector:
     def precision(self, y_true, y_pred):
         true_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_true * y_pred, 0, 1)))
         predicted_positives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + KerasBackend.epsilon())
-        return precision
+        return true_positives / (predicted_positives + KerasBackend.epsilon())
 
     def quantize_model(self, model):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
