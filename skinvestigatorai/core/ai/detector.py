@@ -41,7 +41,7 @@ class SkinCancerDetector:
             augmentations=aug)
 
         val_generator = self.create_data_generator(self.val_dir)
-        test_datagen = self.create_data_generator()
+        test_datagen = self.create_data_generator(self.test_dir)
 
         return train_generator, val_generator, test_datagen
 
