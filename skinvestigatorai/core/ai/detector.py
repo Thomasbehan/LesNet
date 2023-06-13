@@ -2,13 +2,12 @@ import os
 import datetime
 import albumentations as A
 import tensorflow as tf
-from tensorflow.keras import layers, models
 from tensorflow.keras.metrics import AUC, Precision, Recall
 from tensorflow.keras import backend as KerasBackend
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from skinvestigatorai.core.data_gen import DataGen
-from vit_keras import vit, utils
+from vit_keras import vit
 
 
 class SkinCancerDetector:
@@ -148,8 +147,8 @@ class SkinCancerDetector:
             batch_size=self.batch_size,
             class_mode='categorical')
 
-        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc = self.model.evaluate(
-            test_generator)
+        test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc \
+            = self.model.evaluate(test_generator)
         print('Test accuracy:', test_acc)
         print('Test sensitivity:', test_sensitivity)
         print('Test precision:', test_precision)
@@ -163,7 +162,8 @@ class SkinCancerDetector:
         self._check_model()
         self.model.save(filename)
         self.model = self.quantize_model(self.model)
-        self.model.save('models/skinvestigator-quantized.h5')
+        with open('models/skinvestigator-quantize.tflite', 'wb') as f:
+            f.write(self.model)
 
     def load_model(self, filename):
         """Load the model."""
