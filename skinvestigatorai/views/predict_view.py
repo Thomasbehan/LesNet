@@ -1,20 +1,87 @@
+import os
+import psutil
+import subprocess
+import platform
+import tensorflow as tf
 import numpy as np
 from PIL import Image
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.lite.python.interpreter import Interpreter
 from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
 # Load your trained model
-model_path = 'models/best_model.h5'
+model_dir = 'models/'
 custom_metrics = {
     'f1_score': SkinCancerDetector.f1_score,
     'specificity': SkinCancerDetector.specificity
 }
-model = load_model(model_path, custom_objects=custom_metrics)
+
+
+def get_latest_model(model_dir, extension):
+    """
+    Returns the path of the latest model file in the specified directory with the specified extension.
+    """
+    list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
+                     basename.endswith(extension)]
+    latest_model = max(list_of_files, key=os.path.getctime)
+    return latest_model
+
+
+def get_available_gpu_memory():
+    """
+    Returns the available GPU memory in GB if NVML is installed, or None if not.
+    """
+    if tf.config.list_physical_devices('GPU'):
+        if platform.system() == 'Linux':
+            memory_info = tf.config.experimental.get_memory_info('GPU:0')
+            return memory_info['free'] / (1024 ** 3)
+        else:
+            try:
+                _output_to_list = lambda x: x.decode('ascii').split('\n')[:-1]
+
+                ACCEPTABLE_AVAILABLE_MEMORY = 1024
+                COMMAND = "nvidia-smi --query-gpu=memory.free --format=csv"
+
+                memory_free_info = _output_to_list(subprocess.check_output(COMMAND.split()))[1:]
+                memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+                if len(memory_free_values):
+                    return min(memory_free_values) / 1024.0
+            except Exception as e:
+                print("Could not execute the command to find out the available GPU memory.")
+                return None
+
+    return None
+
+
+def select_model(model_dir, h5_size, tflite_size):
+    """
+    Selects which model to load based on available resources.
+    """
+    # Calculate available GPU memory
+    available_gpu_memory = get_available_gpu_memory()
+
+    # Calculate available RAM
+    svmem = psutil.virtual_memory()
+    available_ram = svmem.available / (1024 ** 3)  # in GB
+
+    if available_gpu_memory is not None and available_gpu_memory >= h5_size:
+        model_path = get_latest_model(model_dir, '.h5')
+        model = load_model(model_path, custom_objects=custom_metrics)
+    elif available_ram >= h5_size + 1:  # leave 1GB buffer
+        model_path = get_latest_model(model_dir, '.h5')
+        model = load_model(model_path, custom_objects=custom_metrics)
+    else:
+        model_path = get_latest_model(model_dir, '.tflite')
+        model = Interpreter(model_path)
+
+    return model
+
+
+model = select_model(model_dir, 1, 0.1)
 print('Model loaded. Start serving...')
-print(model.summary())
 
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
