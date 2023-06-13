@@ -111,7 +111,7 @@ class SkinCancerDetector:
                            metrics=['accuracy', self.recall, self.precision, self.f1_score, self.specificity,
                                     AUC(name='auc')])
 
-    def train_model(self, train_generator, val_generator, epochs=150, patience_lr=20, patience_es=40, min_lr=1e-6,
+    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=20, patience_es=40, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=10):
         """Train the model with callbacks."""
         self._check_model()
