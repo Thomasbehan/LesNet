@@ -104,8 +104,8 @@ class SkinCancerDetector:
                            metrics=['accuracy', self.recall, self.precision, self.f1_score, self.specificity,
                                     AUC(name='auc')])
 
-    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=20, patience_es=40, min_lr=1e-6,
-                    min_delta=1e-4, cooldown_lr=10):
+    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=12, patience_es=40, min_lr=1e-6,
+                    min_delta=1e-4, cooldown_lr=5):
         """Train the model with callbacks."""
         self._check_model()
 
@@ -128,7 +128,7 @@ class SkinCancerDetector:
         """Create Keras callbacks."""
         tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
                                            update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr,
                                                min_delta=min_delta, cooldown=cooldown_lr)
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.model_dir, "{}_best_model.h5".format(current_time)),
