@@ -16,8 +16,8 @@
 
 [![Demo](https://img.shields.io/badge/-Live_Demo-black?style=for-the-badge&logo=render)](https://skinvestigator.onrender.com/) 
 
-Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Rest assured, any initial slow loading is completely normal and the app will run smoothly after this brief wake-up period. Your patience is appreciated!
-
+<sub><i>Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Any initial slow down will ease after a moment. Thank you for your patience.
+</i></sub>
 
 ## Table of Contents
 - [Getting Started](#getting-started)
