@@ -1,8 +1,4 @@
 import os
-import psutil
-import subprocess
-import platform
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 from pyramid.view import view_config
@@ -19,6 +15,8 @@ custom_metrics = {
     'specificity': SkinCancerDetector.specificity
 }
 
+MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
+
 
 def get_latest_model(model_dir, extension):
     """
@@ -30,57 +28,23 @@ def get_latest_model(model_dir, extension):
     return latest_model
 
 
-def get_available_gpu_memory():
+def load_model_type(model_type):
     """
-    Returns the available GPU memory in GB if NVML is installed, or None if not.
+    Load the latest model based on the provided model type.
     """
-    if tf.config.list_physical_devices('GPU'):
-        if platform.system() == 'Linux':
-            memory_info = tf.config.experimental.get_memory_info('GPU:0')
-            return memory_info['free'] / (1024 ** 3)
-        else:
-            try:
-                _output_to_list = lambda x: x.decode('ascii').split('\n')[:-1]
-
-                ACCEPTABLE_AVAILABLE_MEMORY = 1024
-                COMMAND = "nvidia-smi --query-gpu=memory.free --format=csv"
-
-                memory_free_info = _output_to_list(subprocess.check_output(COMMAND.split()))[1:]
-                memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
-                if len(memory_free_values):
-                    return min(memory_free_values) / 1024.0
-            except Exception as e:
-                print("Could not execute the command to find out the available GPU memory.")
-                return None
-
-    return None
-
-
-def select_model(model_dir, h5_size, tflite_size):
-    """
-    Selects which model to load based on available resources.
-    """
-    # Calculate available GPU memory
-    available_gpu_memory = get_available_gpu_memory()
-
-    # Calculate available RAM
-    svmem = psutil.virtual_memory()
-    available_ram = svmem.available / (1024 ** 3)  # in GB
-
-    if available_gpu_memory is not None and available_gpu_memory >= h5_size:
+    if model_type.upper() == 'H5':
         model_path = get_latest_model(model_dir, '.h5')
         model = load_model(model_path, custom_objects=custom_metrics)
-    elif available_ram >= h5_size + 1:  # leave 1GB buffer
-        model_path = get_latest_model(model_dir, '.h5')
-        model = load_model(model_path, custom_objects=custom_metrics)
-    else:
+    elif model_type.upper() == 'TFLITE':
         model_path = get_latest_model(model_dir, '.tflite')
         model = Interpreter(model_path)
+    else:
+        raise ValueError(f"Unsupported model type {model_type}. Please choose 'H5' or 'TFLite'.")
 
     return model
 
 
-model = select_model(model_dir, 1, 0.1)
+model = load_model_type(MODEL_TYPE)
 print('Model loaded. Start serving...')
 
 # Define the class labels
@@ -101,7 +65,16 @@ def predict_view(request):
         image_array = np.expand_dims(image_array, axis=0)
 
         # Make a prediction
-        predictions = model.predict(image_array)
+        if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
+            model.allocate_tensors()
+            input_details = model.get_input_details()
+            model.set_tensor(input_details[0]['index'], image_array)
+            model.invoke()
+            output_details = model.get_output_details()
+            predictions = model.get_tensor(output_details[0]['index'])
+        else:  # If the model is a full Keras model
+            predictions = model.predict(image_array)
+
         predicted_class = class_labels[np.argmax(predictions)]
 
         # Return the prediction result
