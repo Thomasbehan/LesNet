@@ -97,7 +97,6 @@ class DataScraper:
         # Define distribution for train, validation, and test sets
         train_ratio = 0.7
         val_ratio = 0.2
-        test_ratio = 0.1
 
         for category, image_metadata_list in image_metadata_dict.items():
             total_images = len(image_metadata_list)
