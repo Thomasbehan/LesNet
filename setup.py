@@ -25,7 +25,6 @@ requires = [
     'tqdm==4.65.0',
     'vit-keras==0.1.2',
     'tensorflow_addons==0.20.0',
-    'tensorflow_model_optimization==0.7.5',
     'albumentations',
 ]
 

@@ -6,7 +6,6 @@ from tensorflow.keras.metrics import AUC, Precision, Recall
 from tensorflow.keras import backend as KerasBackend
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow_model_optimization.quantization.keras import quantize_model
 from skinvestigatorai.core.data_gen import DataGen
 from vit_keras import vit
 
@@ -72,12 +71,6 @@ class SkinCancerDetector:
         return true_negatives / (possible_negatives + KerasBackend.epsilon())
 
     def quantize_model(self, model):
-        """Quantize model using TensorFlow's model optimization toolkit."""
-
-        # Quantize the model
-        model = quantize_model(model)
-
-        # Convert the model to the TensorFlow Lite format with quantization
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         tflite_quant_model = converter.convert()
