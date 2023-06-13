@@ -2,13 +2,13 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
 # SkinVestigatorAI  [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
-![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.76983-blue)
-![Specificity Score](https://img.shields.io/badge/Specificity-0.76993-blue)
-![Precision Score](https://img.shields.io/badge/Precision-0.76983-blue)
-![F1 Score](https://img.shields.io/badge/F1-0.77343-blue)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-0.76983-blue)
-![Loss Score](https://img.shields.io/badge/Loss-0.22876-blue)
-![AUC Score](https://img.shields.io/badge/AUC-0.86431-blue)
+![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.83643-blue)
+![Specificity Score](https://img.shields.io/badge/Specificity-0.83657-blue)
+![Precision Score](https://img.shields.io/badge/Precision-0.83643-blue)
+![F1 Score](https://img.shields.io/badge/F1-0.82928-blue)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-0.83643-blue)
+![Loss Score](https://img.shields.io/badge/Loss-0.22503-blue)
+![AUC Score](https://img.shields.io/badge/AUC-0.91688-blue)
 ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 
@@ -228,13 +228,13 @@ Here is a summary of the model architecture:
 The model achieved an accuracy of 76.9% and a loss of 0.22 on the testing dataset.
 We also track sensitivity, specificity, precision, and F1 score. The model achieved a sensitivity of 76.9%, a specificity of 76.9%, a precision of 76.9%, and an F1 score of 77.3% on the testing dataset.
 
-![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.76983-blue)
-![Specificity Score](https://img.shields.io/badge/Specificity-0.76993-blue)
-![Precision Score](https://img.shields.io/badge/Precision-0.76983-blue)
-![F1 Score](https://img.shields.io/badge/F1-0.77343-blue)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-0.76983-blue)
-![Loss Score](https://img.shields.io/badge/Loss-0.22876-blue)
-![AUC Score](https://img.shields.io/badge/AUC-0.86431-blue)
+![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.83643-blue)
+![Specificity Score](https://img.shields.io/badge/Specificity-0.83657-blue)
+![Precision Score](https://img.shields.io/badge/Precision-0.83643-blue)
+![F1 Score](https://img.shields.io/badge/F1-0.82928-blue)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-0.83643-blue)
+![Loss Score](https://img.shields.io/badge/Loss-0.22503-blue)
+![AUC Score](https://img.shields.io/badge/AUC-0.91688-blue)
 
 ## Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
