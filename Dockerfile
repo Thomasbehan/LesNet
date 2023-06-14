@@ -16,7 +16,7 @@ RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 # Get the latest available model
-RUN curl -L -o models/skinvestigator_nano_40MB_91_38_acc.h5 https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.0.3/skinvestigator_nano_40MB_91_38_acc.h5
+RUN curl -L -o models/skinvestigator-sm.tflite https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-sm.tflite
 
 # Add a new user to avoid running the application as root
 RUN useradd -ms /bin/bash appuser
