@@ -1,6 +1,6 @@
 def test_root(testapp):
     res = testapp.get('/', status=200)
-    assert b'Doctor' in res.body
+    assert b'Medical' in res.body
 
 
 def test_notfound(testapp):
