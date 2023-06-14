@@ -4,7 +4,7 @@
 
 <div class="content">
     <h1><span class="smaller">SkinVestigator<span class="font-semi-bold">AI</span></span></h1>
-    <p class="lead">Welcome to <span class="font-normal">{{project}}</span>, &nbsp;Always consult a <span class="font-normal">Doctor</span>, this application is not intended to be used as a definitive diagnosis&nbsp;.</p>
+    <p class="lead">Welcome to <span class="font-normal">{{project}}</span>, &nbsp;Always consult a <span class="font-normal">Medical Professional</span>, this application is not intended to be used as a definitive diagnosis&nbsp;.</p>
 </div>
 <section class="evaluation">
 	<div class="evaluation__photo">
@@ -18,11 +18,12 @@
             <span>Upload a photo to evaluate this model</span>
 		</div>
 		<div class="results-container">
+            <div id="loading" style="display: none;">Loading...</div>
             <div id="response-data" class="result"></div>
             {% if prediction %}
-    			<div class="result">
-    			    <span>{{ confidence|round(2) }}% it is {{ prediction }}</span>
-    			</div>
+            <div class="result">
+                <span>{{ confidence|round(2) }}% it is {{ prediction }}</span>
+            </div>
             {% endif %}
         </div>
         <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
@@ -268,26 +269,27 @@ footer a:hover {
 <script>
     $(document).ready(function() {
         $(".upload-form").on("submit", function(event) {
-            event.preventDefault(); // Prevent the form from submitting the default way
+            event.preventDefault();
 
-            var formData = new FormData(this); // Create a FormData object from the form
+            var formData = new FormData(this);
 
-            // Display the uploaded image in the photo-container
             var reader = new FileReader();
             reader.onload = function(e) {
                 $(".photo-container img").attr("src", e.target.result);
                 $(".photo-container img").attr("alt", "Uploaded image");
             }
             reader.readAsDataURL($("#image")[0].files[0]);
-            // Send the AJAX request
+
+            $("#loading").show();
+
             $.ajax({
                 url: "{{ request.route_url('predict') }}",
                 type: "POST",
                 data: formData,
-                contentType: false, // Set content type to false (multipart/form-data)
-                processData: false, // Set processData to false (do not process data as query string)
+                contentType: false,
+                processData: false,
                 success: function(data) {
-                    // Update the results container with the new data
+                    $("#loading").hide();
                     $(".results-container").html(`
                         <div class="result">
                             <span>${(data.confidence).toFixed(2)}% it is ${data.prediction}</span>
@@ -295,16 +297,16 @@ footer a:hover {
                     `);
                 },
                 error: function() {
-                    // Handle any errors (e.g., display a message)
+                    $("#loading").hide();
                     $(".results-container").html("<div class='alert alert-danger'>An error occurred while processing the image.</div>");
                 }
             });
         });
     });
+
     function updateFileName(inputElement) {
         var fileName = inputElement.files[0].name;
         document.getElementById('file-name').innerText = " " + fileName;
     }
-
 </script>
 {% endblock content %}

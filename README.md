@@ -2,15 +2,22 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
 # SkinVestigatorAI  [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
-![Accuracy Score](https://img.shields.io/badge/Accuracy-91-green) ![Loss Score](https://img.shields.io/badge/Loss-22-red) ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.84035-blue)
+![Specificity Score](https://img.shields.io/badge/Specificity-0.84019-blue)
+![Precision Score](https://img.shields.io/badge/Precision-0.84035-blue)
+![F1 Score](https://img.shields.io/badge/F1-0.84467-blue)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-0.84035-blue)
+![Loss Score](https://img.shields.io/badge/Loss-0.23201-blue)
+![AUC Score](https://img.shields.io/badge/AUC-0.91692-blue)
+![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 
 > SkinVestigatorAI is an open-source project for deep learning-based skin cancer detection. It aims to create a reliable tool and foster community involvement in critical AI problems. The repository includes code for data preprocessing, model building, and performance evaluation. Contribute and shape the future of skin cancer detection.
 
 [![Demo](https://img.shields.io/badge/-Live_Demo-black?style=for-the-badge&logo=render)](https://skinvestigator.onrender.com/) 
 
-Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Rest assured, any initial slow loading is completely normal and the app will run smoothly after this brief wake-up period. Your patience is appreciated!
-
+<sub><i>Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Any initial slow down will ease after a moment. Thank you for your patience.
+</i></sub>
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -174,9 +181,7 @@ docker exec -ti skinvestigatorai-app-1 python3.9 -m ruff --format=github --targe
 ## Data
 The DataScraper tool within this application is designed to download and preprocess skin lesion images from the ISIC Archive for use in machine learning projects. The images are stored in three separate directories for training, validation, and testing.
 The data is organised as follows:
-- Train: 42504 benign, 5138 malignant
-- 47742 images belonging to 3 classes.
-- 13647 images belonging to 3 classes.
+- Train: 5625 benign, 5152 malignant
 
 ### Data Source
 The data is fetched from the ISIC Archive using their API. The base URL for the API is https://api.isic-archive.com/api/v2. The code makes use of the /images/ endpoint to fetch a list of images in JSON format. Each image's metadata contains information about the image, including its URL, ISIC ID, and clinical information (benign/malignant).
@@ -190,43 +195,46 @@ The images are organized into three folders:
 Each folder is further organized into subfolders, separating the images based on their clinical classification (benign or malignant).
 
 ## Model
-The model is a convolutional neural network (CNN) that uses transfer learning to classify skin lesion images as benign or malignant. The model is built using the Keras API and is trained using the TensorFlow backend. The model is trained using the Adam optimizer and the binary cross-entropy loss function.
+The model is a convolutional neural network (CNN) that uses transfer learning with the Vision Transformer (ViT) model to classify skin lesion images as benign or malignant. The model is trained using the Adam optimizer and the binary cross-entropy loss function.
 Here is a summary of the model architecture:
 
-    Model: "sequential_1"
-    _________________________________________________________________
-    Layer (type)                 Output Shape              Param #   
-    =================================================================
-    conv2d_1 (Conv2D)            (None, 224, 224, 32)      896       
-    _________________________________________________________________
-    max_pooling2d_1 (MaxPooling2 (None, 112, 112, 32)      0         
-    _________________________________________________________________
-    conv2d_2 (Conv2D)            (None, 112, 112, 64)      18496     
-    _________________________________________________________________
-    max_pooling2d_2 (MaxPooling2 (None, 56, 56, 64)        0         
-    _________________________________________________________________
-    conv2d_3 (Conv2D)            (None, 56, 56, 128)       73856     
-    _________________________________________________________________
-    max_pooling2d_3 (MaxPooling2 (None, 28, 28, 128)       0         
-    _________________________________________________________________
-    conv2d_4 (Conv2D)            (None, 28, 28, 128)       147584    
-    _________________________________________________________________
-    max_pooling2d_4 (MaxPooling2 (None, 14, 14, 128)       0         
-    _________________________________________________________________
-    flatten_1 (Flatten)          (None, 25088)             0         
-    _________________________________________________________________
-    dense_1 (Dense)              (None, 512)               12845568  
-    _________________________________________________________________
-    dense_2 (Dense)              (None, 1)                 513       
-    =================================================================
-    Total params: 13,053,313
-    Trainable params: 13,053,313
-    Non-trainable params: 0
-    _________________________________________________________________
+    Model: "sequential"
+      _________________________________________________________________
+      Layer (type)                Output Shape              Param #
+      =================================================================
+       vit-b32 (Functional)        (None, 768)               87429888
+      
+       flatten (Flatten)           (None, 768)               0
+      
+       batch_normalization (BatchN  (None, 768)              3072
+       ormalization)
+      
+       dense (Dense)               (None, 1024)              787456
+      
+       batch_normalization_1 (Batc  (None, 1024)             4096
+       hNormalization)
+      
+       dropout (Dropout)           (None, 1024)              0
+      
+       dense_1 (Dense)             (None, 2)                 2050
+      
+      =================================================================
+      Total params: 88,226,562
+      Trainable params: 88,222,978
+      Non-trainable params: 3,584
+      _________________________________________________________________
 
 ## Performance
-The model achieved an accuracy of 91% and a loss of 22% on the testing dataset.
-![Accuracy Score](https://img.shields.io/badge/Accuracy-91-green) ![Loss Score](https://img.shields.io/badge/Loss-22-red)
+The model achieved an accuracy of 84% and a loss of 0.23 on the testing dataset.
+We also track sensitivity, specificity, precision, and F1 score. The model achieved a sensitivity of 84%, a specificity of 84%, a precision of 84%, and an F1 score of 84.4% on the testing dataset.
+
+![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.84035-blue)
+![Specificity Score](https://img.shields.io/badge/Specificity-0.84019-blue)
+![Precision Score](https://img.shields.io/badge/Precision-0.84035-blue)
+![F1 Score](https://img.shields.io/badge/F1-0.84467-blue)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-0.84035-blue)
+![Loss Score](https://img.shields.io/badge/Loss-0.23201-blue)
+![AUC Score](https://img.shields.io/badge/AUC-0.91692-blue)
 
 ## Contributing
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
