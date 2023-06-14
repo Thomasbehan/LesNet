@@ -23,6 +23,8 @@ requires = [
     'torch==2.0.0',
     'torchvision==0.15.1',
     'tqdm==4.65.0',
+    'vit-keras==0.1.2',
+    'tensorflow_addons==0.20.0',
     'albumentations',
 ]
 
@@ -34,7 +36,7 @@ tests_require = [
 
 setup(
     name='skinvestigatorai',
-    version='0.0.4',
+    version='0.1.5',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
