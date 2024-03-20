@@ -56,20 +56,24 @@ class SkinCancerDetector:
     def build_model(self, num_classes=2):
         self.model = tf.keras.Sequential([
             tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
-            tf.keras.layers.Conv2D(180, 3, padding='same', activation='relu'),
+            tf.keras.layers.Conv2D(128, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
-            tf.keras.layers.Dropout(0.25),
-            tf.keras.layers.Conv2D(512, 3, padding='same', activation='relu'),
-            tf.keras.layers.MaxPooling2D(),
+            tf.keras.layers.Dropout(0.1),  # dropout_conv_0 from the best trial
             tf.keras.layers.Conv2D(256, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
+            tf.keras.layers.Dropout(0.15),
+            tf.keras.layers.Conv2D(192, 3, padding='same', activation='relu'),
+            tf.keras.layers.MaxPooling2D(),
+            tf.keras.layers.Dropout(0.3),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dropout(0.5),
-            tf.keras.layers.Dense(1, activation='sigmoid')
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dropout(0.3),
+            tf.keras.layers.Dense(96, activation='relu'),
+            tf.keras.layers.Dropout(0.1),
+            tf.keras.layers.Dense(num_classes, activation='softmax' if num_classes > 2 else 'sigmoid')
         ])
 
-        self.model.compile(optimizer='adam',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
                            loss='binary_crossentropy',
                            metrics=[
                                'accuracy',
