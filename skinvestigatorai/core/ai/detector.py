@@ -11,8 +11,8 @@ from vit_keras import vit
 
 
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=64, model_dir='models',
-                 img_size=(128, 128)):
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=32, model_dir='models',
+                 img_size=(180, 180)):
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
@@ -81,22 +81,17 @@ class SkinCancerDetector:
         self.precision = Precision(name='precision')
         self.recall = Recall(name='sensitivity')
 
-        vit_model = vit.vit_b32(
-            image_size=self.img_size[0],
-            activation='softmax',
-            pretrained=True,
-            include_top=False,
-            pretrained_top=False,
-            classes=num_classes)
-
         self.model = tf.keras.Sequential([
-            vit_model,
+            tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
+            tf.keras.layers.Conv2D(16, 3, padding='same', activation='relu'),
+            tf.keras.layers.MaxPooling2D(),
+            tf.keras.layers.Conv2D(32, 3, padding='same', activation='relu'),
+            tf.keras.layers.MaxPooling2D(),
+            tf.keras.layers.Conv2D(64, 3, padding='same', activation='relu'),
+            tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dense(1024, activation=tf.nn.relu),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.25),
-            tf.keras.layers.Dense(num_classes, activation='softmax', dtype=tf.float32)
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(num_classes)
         ])
 
         self.model.compile(optimizer='adam',

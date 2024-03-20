@@ -32,11 +32,12 @@ tests_require = [
     'WebTest',
     'pytest',
     'pytest-cov',
+    'flake8',
 ]
 
 setup(
     name='skinvestigatorai',
-    version='0.1.5',
+    version='2.0.0',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
