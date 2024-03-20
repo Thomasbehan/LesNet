@@ -27,12 +27,9 @@ class SkinCancerDetector:
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
         aug = A.Compose([
-            A.Rotate(limit=60),
-            A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2),
             A.HorizontalFlip(),
             A.VerticalFlip(),
             A.RandomBrightnessContrast(),
-            A.CoarseDropout(max_holes=8),
         ])
 
         train_generator = DataGen(
@@ -48,22 +45,23 @@ class SkinCancerDetector:
         return train_generator, val_generator, test_datagen
 
     def create_data_generator(self, dir=None):
-        """Create ImageDataGenerator."""
-        datagen = ImageDataGenerator(rescale=1. / 255)
+        """ImageDataGenerator for validation/test sets."""
+        datagen = ImageDataGenerator(rescale=1. / 255)  # Only rescaling for validation/test
 
         if dir:
             return datagen.flow_from_directory(
                 dir,
                 target_size=self.img_size,
                 batch_size=self.batch_size,
-                class_mode='categorical')
+                class_mode='binary')  # Change to binary for binary classification
 
         return datagen
 
+    @tf.function
     def f1_score(self, y_true, y_pred):
         prec = self.precision(y_true, y_pred)
         rec = self.recall(y_true, y_pred)
-        return 2 * ((prec * rec) / (prec + rec + KerasBackend.epsilon()))
+        return 2 * (prec * rec) / (prec + rec + KerasBackend.epsilon())
 
     def specificity(self, y_true, y_pred):
         true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
@@ -77,27 +75,30 @@ class SkinCancerDetector:
 
         return tflite_quant_model
 
-    def build_model(self, num_classes):
-        self.precision = Precision(name='precision')
-        self.recall = Recall(name='sensitivity')
-
+    def build_model(self, num_classes=2):
         self.model = tf.keras.Sequential([
             tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
-            tf.keras.layers.Conv2D(16, 3, padding='same', activation='relu'),
+            tf.keras.layers.Conv2D(180, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
-            tf.keras.layers.Conv2D(32, 3, padding='same', activation='relu'),
+            tf.keras.layers.Dropout(0.25),
+            tf.keras.layers.Conv2D(512, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
-            tf.keras.layers.Conv2D(64, 3, padding='same', activation='relu'),
+            tf.keras.layers.Conv2D(256, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(num_classes)
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dense(1, activation='sigmoid')
         ])
 
         self.model.compile(optimizer='adam',
-                           loss='categorical_crossentropy',
-                           metrics=['accuracy', self.recall, self.precision, self.f1_score, self.specificity,
-                                    AUC(name='auc')])
+                           loss='binary_crossentropy',
+                           metrics=[
+                               'accuracy',
+                               tf.keras.metrics.Precision(name='precision'),
+                               tf.keras.metrics.Recall(name='recall'),
+                               tf.keras.metrics.AUC(name='auc')
+                           ])
 
     def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=12, patience_es=40, min_lr=1e-6,
                     min_delta=1e-4, cooldown_lr=5):
@@ -119,28 +120,35 @@ class SkinCancerDetector:
             callbacks=callbacks)
         return history
 
-    def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
-        """Create Keras callbacks."""
-        tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
-                                           update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr,
-                                               min_delta=min_delta, cooldown=cooldown_lr)
+    def _create_callbacks(
+            self, log_dir, current_time, patience_lr=10, min_lr=1e-5, min_delta=1e-3, patience_es=30, cooldown_lr=5
+    ):
+        """Callbacks for optimized learning rate adjustments and early stopping."""
+        tensorboard_callback = TensorBoard(
+            log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=0
+        )
+        reduce_lr_callback = ReduceLROnPlateau(
+            monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr, min_delta=min_delta,
+            cooldown=cooldown_lr, verbose=1
+        )
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.model_dir, "{}_best_model.h5".format(current_time)),
-            save_best_only=True, monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True)
+            save_best_only=True, monitor='val_loss', mode='min', verbose=1
+        )
+        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
+                                                verbose=1)
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
     def evaluate_model(self, test_datagen):
-        """Evaluate the model."""
+        """Evaluate the model for binary classification."""
         self._check_model()
 
         test_generator = test_datagen.flow_from_directory(
             self.test_dir,
             target_size=self.img_size,
             batch_size=self.batch_size,
-            class_mode='categorical')
+            class_mode='binary')  # Updated to binary
 
         test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc \
             = self.model.evaluate(test_generator)
@@ -153,23 +161,25 @@ class SkinCancerDetector:
         return test_loss, test_acc, test_sensitivity, test_precision, test_f1, test_specificity, test_auc
 
     def save_model(self, filename='models/skinvestigator.h5'):
-        """Save the model."""
+        """Save the original and quantized model."""
         self._check_model()
+
+        # Save the original model
         self.model.save(filename)
-        self.model = self.quantize_model(self.model)
-        with open('models/skinvestigator-quantize.tflite', 'wb') as f:
-            f.write(self.model)
+
+        # Quantize and save the model
+        tflite_model = self.quantize_model(self.model)
+        tflite_model_path = filename.replace('.h5', '-quantized.tflite')
+        with open(tflite_model_path, 'wb') as f:
+            f.write(tflite_model)
+        print(f"Model saved as {filename} and {tflite_model_path}")
 
     def load_model(self, filename):
         """Load the model."""
-        self.model = tf.keras.models.load_model(
-            filename,
-            custom_objects={
-                'f1_score': self.f1_score,
-                'specificity': self.specificity
-            })
+        self.model = tf.keras.models.load_model(filename)
+        print(f"Model loaded from {filename}")
 
     def _check_model(self):
-        """Check if model has not been built."""
+        """Checking if the model has not been built."""
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
