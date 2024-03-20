@@ -9,11 +9,14 @@ def main(filename='models/skinvestigator.h5'):
     if not os.path.exists(train_dir):
         print('Downloading data...')
         downloader = DataScraper()
-        downloader.download_and_split_images(-1)
+        downloader.download_and_split_images()
         print('Done downloading data')
 
     # Print count of files in each directory
     print('Train:', len(os.listdir(train_dir + '/benign')), 'benign,', len(os.listdir(train_dir + '/malignant')),
+          'malignant')
+    # Print count of files in each directory
+    print('Test:', len(os.listdir(test_dir + '/benign')), 'benign,', len(os.listdir(test_dir + '/malignant')),
           'malignant')
 
     detector = SkinCancerDetector(train_dir, val_dir, test_dir)
@@ -30,5 +33,5 @@ if __name__ == '__main__':
         downloader = DataScraper()
         print('Done training models')
         print('Training model with all data')
-        downloader.download_and_split_images(-1)
+        downloader.download_and_split_images()
     main('skin_cancer_detection_model_all_GPU.h5')

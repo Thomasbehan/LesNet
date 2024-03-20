@@ -6,8 +6,10 @@ from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelChec
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import kerastuner as kt
 
+
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=32, model_dir='models', img_size=(180, 180)):
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=32, model_dir='models',
+                 img_size=(180, 180)):
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
@@ -20,9 +22,9 @@ class SkinCancerDetector:
         self.recall = Recall()
 
     def preprocess_data(self):
-        train_generator = self.create_data_generator(self.train_dir)
-        val_generator = self.create_data_generator(augment=False)
-        test_datagen = self.create_data_generator(augment=False)
+        train_generator = self.create_data_generator(self.train_dir, augment=False)
+        val_generator = self.create_data_generator(self.test_dir)
+        test_datagen = self.create_data_generator(self.test_dir)
         return train_generator, val_generator, test_datagen
 
     def create_data_generator(self, dir=None, augment=False):
@@ -76,12 +78,14 @@ class SkinCancerDetector:
                                tf.keras.metrics.AUC(name='auc')
                            ])
 
-    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=12, patience_es=40, min_lr=1e-6, min_delta=1e-4, cooldown_lr=5):
+    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=12, patience_es=40, min_lr=1e-6,
+                    min_delta=1e-4, cooldown_lr=5):
         self._check_model()
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
-        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr)
+        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
+                                           cooldown_lr)
         history = self.model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=callbacks)
         return history
 
@@ -159,20 +163,25 @@ class SkinCancerDetector:
             log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=0
         )
         reduce_lr_callback = ReduceLROnPlateau(
-            monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr, min_delta=min_delta, cooldown=cooldown_lr, verbose=1
+            monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr, min_delta=min_delta,
+            cooldown=cooldown_lr, verbose=1
         )
         model_checkpoint_callback = ModelCheckpoint(
-            filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True, monitor='val_loss', mode='min', verbose=1
+            filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True,
+            monitor='val_loss', mode='min', verbose=1
         )
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True, verbose=1)
+        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
+                                                verbose=1)
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
     def evaluate_model(self, test_datagen):
         self._check_model()
-        test_generator = test_datagen.flow_from_directory(self.test_dir, target_size=self.img_size, batch_size=self.batch_size, class_mode='binary')
+        test_generator = test_datagen.flow_from_directory(self.test_dir, target_size=self.img_size,
+                                                          batch_size=self.batch_size, class_mode='binary')
         test_loss, test_acc, test_precision, test_recall, test_auc = self.model.evaluate(test_generator)
-        print(f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}')
+        print(
+            f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}')
         return test_loss, test_acc, test_precision, test_recall, test_auc
 
     def save_model(self, filename='models/skinvestigator.h5'):
@@ -191,4 +200,3 @@ class SkinCancerDetector:
     def _check_model(self):
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
-
