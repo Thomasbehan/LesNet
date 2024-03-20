@@ -1,7 +1,6 @@
-
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
-# SkinVestigatorAI  [![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)]
+# SkinVestigatorAI  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)
 ![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.84035-blue)
 ![Specificity Score](https://img.shields.io/badge/Specificity-0.84019-blue)
 ![Precision Score](https://img.shields.io/badge/Precision-0.84035-blue)
@@ -33,134 +32,30 @@
 # Getting Started
 <img src="screenshot.png" align="center" />
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See [deployment](#deployment) for notes on how to deploy the project on a live system.
+These instructions will help you set up the project on your local machine for development and testing purposes. See [deployment](#deployment) for notes on deploying the project on a live system.
 
-## Running the Application with Docker and Docker Compose
+## Quick Setup for Development
 
-### Prerequisites
+To quickly set up SkinVestigatorAI for development, follow these steps
+(Requires Python >=3.11):
 
-- Docker: [Install Docker](https://docs.docker.com/get-docker/)
-- Docker Compose: [Install Docker Compose](https://docs.docker.com/compose/install/)
-- NVIDIA drivers and NVIDIA Container Toolkit (only required for GPU support): [Install NVIDIA Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-- Download Pretrained Model: Put the latest h5 file in the models folder [Download Model](https://github.com/Thomasbehan/SkinVestigatorAI/releases)
-
-### Steps
-
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/Thomasbehan/SkinVestigatorAI.git
-    cd SkinVestigatorAI
-    ```
-2. Build the Docker image:
-    ```bash
-    docker-compose build
-    ```
-
-3. Run the application using Docker Compose:
-    ```bash
-    docker-compose up
-    ```
-
-4. Access the application in your web browser by navigating to:
-    ```bash
-    http://localhost:6543
-    ```
-
-5. To stop the application, press Ctrl+C in the terminal where you ran docker-compose up.
-
-6. (Optional) If you need to remove the containers, networks, and volumes defined in docker-compose.yml, run:
-    ```bash
-    docker-compose down --remove-orphans --volumes
-    ```
-
-
-## Running the Application without Docker
-
-### Prerequisites
-- Python 3.9+
-
-### Installing
-1. Clone the repository
-    ```bash
-    git clone https://github.com/Thomasbehan/SkinVestigatorAI.git
-    ```
-2. Change directory into your newly created project if not already there. Your current directory should be the same as this README.txt file and setup.py.
-    ```bash
-    cd SkinVestigatorAI
-    ```
-3. Create a Python virtual environment, if not already created.
-    ```bash
-    python3 -m venv env
-    ```
-4. Upgrade packaging tools, if necessary.
-    ```bash
-    env/bin/pip install --upgrade pip setuptools
-    ```
-5. Install the project in editable mode with its testing requirements.
-    ```bash
-    env/bin/pip install -e ".[testing]"
-    ```
-6. Run your project's tests.
-    ```bash
-    env/bin/pytest
-    ```
-7. Run your project.
-    ```bash
-    env/bin/pserve development.ini
-    ```
-
-## Running the Application If you have an Apple Silicon arm64 CPU
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/Thomasbehan/SkinVestigatorAI.git
-    cd SkinVestigatorAI
-    ```
-2. Download the latest version of Conda for Apple Silicon from [here](https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh)
-
-3. using that shell script, install miniconda3
+1. **Upgrade Your Packaging Tools:**
+   Ensure your `pip` and `setuptools` are up-to-date by running:
    ```bash
-   bash ~/miniconda.sh -b -p $HOME/miniconda
+   python -m pip install --upgrade pip setuptools
+   ```
+
+2. **Install SkinVestigatorAI:**
+   In the project directory, install the project in editable mode with:
+   ```bash
+   python -m pip install -e .
    ```
    
-4. Activate the conda environment
+3. **Run the Application:**
+   Start the application with auto-reloading using:
    ```bash
-   source ~/miniconda/bin/activate
+   pserve development.ini --reload
    ```
-
-5. Install apple and tensorflow-deps packages
-   ```bash
-   conda install -c apple tensorflow-deps
-   ```
-
-6. Install tensorflow
-   ```bash
-   python -m pip install tensorflow
-   ```
-   
-7. Install tensorflow-metal
-   ```bash  
-   python -m pip install tensorflow-metal
-   ```
-
-8. Upgrade packaging tools, if necessary.
-    ```bash
-    python -m pip install --upgrade pip setuptools
-    ```
-   
-9. Install the project in editable mode with its testing requirements.
-    ```bash
-    python -m pip install -e ".[testing]"
-    ```
-   
-10. Run your project's tests.
-     ```bash
-     python -m pytest
-     ```
-    
-11. Run your project.
-     ```bash
-     python -m pserve development.ini --reload
-     ```
 
 ## Running the Tests and Linting
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
@@ -169,13 +64,13 @@ These instructions will get you a copy of the project up and running on your loc
 ### Running the Tests
 To run the tests, run the following command:
 ```bash
-docker exec -ti skinvestigatorai-app-1 python3.9 -m pytest
+python -m pytest
 ```
 
 ### Running the Linter
 To run the linter, run the following command:
 ```bash
-docker exec -ti skinvestigatorai-app-1 python3.9 -m ruff --format=github --target-version=py39 .
+python -m ruff --format=github --target-version=py311 .
 ```
 
 ## Data
