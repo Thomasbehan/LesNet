@@ -58,7 +58,7 @@ class SkinCancerDetector:
             tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
             tf.keras.layers.Conv2D(128, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
-            tf.keras.layers.Dropout(0.1),  # dropout_conv_0 from the best trial
+            tf.keras.layers.Dropout(0.1),
             tf.keras.layers.Conv2D(256, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Dropout(0.15),
