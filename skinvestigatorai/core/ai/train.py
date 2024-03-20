@@ -9,7 +9,7 @@ def main(filename='models/skinvestigator.h5'):
     if not os.path.exists(train_dir):
         print('Downloading data...')
         downloader = DataScraper()
-        downloader.download_images(-1)
+        downloader.download_and_split_images(-1)
         print('Done downloading data')
 
     # Print count of files in each directory
@@ -30,5 +30,5 @@ if __name__ == '__main__':
         downloader = DataScraper()
         print('Done training models')
         print('Training model with all data')
-        downloader.download_images(-1)
+        downloader.download_and_split_images(-1)
     main('skin_cancer_detection_model_all_GPU.h5')
