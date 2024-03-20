@@ -25,6 +25,8 @@ def get_latest_model(model_dir, extension):
     list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
                      basename.endswith(extension)]
     latest_model = max(list_of_files, key=os.path.getctime)
+    print("LATEST MODEL:")
+    print(latest_model)
     return latest_model
 
 
