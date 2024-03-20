@@ -55,7 +55,6 @@ class SkinCancerDetector:
 
     def build_model(self, num_classes=2):
         self.model = tf.keras.Sequential([
-            tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
             tf.keras.layers.Conv2D(128, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Dropout(0.1),
@@ -70,10 +69,10 @@ class SkinCancerDetector:
             tf.keras.layers.Dropout(0.3),
             tf.keras.layers.Dense(96, activation='relu'),
             tf.keras.layers.Dropout(0.1),
-            tf.keras.layers.Dense(num_classes, activation='softmax' if num_classes > 2 else 'sigmoid')
+            tf.keras.layers.Dense(1, activation='softmax' if num_classes > 2 else 'sigmoid')
         ])
 
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+        self.model.compile(optimizer='adam',
                            loss='binary_crossentropy',
                            metrics=[
                                'accuracy',
@@ -93,7 +92,7 @@ class SkinCancerDetector:
         history = self.model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=callbacks)
         return history
 
-    def HParam_tuning(self, train_generator, val_generator, epochs=200):
+    def HParam_tuning(self, train_generator, val_generator, epochs=10):
         def model_builder(hp):
             model = tf.keras.Sequential()
             model.add(tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)))
