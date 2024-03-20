@@ -35,7 +35,7 @@ jobs:
           curl -L -o models/skinvestigator-sm.tflite https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-sm.tflite
       - name: Download some data for testing
         run: |
-          python skinvestigatorai/core/data_scraper.py
+          python skinvestigatorai/core/data_scraper.py -p 2
       - name: Lint with ruff
         run: |
           ruff check
