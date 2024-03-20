@@ -78,8 +78,8 @@ class SkinCancerDetector:
                                tf.keras.metrics.AUC(name='auc')
                            ])
 
-    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=12, patience_es=40, min_lr=1e-6,
-                    min_delta=1e-4, cooldown_lr=5):
+    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=22, patience_es=100, min_lr=1e-6,
+                    min_delta=1e-4, cooldown_lr=20):
         self._check_model()
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
@@ -89,7 +89,7 @@ class SkinCancerDetector:
         history = self.model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=callbacks)
         return history
 
-    def HParam_tuning(self, train_generator, val_generator, epochs=10):
+    def HParam_tuning(self, train_generator, val_generator, epochs=200):
         def model_builder(hp):
             model = tf.keras.Sequential()
             model.add(tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)))
