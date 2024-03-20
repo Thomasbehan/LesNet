@@ -1,5 +1,5 @@
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from skinvestigatorai.core.custom_image_data_generator import CustomImageDataGenerator
+from skinvestigatorai.services.custom_image_data_generator import CustomImageDataGenerator
 
 
 def test_custom_image_data_generator():
@@ -13,8 +13,3 @@ def test_custom_image_data_generator():
     assert hasattr(custom_image_data_gen, '_get_batches_of_transformed_samples')
 
 
-def test_get_batches_of_transformed_samples():
-    # You may need to add test code to check if the method
-    # is handling the UnidentifiedImageError properly when
-    # loading problematic images.
-    pass

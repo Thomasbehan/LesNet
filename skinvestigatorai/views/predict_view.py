@@ -6,8 +6,8 @@ from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
+from skinvestigatorai.services.feature_extraction_service import FeatureExtractionService
 
-# Load your trained model
 model_dir = 'models/'
 
 MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
@@ -47,6 +47,10 @@ print('Model loaded. Start serving...')
 # Define the class labels
 class_labels = ['benign', 'malignant', 'unknown']
 
+# Initialize the feature extraction service
+feature_service = FeatureExtractionService(model, MODEL_TYPE)
+feature_service.create_feature_extractor()
+
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
 def predict_view(request):
@@ -61,11 +65,17 @@ def predict_view(request):
         image_array = image_array / 255.0
         image_array = np.expand_dims(image_array, axis=0)
 
+        is_similar = feature_service.is_image_similar(image_array)
+        if not is_similar:
+            return HTTPBadRequest(
+                reason="Please make sure the image is clear, focused, and occupies most of the "
+                       "frame while leaving sufficient space around the edges."
+            )
+
         # Make a prediction
         if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
             model.allocate_tensors()
             input_details = model.get_input_details()
-            model.set_tensor(input_details[0]['index'], image_array)
             model.invoke()
             output_details = model.get_output_details()
             predictions = model.get_tensor(output_details[0]['index'])
@@ -80,6 +90,8 @@ def predict_view(request):
             'confidence': float(predictions[0][np.argmax(predictions)]) * 100
         }
     except Exception as e:
+        print(e)
+        exit()
         return HTTPBadRequest(reason=str(e))
 
 
