@@ -10,10 +10,6 @@ from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
 # Load your trained model
 model_dir = 'models/'
-custom_metrics = {
-    'f1_score': SkinCancerDetector.f1_score,
-    'specificity': SkinCancerDetector.specificity
-}
 
 MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
 
@@ -36,7 +32,7 @@ def load_model_type(model_type):
     """
     if model_type.upper() == 'H5':
         model_path = get_latest_model(model_dir, '.h5')
-        model = load_model(model_path, custom_objects=custom_metrics)
+        model = load_model(model_path)
     elif model_type.upper() == 'TFLITE':
         model_path = get_latest_model(model_dir, '.tflite')
         model = Interpreter(model_path)

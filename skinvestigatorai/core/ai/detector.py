@@ -26,47 +26,31 @@ class SkinCancerDetector:
 
     def preprocess_data(self):
         """Preprocess data and apply image augmentation."""
-        aug = A.Compose([
-            A.HorizontalFlip(),
-            A.VerticalFlip(),
-            A.RandomBrightnessContrast(),
-        ])
-
-        train_generator = DataGen(
-            self.train_dir,
-            batch_size=self.batch_size,
-            img_height=self.img_size[0],
-            img_width=self.img_size[1],
-            augmentations=aug)
-
-        val_generator = self.create_data_generator(self.val_dir)
-        test_datagen = self.create_data_generator()
+        train_generator = self.create_data_generator(self.train_dir)
+        val_generator = self.create_data_generator(self.val_dir, augment=True)
+        test_datagen = self.create_data_generator(augment=True)
 
         return train_generator, val_generator, test_datagen
 
-    def create_data_generator(self, dir=None):
-        """ImageDataGenerator for validation/test sets."""
-        datagen = ImageDataGenerator(rescale=1. / 255)  # Only rescaling for validation/test
+    def create_data_generator(self, dir=None, augment=False):
+        if augment:
+            datagen = ImageDataGenerator(
+                rescale=1. / 255,
+                horizontal_flip=True,
+                vertical_flip=True,
+                brightness_range=[0.8, 1.2]
+            )
+        else:
+            datagen = ImageDataGenerator(rescale=1. / 255)
 
         if dir:
             return datagen.flow_from_directory(
                 dir,
                 target_size=self.img_size,
                 batch_size=self.batch_size,
-                class_mode='binary')  # Change to binary for binary classification
-
+                class_mode='binary'
+            )
         return datagen
-
-    @tf.function
-    def f1_score(self, y_true, y_pred):
-        prec = self.precision(y_true, y_pred)
-        rec = self.recall(y_true, y_pred)
-        return 2 * (prec * rec) / (prec + rec + KerasBackend.epsilon())
-
-    def specificity(self, y_true, y_pred):
-        true_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip((1 - y_true) * (1 - y_pred), 0, 1)))
-        possible_negatives = KerasBackend.sum(KerasBackend.round(KerasBackend.clip(1 - y_true, 0, 1)))
-        return true_negatives / (possible_negatives + KerasBackend.epsilon())
 
     def quantize_model(self, model):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
