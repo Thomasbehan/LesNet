@@ -72,7 +72,7 @@ class SkinCancerDetector:
             tf.keras.layers.Dense(1, activation='softmax' if num_classes > 2 else 'sigmoid')
         ])
 
-        self.model.compile(optimizer='adam',
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                            loss='binary_crossentropy',
                            metrics=[
                                'accuracy',
@@ -110,7 +110,7 @@ class SkinCancerDetector:
 
             # Hyperparameters for the dense layers
             for i in range(hp.Int('dense_blocks', 1, 2, default=1)):
-                hp_units = hp.Int(f'units_{i}', min_value=32, max_value=512, step=32)
+                hp_units = hp.Int(f'units_{i}', min_value=32, max_value=1028, step=32)
                 model.add(tf.keras.layers.Dense(units=hp_units, activation='relu'))
                 model.add(tf.keras.layers.Dropout(
                     rate=hp.Float(f'dropout_dense_{i}', min_value=0.0, max_value=0.5, default=0.5, step=0.05)))
@@ -123,7 +123,12 @@ class SkinCancerDetector:
 
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
                           loss='binary_crossentropy',
-                          metrics=['accuracy'])
+                          metrics=[
+                               'accuracy',
+                               tf.keras.metrics.Precision(name='precision'),
+                               tf.keras.metrics.Recall(name='recall'),
+                               tf.keras.metrics.AUC(name='auc')
+                           ])
 
             return model
 
