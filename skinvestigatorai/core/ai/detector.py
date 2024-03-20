@@ -81,8 +81,8 @@ class SkinCancerDetector:
                                tf.keras.metrics.AUC(name='auc')
                            ])
 
-    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=22, patience_es=100, min_lr=1e-6,
-                    min_delta=1e-4, cooldown_lr=20):
+    def train_model(self, train_generator, val_generator, epochs=1000, patience_lr=100, patience_es=100, min_lr=1e-6,
+                    min_delta=1e-3, cooldown_lr=20):
         self._check_model()
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
@@ -92,7 +92,7 @@ class SkinCancerDetector:
         history = self.model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=callbacks)
         return history
 
-    def HParam_tuning(self, train_generator, val_generator, epochs=10):
+    def HParam_tuning(self, train_generator, val_generator, epochs=25):
         def model_builder(hp):
             model = tf.keras.Sequential()
             model.add(tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)))
@@ -128,10 +128,12 @@ class SkinCancerDetector:
             return model
 
         tuner = kt.Hyperband(model_builder,
-                             objective='val_accuracy',
+                             objective='validation.evaluation_accuracy_vs_iterations',
                              max_epochs=epochs,
                              factor=3,
                              directory='hyperband_logs',
+                             seed=42,
+                             hyperband_iterations=2,
                              project_name='skin_cancer_detection')
 
         class ClearTrainingOutput(tf.keras.callbacks.Callback):
