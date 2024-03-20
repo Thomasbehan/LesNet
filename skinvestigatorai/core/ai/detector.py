@@ -1,13 +1,9 @@
 import os
 import datetime
-import albumentations as A
 import tensorflow as tf
-from tensorflow.keras.metrics import AUC, Precision, Recall
-from tensorflow.keras import backend as KerasBackend
+from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from skinvestigatorai.core.data_gen import DataGen
-from vit_keras import vit
 
 
 class SkinCancerDetector:

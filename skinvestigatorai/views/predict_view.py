@@ -6,7 +6,6 @@ from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
-from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
 # Load your trained model
 model_dir = 'models/'
