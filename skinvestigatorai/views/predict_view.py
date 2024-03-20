@@ -6,14 +6,9 @@ from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
-from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
 # Load your trained model
 model_dir = 'models/'
-custom_metrics = {
-    'f1_score': SkinCancerDetector.f1_score,
-    'specificity': SkinCancerDetector.specificity
-}
 
 MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
 
@@ -25,6 +20,8 @@ def get_latest_model(model_dir, extension):
     list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
                      basename.endswith(extension)]
     latest_model = max(list_of_files, key=os.path.getctime)
+    print("LATEST MODEL:")
+    print(latest_model)
     return latest_model
 
 
@@ -34,7 +31,7 @@ def load_model_type(model_type):
     """
     if model_type.upper() == 'H5':
         model_path = get_latest_model(model_dir, '.h5')
-        model = load_model(model_path, custom_objects=custom_metrics)
+        model = load_model(model_path)
     elif model_type.upper() == 'TFLITE':
         model_path = get_latest_model(model_dir, '.tflite')
         model = Interpreter(model_path)
