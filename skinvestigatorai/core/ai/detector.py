@@ -179,9 +179,7 @@ class SkinCancerDetector:
         # Get the optimal hyperparameters
         best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-        print(f"""
-        The hyperparameter search is complete.
-        """)
+        print("The hyperparameter search is complete.")
 
         # Train the model with the best hyperparameters
         best_model = tuner.hypermodel.build(best_hps)
@@ -213,7 +211,11 @@ class SkinCancerDetector:
                                                           batch_size=self.batch_size, class_mode='binary')
         test_loss, test_acc, test_precision, test_recall, test_auc = self.model.evaluate(test_generator)
         print(
-            f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}')
+            f'Test accuracy: {test_acc}, '
+            f'Test precision: {test_precision}, '
+            f'Test recall: {test_recall}, '
+            f'Test AUC: {test_auc}'
+        )
         return test_loss, test_acc, test_precision, test_recall, test_auc
 
     def save_model(self, filename='models/skinvestigator.h5'):
