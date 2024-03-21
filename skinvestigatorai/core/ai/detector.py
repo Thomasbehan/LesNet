@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from PIL import Image
 import kerastuner as kt
 
 
@@ -21,7 +22,28 @@ class SkinCancerDetector:
         self.precision = Precision()
         self.recall = Recall()
 
+    def verify_images(self, directory):
+        """
+        Verify that images in the directory can be opened with PIL.
+        Automatically deletes any image that fails to open.
+        """
+        invalid_images = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    try:
+                        img_path = os.path.join(root, file)
+                        with Image.open(img_path) as img:
+                            img.verify()  # Verify that it is, in fact, an image
+                    except (Image.UnidentifiedImageError, IOError):
+                        invalid_images.append(img_path)
+                        os.remove(img_path)  # Delete corrupt or invalid file
+                        print('Deleted invalid file:', img_path)  # Log out the names of deleted files
+        return invalid_images
+
     def preprocess_data(self):
+        self.verify_images(self.train_dir)
+        self.verify_images(self.test_dir)
         train_generator = self.create_data_generator(self.train_dir, augment=False)
         val_generator = self.create_data_generator(self.test_dir)
         test_datagen = self.create_data_generator(self.test_dir)
