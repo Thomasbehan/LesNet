@@ -207,9 +207,7 @@ class SkinCancerDetector:
 
     def evaluate_model(self, test_datagen):
         self._check_model()
-        test_generator = test_datagen.flow_from_directory(self.test_dir, target_size=self.img_size,
-                                                          batch_size=self.batch_size, class_mode='binary')
-        test_loss, test_acc, test_precision, test_recall, test_auc = self.model.evaluate(test_generator)
+        test_loss, test_acc, test_precision, test_recall, test_auc = self.model.evaluate(test_datagen)
         print(
             f'Test accuracy: {test_acc}, '
             f'Test precision: {test_precision}, '
