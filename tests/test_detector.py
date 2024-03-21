@@ -1,7 +1,6 @@
 import os
 import shutil
 import pytest
-import tensorflow as tf
 from PIL import Image
 from skinvestigatorai.core.ai.detector import SkinCancerDetector
 
