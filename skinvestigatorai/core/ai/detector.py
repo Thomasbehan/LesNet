@@ -92,7 +92,7 @@ class SkinCancerDetector:
         history = self.model.fit(train_generator, epochs=epochs, validation_data=val_generator, callbacks=callbacks)
         return history
 
-    def HParam_tuning(self, train_generator, val_generator, epochs=25):
+    def HParam_tuning(self, train_generator, val_generator, epochs=1000):
         def model_builder(hp):
             model = tf.keras.Sequential()
             model.add(tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)))
@@ -135,7 +135,7 @@ class SkinCancerDetector:
         tuner = kt.Hyperband(model_builder,
                              objective='val_loss',
                              max_epochs=epochs,
-                             factor=3,
+                             factor=5,
                              directory='hyperband_logs',
                              seed=42,
                              hyperband_iterations=2,
