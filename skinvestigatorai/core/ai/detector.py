@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelChec
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import Rescaling
 from PIL import Image
-import kerastuner as kt
+import keras_tuner as kt
 
 
 def f1_score(precision, recall):
