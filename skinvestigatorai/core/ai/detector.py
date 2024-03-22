@@ -136,12 +136,12 @@ class SkinCancerDetector:
     def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
         tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
                                            update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr,
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_auc', factor=0.2, patience=patience_lr, min_lr=min_lr,
                                                min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True,
-            monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
+            monitor='val_f1_score', mode='max', verbose=1)
+        early_stopping_callback = EarlyStopping(monitor='val_f1_score', patience=patience_es, restore_best_weights=True,
                                                 verbose=1)
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
