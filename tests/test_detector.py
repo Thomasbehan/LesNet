@@ -1,5 +1,4 @@
 import os
-import shutil
 import pytest
 from PIL import Image
 from skinvestigatorai.core.ai.detector import SkinCancerDetector

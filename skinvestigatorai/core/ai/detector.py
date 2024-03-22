@@ -6,7 +6,6 @@ from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelChec
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import Rescaling
 from PIL import Image
-import numpy as np
 import kerastuner as kt
 
 
@@ -148,10 +147,15 @@ class SkinCancerDetector:
 
     def evaluate_model(self, test_datagen):
         self._check_model()
-        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score = self.model.evaluate(
-            test_datagen)
+        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score = \
+            self.model.evaluate(test_datagen)
         print(
-            f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}, Test F1 Score: {test_f1_score}')
+            f'Test accuracy: {test_acc}, '
+            f'Test precision: {test_precision}, '
+            f'Test recall: {test_recall}, '
+            f'Test AUC: {test_auc}, '
+            f'Test F1 Score: {test_f1_score}'
+        )
         return test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score
 
     def save_model(self, filename='models/skin_cancer_detector.h5'):
@@ -171,3 +175,77 @@ class SkinCancerDetector:
     def _check_model(self):
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
+
+    def HParam_tuning(self, train_generator, val_generator, epochs=1000):
+        def model_builder(hp):
+            model = tf.keras.Sequential()
+            model.add(tf.keras.layers.Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)))
+
+            # Hyperparameters for the convolutional layers
+            for i in range(hp.Int('conv_blocks', 1, 3, default=2)):
+                hp_filters = hp.Int(f'filters_{i}', min_value=32, max_value=256, step=32)
+                model.add(
+                    tf.keras.layers.Conv2D(filters=hp_filters, kernel_size=(3, 3), activation='relu', padding='same'))
+                model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+                model.add(tf.keras.layers.Dropout(
+                    rate=hp.Float(f'dropout_conv_{i}', min_value=0.0, max_value=0.5, default=0.25, step=0.05)))
+
+            model.add(tf.keras.layers.Flatten())
+
+            # Hyperparameters for the dense layers
+            for i in range(hp.Int('dense_blocks', 1, 2, default=1)):
+                hp_units = hp.Int(f'units_{i}', min_value=32, max_value=1028, step=32)
+                model.add(tf.keras.layers.Dense(units=hp_units, activation='relu'))
+                model.add(tf.keras.layers.Dropout(
+                    rate=hp.Float(f'dropout_dense_{i}', min_value=0.0, max_value=0.5, default=0.5, step=0.05)))
+
+            # Output layer
+            model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+            # Tuning the learning rate
+            hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+
+            model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
+                          loss='binary_crossentropy',
+                          metrics=[
+                              'accuracy',
+                              tf.keras.metrics.Precision(name='precision'),
+                              tf.keras.metrics.Recall(name='recall'),
+                              tf.keras.metrics.AUC(name='auc')
+                          ])
+
+            return model
+
+        tuner = kt.Hyperband(model_builder,
+                             objective='val_loss',
+                             max_epochs=epochs,
+                             factor=5,
+                             directory='hyperband_logs',
+                             seed=42,
+                             hyperband_iterations=2,
+                             project_name='skin_cancer_detection')
+
+        class ClearTrainingOutput(tf.keras.callbacks.Callback):
+            def on_train_end(*args, **kwargs):
+                return
+
+        # Adding a callback for TensorBoard
+        log_dir = f"logs/hparam_tuning/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+        tuner.search(train_generator,
+                     epochs=epochs,
+                     validation_data=val_generator,
+                     callbacks=[ClearTrainingOutput(), tensorboard_callback])
+
+        # Get the optimal hyperparameters
+        best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+
+        print("The hyperparameter search is complete.")
+
+        # Train the model with the best hyperparameters
+        best_model = tuner.hypermodel.build(best_hps)
+        best_model.fit(train_generator,
+                       epochs=epochs,
+                       validation_data=val_generator,
+                       callbacks=[tensorboard_callback])
