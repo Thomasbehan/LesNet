@@ -9,11 +9,14 @@ from PIL import Image
 import numpy as np
 import kerastuner as kt
 
+
 def f1_score(precision, recall):
-    return 2*((precision*recall)/(precision+recall+tf.keras.backend.epsilon()))
+    return 2 * ((precision * recall) / (precision + recall + tf.keras.backend.epsilon()))
+
 
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=32, model_dir='models', img_size=(180, 180)):
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=32, model_dir='models',
+                 img_size=(180, 180)):
         self.train_dir = train_dir
         self.val_dir = val_dir
         self.test_dir = test_dir
@@ -86,7 +89,7 @@ class SkinCancerDetector:
 
     def build_model(self, num_classes=2):
         self.model = tf.keras.Sequential([
-            Rescaling(1./255, input_shape=(self.img_size[0], self.img_size[1], 3)),
+            Rescaling(1. / 255, input_shape=(self.img_size[0], self.img_size[1], 3)),
             tf.keras.layers.Conv2D(128, 3, padding='same', activation='relu'),
             tf.keras.layers.MaxPooling2D(),
             tf.keras.layers.Dropout(0.1),
@@ -99,7 +102,7 @@ class SkinCancerDetector:
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(64, activation='relu'),
             tf.keras.layers.Dropout(0.3),
-            tf.keras.layers.Dense(96,            activation='relu'),
+            tf.keras.layers.Dense(96, activation='relu'),
             tf.keras.layers.Dropout(0.1),
             tf.keras.layers.Dense(1, activation='sigmoid')
         ])
@@ -115,12 +118,14 @@ class SkinCancerDetector:
                                f1_score
                            ])
 
-    def train_model(self, train_generator, val_generator, class_weights=None, epochs=1000, patience_lr=10, patience_es=30, min_lr=1e-6, min_delta=1e-4, cooldown_lr=5):
+    def train_model(self, train_generator, val_generator, class_weights=None, epochs=1000, patience_lr=10,
+                    patience_es=30, min_lr=1e-6, min_delta=1e-4, cooldown_lr=5):
         self._check_model()
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
-        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr)
+        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
+                                           cooldown_lr)
         history = self.model.fit(train_generator,
                                  epochs=epochs,
                                  validation_data=val_generator,
@@ -129,17 +134,24 @@ class SkinCancerDetector:
         return history
 
     def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
-        tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr, min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
-        model_checkpoint_callback = ModelCheckpoint(filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True, monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True, verbose=1)
+        tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
+                                           update_freq='epoch', profile_batch=0)
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=patience_lr, min_lr=min_lr,
+                                               min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
+        model_checkpoint_callback = ModelCheckpoint(
+            filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True,
+            monitor='val_loss', mode='min', verbose=1)
+        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
+                                                verbose=1)
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
     def evaluate_model(self, test_datagen):
         self._check_model()
-        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score = self.model.evaluate(test_datagen)
-        print(f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}, Test F1 Score: {test_f1_score}')
+        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score = self.model.evaluate(
+            test_datagen)
+        print(
+            f'Test accuracy: {test_acc}, Test precision: {test_precision}, Test recall: {test_recall}, Test AUC: {test_auc}, Test F1 Score: {test_f1_score}')
         return test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score
 
     def save_model(self, filename='models/skin_cancer_detector.h5'):
@@ -152,11 +164,10 @@ class SkinCancerDetector:
         print(f"Model saved as {filename} and {tflite_model_path}")
 
     def load_model(self, filename):
-        self.model = tf.keras.models.load_model(filename, custom_objects={"Precision": Precision, "Recall": Recall, "f1_score": f1_score})
+        self.model = tf.keras.models.load_model(filename, custom_objects={"Precision": Precision, "Recall": Recall,
+                                                                          "f1_score": f1_score})
         print(f"Model loaded from {filename}")
 
     def _check_model(self):
         if self.model is None:
             raise ValueError("Model has not been built. Call build_model() first.")
-
-
