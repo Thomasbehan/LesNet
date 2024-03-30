@@ -148,7 +148,7 @@ class SkinCancerDetector:
         input_shape = (self.img_size[0], self.img_size[1], 3)
         self.model = self.build_complex_model(input_shape, num_classes)
 
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                            loss='binary_crossentropy',
                            metrics=[
                                'accuracy',
