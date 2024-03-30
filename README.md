@@ -71,6 +71,24 @@ To run the linter, run the following command:
 python -m ruff check
 ```
 
+## Model Downloader
+
+To download and prepare a specific model for use, you can use the `download_model.py` script located in the `commands` directory. This script accepts the model identifier as an argument.
+
+### Usage
+
+Run the following command from the root of the project directory:
+
+```bash
+python .\commands\download_model.py -m <model_id>
+```
+### Available Models
+Here is a list of all the available models you can download using the script:
+
+* M-0003: Simple Testing (Legacy).
+* M-0015: Best Model.
+* M-0015s: Fastest Model.
+
 ## Data
 The DataScraper tool within this application is designed to download and preprocess skin lesion images from the ISIC Archive for use in machine learning projects. The images
 are stored in three separate directories for training, validation, and testing, featuring a total of 40,194 images. This substantial dataset aims to provide a comprehensive basis for accurate skin lesion analysis and classification.
