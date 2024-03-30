@@ -25,7 +25,7 @@ def f1_score(precision, recall):
 
 
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=16, model_dir='models',
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=1, model_dir='models',
                  img_size=(180, 180)):
         self.train_dir = train_dir
         self.val_dir = val_dir
@@ -125,7 +125,7 @@ class SkinCancerDetector:
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(128, activation='relu'),
             tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),  # Adjusted dropout rate
+            tf.keras.layers.Dropout(0.5),
             tf.keras.layers.Dense(1, activation='sigmoid')
         ])
 
