@@ -130,7 +130,7 @@ class SkinCancerDetector:
             tf.keras.layers.Dense(1, activation='sigmoid')
         ])
 
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.1),
                            loss='binary_crossentropy',
                            metrics=[
                                'accuracy',
