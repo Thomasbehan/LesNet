@@ -3,7 +3,9 @@ import datetime
 import tensorflow as tf
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from tensorflow.keras.layers import Rescaling
+from tensorflow.keras.layers import Rescaling, Input, Conv2D, MaxPooling2D, Dense, Flatten, Add, Activation, \
+    BatchNormalization, GlobalAveragePooling2D, Dropout
+from tensorflow.keras.models import Model
 from PIL import Image
 import keras_tuner as kt
 
@@ -19,12 +21,10 @@ if gpus:
 
 def f1_score(precision, recall):
     return 2 * ((precision * recall) / (precision + recall + tf.keras.backend.epsilon()))
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dense, Flatten, Add, Activation, BatchNormalization, GlobalAveragePooling2D, Dropout, Rescaling
-from tensorflow.keras.models import Model
 
 
 class SkinCancerDetector:
-    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=1, model_dir='models',
+    def __init__(self, train_dir, val_dir, test_dir, log_dir='logs', batch_size=16, model_dir='models',
                  img_size=(180, 180)):
         self.train_dir = train_dir
         self.val_dir = val_dir
@@ -100,50 +100,6 @@ class SkinCancerDetector:
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         return ds
 
-    def residual_block(self, x, filters, kernel_size=3, stride=1):
-        shortcut = x
-        x = Conv2D(filters, kernel_size=kernel_size, strides=stride, padding='same')(x)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-
-        x = Conv2D(filters, kernel_size=kernel_size, strides=1, padding='same')(x)
-        x = BatchNormalization()(x)
-
-        if stride != 1 or shortcut.shape[-1] != filters:
-            shortcut = Conv2D(filters, kernel_size=1, strides=stride, padding='same')(shortcut)
-            shortcut = BatchNormalization()(shortcut)
-
-        x = Add()([x, shortcut])
-        x = Activation('relu')(x)
-        return x
-
-    def build_complex_model(self, input_shape, num_classes):
-        inputs = Input(shape=input_shape)
-        x = Rescaling(1. / 255)(inputs)
-        x = Conv2D(64, kernel_size=7, strides=2, padding='same')(x)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-        x = MaxPooling2D(pool_size=(3, 3), strides=2, padding='same')(x)
-
-        for filters in [64] * 2 + [128] * 2 + [256] * 2 + [512] * 2:
-            strides = 2 if x.shape[1] > input_shape[0] / 8 else 1
-            x = self.residual_block(x, filters, stride=strides)
-
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(256, activation='relu')(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
-        outputs = Dense(1, activation='sigmoid')(x)
-
-        model = Model(inputs=inputs, outputs=outputs)
-        return model
-
-    def quantize_model(self, model):
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        tflite_quant_model = converter.convert()
-        return tflite_quant_model
-
     def build_model(self, num_classes=2):
         input_shape = (self.img_size[0], self.img_size[1], 3)
         self.model = self.build_complex_model(input_shape, num_classes)
@@ -158,6 +114,49 @@ class SkinCancerDetector:
                                tf.keras.metrics.BinaryAccuracy(name='binary_accuracy'),
                                f1_score
                            ])
+
+    def build_complex_model(self, input_shape, num_classes):
+        inputs = Input(shape=input_shape)
+        x = Rescaling(1. / 255)(inputs)
+        x = Conv2D(64, kernel_size=7, strides=2, padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(pool_size=(3, 3), strides=2, padding='same')(x)
+
+        for filters in [64, 64, 128, 128, 256, 256, 512, 512]:
+            strides = 1 if filters == 64 else 2
+            x = self.residual_block(x, filters, stride=strides)
+
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(256, activation='relu')(x)
+        x = BatchNormalization()(x)
+        x = Dropout(0.5)(x)
+        outputs = Dense(1, activation='sigmoid')(x)
+
+        model = Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def residual_block(self, x, filters, kernel_size=3, stride=1):
+        shortcut = x
+        x = Conv2D(filters, kernel_size, strides=stride, padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Conv2D(filters, kernel_size, strides=1, padding='same')(x)
+        x = BatchNormalization()(x)
+
+        if stride != 1 or shortcut.shape[-1] != filters:
+            shortcut = Conv2D(filters, 1, strides=stride, padding='same')(shortcut)
+            shortcut = BatchNormalization()(shortcut)
+
+        x = Add()([x, shortcut])
+        x = Activation('relu')(x)
+        return x
+
+    def quantize_model(self, model):
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_quant_model = converter.convert()
+        return tflite_quant_model
 
     def train_model(self, train_generator, val_generator, class_weights=None, epochs=1000, patience_lr=10,
                     patience_es=30, min_lr=1e-6, min_delta=1e-4, cooldown_lr=5):
