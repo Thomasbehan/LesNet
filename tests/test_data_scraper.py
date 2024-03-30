@@ -28,7 +28,7 @@ def test_create_output_folders():
     shutil.rmtree("test_data")
 
 
-@patch("skinvestigatorai.core.data_scraper.DataScraper.download_and_split_images")
+@patch("skinvestigatorai.services.data_scaper_service.DataScraper.download_and_split_images")
 def test_download_images(mock_download_images):
     data_scraper = DataScraper()
     data_scraper.download_and_split_images()
