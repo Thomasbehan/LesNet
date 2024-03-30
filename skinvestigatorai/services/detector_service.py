@@ -240,7 +240,7 @@ class SkinCancerDetector:
             return model
 
         tuner = kt.Hyperband(model_builder,
-                             objective='val_loss',
+                             objective='val_recall',
                              max_epochs=epochs,
                              factor=5,
                              directory='hyperband_logs',
