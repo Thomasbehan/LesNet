@@ -1,13 +1,11 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
 # SkinVestigatorAI  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)
-![Sensitivity Score](https://img.shields.io/badge/Sensitivity-0.84035-blue)
-![Specificity Score](https://img.shields.io/badge/Specificity-0.84019-blue)
-![Precision Score](https://img.shields.io/badge/Precision-0.84035-blue)
-![F1 Score](https://img.shields.io/badge/F1-0.84467-blue)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-0.84035-blue)
-![Loss Score](https://img.shields.io/badge/Loss-0.23201-blue)
-![AUC Score](https://img.shields.io/badge/AUC-0.91692-blue)
+![Precision Score](https://img.shields.io/badge/Precision-0.6753-blue)
+![Recall Score](https://img.shields.io/badge/Recall-0.3701-blue)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-94.34%25-darkgreen)
+![Loss Score](https://img.shields.io/badge/Loss-0.1501-blue)
+![AUC Score](https://img.shields.io/badge/AUC-0.9286-darkgreen)
 ![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
 

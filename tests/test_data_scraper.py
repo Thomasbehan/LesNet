@@ -1,7 +1,7 @@
 import os
 import shutil
 from unittest.mock import patch
-from skinvestigatorai.core.data_scraper import DataScraper
+from skinvestigatorai.services.data_scaper_service import DataScraper
 
 
 def test_create_output_folders():

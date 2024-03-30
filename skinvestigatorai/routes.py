@@ -1,4 +1,6 @@
-from skinvestigatorai.core.route_generator import generate_route_name
+def generate_route_name():
+    import uuid
+    return str(uuid.uuid4()) + '/train'
 
 
 def includeme(config):

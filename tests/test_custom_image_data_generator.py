@@ -1,5 +1,5 @@
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from skinvestigatorai.core.custom_image_data_generator import CustomImageDataGenerator
+from skinvestigatorai.services.custom_image_data_generator import CustomImageDataGenerator
 
 
 def test_custom_image_data_generator():

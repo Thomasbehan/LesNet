@@ -1,7 +1,7 @@
 import os
 import pytest
 from PIL import Image
-from skinvestigatorai.core.ai.detector import SkinCancerDetector
+from skinvestigatorai.services.detector_service import SkinCancerDetector
 
 TRAIN_DIR = "data/train"
 VAL_DIR = "data/val"

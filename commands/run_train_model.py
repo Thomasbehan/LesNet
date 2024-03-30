@@ -1,7 +1,7 @@
 import os
-from skinvestigatorai.core.ai.detector import SkinCancerDetector
-from skinvestigatorai.core.ai.config import train_dir, val_dir, test_dir
-from skinvestigatorai.core.data_scraper import DataScraper
+from skinvestigatorai.services.detector_service import SkinCancerDetector
+from __config import train_dir, val_dir, test_dir
+from skinvestigatorai.services.data_scaper_service import DataScraper
 
 
 def calculate_class_weights(train_dir):
