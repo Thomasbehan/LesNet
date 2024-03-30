@@ -1,14 +1,11 @@
 import os
 import datetime
 import tensorflow as tf
-from tensorflow.keras.models import Model
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import Rescaling
 from PIL import Image
 import keras_tuner as kt
-import numpy as np
 
 # Configure TensorFlow to only allocate memory as needed
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -57,52 +54,49 @@ class SkinCancerDetector:
                         print('Deleted invalid file:', img_path)
         return invalid_images
 
-    def create_feature_extractor(self):
-        self.feature_extractor = Model(inputs=self.model.input,
-                                       outputs=self.model.layers[
-                                           -3].output)
-
-    def calculate_dataset_embedding(self, data_generator):
-        features = []
-        for _, (imgs, _) in enumerate(data_generator):
-            features.append(self.feature_extractor.predict(imgs))
-        features = np.concatenate(features, axis=0)
-        self.dataset_embedding = np.mean(features, axis=0)
-
-    def is_image_similar(self, image, threshold=0.8):
-        image_embedding = self.feature_extractor.predict(image[np.newaxis, ...])
-        similarity = np.dot(image_embedding, self.dataset_embedding) / (
-                np.linalg.norm(image_embedding) * np.linalg.norm(self.dataset_embedding))
-        return similarity >= threshold
-
     def preprocess_data(self, augment=True):
-        self.verify_images(self.train_dir)
-        self.verify_images(self.val_dir)
-        train_generator = self.create_data_generator(self.train_dir, augment=False)
-        val_generator = self.create_data_generator(self.val_dir, augment=False)
-        test_datagen = self.create_data_generator(self.test_dir, augment=False)
-        return train_generator, val_generator, test_datagen
+        AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-    def create_data_generator(self, dir=None, augment=False):
-        if augment:
-            datagen = ImageDataGenerator(
-                rescale=1. / 255,
-                horizontal_flip=True,
-                vertical_flip=True,
-                rotation_range=20,
-                brightness_range=[0.8, 1.2],
-            )
-        else:
-            datagen = ImageDataGenerator(rescale=1. / 255)
+        train_paths = tf.data.Dataset.list_files(os.path.join(self.train_dir, '*/*'))
+        val_paths = tf.data.Dataset.list_files(os.path.join(self.val_dir, '*/*'))
+        test_paths = tf.data.Dataset.list_files(os.path.join(self.test_dir, '*/*'))
 
-        if dir:
-            return datagen.flow_from_directory(
-                dir,
-                target_size=self.img_size,
-                batch_size=self.batch_size,
-                class_mode='binary'
-            )
-        return datagen
+        train_labels = train_paths.map(lambda x: tf.where(tf.strings.regex_full_match(x, ".*benign.*"), 0, 1))
+        val_labels = val_paths.map(lambda x: tf.where(tf.strings.regex_full_match(x, ".*benign.*"), 0, 1))
+        test_labels = test_paths.map(lambda x: tf.where(tf.strings.regex_full_match(x, ".*benign.*"), 0, 1))
+
+        train_ds = tf.data.Dataset.zip((train_paths.map(self.load_and_preprocess_image), train_labels))
+        val_ds = tf.data.Dataset.zip((val_paths.map(self.load_and_preprocess_image), val_labels))
+        test_ds = tf.data.Dataset.zip((test_paths.map(self.load_and_preprocess_image), test_labels))
+
+        train_ds = self.prepare_for_training(train_ds)
+        val_ds = self.prepare_for_training(val_ds)
+        test_ds = self.prepare_for_training(test_ds)
+
+        return train_ds, val_ds, test_ds
+
+    def preprocess_image(self, image):
+        image = tf.image.decode_jpeg(image, channels=3)
+        image = tf.image.resize(image, [180, 180])
+        image /= 255.0
+        return image
+
+    def load_and_preprocess_image(self, path):
+        image = tf.io.read_file(path)
+        return self.preprocess_image(image)
+
+    def prepare_for_training(self, ds, cache=True, shuffle_buffer_size=1000):
+        if cache:
+            if isinstance(cache, str):
+                ds = ds.cache(cache)
+            else:
+                ds = ds.cache()
+
+        ds = ds.shuffle(buffer_size=shuffle_buffer_size)
+        ds = ds.repeat()
+        ds = ds.batch(16)
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        return ds
 
     def quantize_model(self, model):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
