@@ -1,12 +1,23 @@
 import os
 import datetime
 import tensorflow as tf
+from tensorflow.keras.models import Model
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers import Rescaling
 from PIL import Image
 import keras_tuner as kt
+import numpy as np
+
+# Configure TensorFlow to only allocate memory as needed
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
 
 
 def f1_score(precision, recall):
@@ -39,12 +50,30 @@ class SkinCancerDetector:
                     try:
                         img_path = os.path.join(root, file)
                         with Image.open(img_path) as img:
-                            img.verify()  # Verify that it is, in fact, an image
+                            img.verify()
                     except (Image.UnidentifiedImageError, IOError):
                         invalid_images.append(img_path)
-                        os.remove(img_path)  # Delete corrupt or invalid file
-                        print('Deleted invalid file:', img_path)  # Log out the names of deleted files
+                        os.remove(img_path)
+                        print('Deleted invalid file:', img_path)
         return invalid_images
+
+    def create_feature_extractor(self):
+        self.feature_extractor = Model(inputs=self.model.input,
+                                       outputs=self.model.layers[
+                                           -3].output)
+
+    def calculate_dataset_embedding(self, data_generator):
+        features = []
+        for _, (imgs, _) in enumerate(data_generator):
+            features.append(self.feature_extractor.predict(imgs))
+        features = np.concatenate(features, axis=0)
+        self.dataset_embedding = np.mean(features, axis=0)
+
+    def is_image_similar(self, image, threshold=0.8):
+        image_embedding = self.feature_extractor.predict(image[np.newaxis, ...])
+        similarity = np.dot(image_embedding, self.dataset_embedding) / (
+                np.linalg.norm(image_embedding) * np.linalg.norm(self.dataset_embedding))
+        return similarity >= threshold
 
     def preprocess_data(self, augment=True):
         self.verify_images(self.train_dir)
