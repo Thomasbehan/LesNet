@@ -96,7 +96,7 @@ class SkinCancerDetector:
 
         ds = ds.shuffle(buffer_size=shuffle_buffer_size)
         ds = ds.repeat()
-        ds = ds.batch(16)
+        ds = ds.batch(self.batch_size)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
         return ds
 
