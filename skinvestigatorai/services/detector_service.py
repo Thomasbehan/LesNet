@@ -78,7 +78,7 @@ class SkinCancerDetector:
     def preprocess_data(self, augment=True):
         self.verify_images(self.train_dir)
         self.verify_images(self.val_dir)
-        train_generator = self.create_data_generator(self.train_dir, augment=augment)
+        train_generator = self.create_data_generator(self.train_dir, augment=False)
         val_generator = self.create_data_generator(self.val_dir, augment=False)
         test_datagen = self.create_data_generator(self.test_dir, augment=False)
         return train_generator, val_generator, test_datagen
