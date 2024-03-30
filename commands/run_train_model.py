@@ -47,4 +47,4 @@ def main(filename='models/skinvestigator.h5'):
 
 
 if __name__ == '__main__':
-    main('skin_cancer_detection_model_all_GPU.h5')
+    main()
