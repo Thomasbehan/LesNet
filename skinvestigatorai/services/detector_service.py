@@ -114,6 +114,7 @@ class SkinCancerDetector:
                                tf.keras.metrics.BinaryAccuracy(name='binary_accuracy'),
                                f1_score
                            ])
+        self.model.summary()
 
     def build_complex_model(self, input_shape, num_classes):
         inputs = Input(shape=input_shape)
