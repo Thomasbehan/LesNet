@@ -108,11 +108,11 @@ class SkinCancerDetector:
                            loss='binary_crossentropy',
                            metrics=[
                                Recall(name='recall'),
-                               'accuracy',
-                               Precision(name='precision'),
                                tf.keras.metrics.AUC(name='auc'),
+                               f1_score,
+                               Precision(name='precision'),
+                               'accuracy',
                                tf.keras.metrics.BinaryAccuracy(name='binary_accuracy'),
-                               f1_score
                            ])
         print("Model Summary:")
         self.model.summary()
