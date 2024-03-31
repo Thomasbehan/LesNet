@@ -75,7 +75,6 @@ def predict_view(request):
         # Make a prediction
         if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
             model.allocate_tensors()
-            input_details = model.get_input_details()
             model.invoke()
             output_details = model.get_output_details()
             predictions = model.get_tensor(output_details[0]['index'])
