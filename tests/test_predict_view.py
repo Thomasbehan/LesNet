@@ -18,7 +18,7 @@ def mock_is_image_similar():
 def test_predict_view(mock_is_image_similar):
     request = testing.DummyRequest()
 
-    benign_directory = 'data/train/benign'
+    benign_directory = 'data/temp/benign'
 
     jpg_files = [f for f in os.listdir(benign_directory) if f.endswith('.JPG')]
 
