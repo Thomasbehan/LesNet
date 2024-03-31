@@ -71,9 +71,9 @@ class SkinCancerDetector:
         val_ds = tf.data.Dataset.zip((val_paths.map(self.load_and_preprocess_image), val_labels))
         test_ds = tf.data.Dataset.zip((test_paths.map(self.load_and_preprocess_image), test_labels))
 
-        train_ds = self.prepare_for_training(train_ds)
-        val_ds = self.prepare_for_training(val_ds)
-        test_ds = self.prepare_for_training(test_ds)
+        # train_ds = self.prepare_for_training(train_ds)
+        # val_ds = self.prepare_for_training(val_ds)
+        # test_ds = self.prepare_for_training(test_ds)
 
         return train_ds, val_ds, test_ds
 
