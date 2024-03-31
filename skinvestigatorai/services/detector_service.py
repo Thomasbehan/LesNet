@@ -107,9 +107,9 @@ class SkinCancerDetector:
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                            loss='binary_crossentropy',
                            metrics=[
+                               Recall(name='recall'),
                                'accuracy',
                                Precision(name='precision'),
-                               Recall(name='recall'),
                                tf.keras.metrics.AUC(name='auc'),
                                tf.keras.metrics.BinaryAccuracy(name='binary_accuracy'),
                                f1_score
