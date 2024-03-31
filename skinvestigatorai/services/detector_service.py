@@ -3,7 +3,7 @@ import datetime
 import tensorflow as tf
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
-from tensorflow.keras.layers import Rescaling, Input, Conv2D, MaxPooling2D, Dense, Flatten, Add, Activation, \
+from tensorflow.keras.layers import Rescaling, Input, Conv2D, MaxPooling2D, Dense, Add, Activation, \
     BatchNormalization, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.models import Model
 from PIL import Image
@@ -57,7 +57,6 @@ class SkinCancerDetector:
         return invalid_images
 
     def preprocess_data(self, augment=True):
-        AUTOTUNE = tf.data.experimental.AUTOTUNE
 
         train_paths = tf.data.Dataset.list_files(os.path.join(self.train_dir, '*/*'))
         val_paths = tf.data.Dataset.list_files(os.path.join(self.val_dir, '*/*'))
@@ -71,9 +70,9 @@ class SkinCancerDetector:
         val_ds = tf.data.Dataset.zip((val_paths.map(self.load_and_preprocess_image), val_labels))
         test_ds = tf.data.Dataset.zip((test_paths.map(self.load_and_preprocess_image), test_labels))
 
-        # train_ds = self.prepare_for_training(train_ds)
-        # val_ds = self.prepare_for_training(val_ds)
-        # test_ds = self.prepare_for_training(test_ds)
+        train_ds = self.prepare_for_training(train_ds)
+        val_ds = self.prepare_for_training(val_ds)
+        test_ds = self.prepare_for_training(test_ds)
 
         return train_ds, val_ds, test_ds
 
@@ -87,17 +86,35 @@ class SkinCancerDetector:
         image = tf.io.read_file(path)
         return self.preprocess_image(image)
 
-    def prepare_for_training(self, ds, cache=True, shuffle_buffer_size=1000):
+    def prepare_for_training(self, ds, cache=True, shuffle=False, shuffle_buffer_size=1000, repeat=False):
+        """
+        Prepares the dataset for training by caching, shuffling, batching, and prefetching it.
+
+        Parameters:
+        - ds: The dataset to prepare.
+        - cache: Determines whether to cache the dataset. Can be True, False, or a file path as a string.
+        - shuffle: Whether to shuffle the dataset.
+        - shuffle_buffer_size: The buffer size to use for shuffling.
+        - repeat: Whether to repeat the dataset indefinitely.
+
+        Returns:
+        - The prepared dataset.
+        """
         if cache:
             if isinstance(cache, str):
                 ds = ds.cache(cache)
             else:
                 ds = ds.cache()
 
-        ds = ds.shuffle(buffer_size=shuffle_buffer_size)
-        ds = ds.repeat()
+        if shuffle:
+            ds = ds.shuffle(buffer_size=shuffle_buffer_size)
+
+        if repeat:
+            ds = ds.repeat()
+
         ds = ds.batch(self.batch_size)
         ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
         return ds
 
     def build_model(self, num_classes=2):

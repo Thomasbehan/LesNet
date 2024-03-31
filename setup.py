@@ -33,6 +33,7 @@ tests_require = [
     'WebTest',
     'pytest',
     'pytest-cov',
+    'pytest-mock',
     'flake8',
 ]
 

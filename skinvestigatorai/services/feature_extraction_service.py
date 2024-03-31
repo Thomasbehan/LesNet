@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model, Model
-from tensorflow.lite.python.interpreter import Interpreter
+from tensorflow.keras.models import Model
 
 
 class FeatureExtractionService:

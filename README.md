@@ -186,14 +186,13 @@ The updated model demonstrates significant improvements in its ability to classi
 
 | Metric            | Target Range  | Progress                                        |
 |-------------------|---------------|-------------------------------------------------|
-| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/10/?scale=0..0.6924&title=progress&suffix=) |
-| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/34/?scale=85..95&title=progress&suffix=)    |
-| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/10/?scale=80..90&title=progress&suffix=)    |
-| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/20/?scale=85..95&title=progress&suffix=)    |
-| **AUC**           | 0.85 - 0.95   | ![Progress](https://progress-bar.dev/5/?scale=0.85..0.95&title=progress&suffix=)  |
-| **Binary Accuracy**| 85% - 95%    | ![Progress](https://progress-bar.dev/34/?scale=85..95&title=progress&suffix=)    |
-| **F1 Score**      | 85% - 95%     | ![Progress](https://progress-bar.dev/7/?scale=85..95&title=progress&suffix=)     |
-
+| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/10/?scale=0..0.6932&title=progress&suffix=) |
+| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/0/?scale=85..95&title=progress&suffix=)    |
+| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/11/?scale=80..90&title=progress&suffix=)   |
+| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/33/?scale=85..95&title=progress&suffix=)   |
+| **AUC**           | 0.85 - 0.95   | ![Progress](https://progress-bar.dev/0/?scale=0.85..0.95&title=progress&suffix=) |
+| **Binary Accuracy**| 85% - 95%    | ![Progress](https://progress-bar.dev/0/?scale=85..95&title=progress&suffix=)    |
+| **F1 Score**      | 85% - 95%     | ![Progress](https://progress-bar.dev/7/?scale=85..95&title=progress&suffix=)    |
 
 ## Contributing
 We encourage contributions to SkinVestigatorAI! For guidelines on contributing, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
