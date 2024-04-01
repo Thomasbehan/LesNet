@@ -1,6 +1,8 @@
 import os
+import json
 import numpy as np
 from PIL import Image
+from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
 from tensorflow.keras.models import load_model
@@ -67,10 +69,12 @@ def predict_view(request):
 
         is_similar = feature_service.is_image_similar(image_array)
         if not is_similar:
-            return HTTPBadRequest(
-                reason="Please make sure the image is clear, focused, and occupies most of the "
-                       "frame while leaving sufficient space around the edges."
-            )
+            error_message = """
+                            Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the 
+                            frame while leaving sufficient space around the edges.
+                            """
+            return Response(status=400, body=json.dumps({"error": error_message.strip()}),
+                            content_type='application/json')
 
         # Make a prediction
         if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
@@ -89,8 +93,6 @@ def predict_view(request):
             'confidence': float(predictions[0][np.argmax(predictions)]) * 100
         }
     except Exception as e:
-        print(e)
-        exit()
         return HTTPBadRequest(reason=str(e))
 
 
