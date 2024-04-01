@@ -37,7 +37,7 @@ def main(filename='models/skinvestigator.h5'):
 
     detector = SkinCancerDetector(train_dir, val_dir, test_dir)
     train_generator, val_generator, test_datagen = detector.preprocess_data()
-    detector.build_model(num_classes=len(train_generator.class_indices))
+    detector.build_model()
 
     class_weights = calculate_class_weights(train_dir)
 
