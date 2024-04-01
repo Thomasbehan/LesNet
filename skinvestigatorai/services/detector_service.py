@@ -8,7 +8,6 @@ from tensorflow.keras.layers import Rescaling, Input, Conv2D, MaxPooling2D, Dens
 from tensorflow.keras.models import Model
 from PIL import Image
 import keras_tuner as kt
-from tensorflow.keras import backend as K
 
 # Configure TensorFlow to only allocate memory as needed
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -18,21 +17,6 @@ if gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
     except RuntimeError as e:
         print(e)
-
-
-def focal_loss(gamma=2., alpha=4.):
-    def focal_loss_fixed(y_true, y_pred):
-        """Focal loss for binary classification problems."""
-        pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
-        pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
-        return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(pt_1)) - K.sum(
-            (1 - alpha) * K.pow(pt_0, gamma) * K.log(1. - pt_0))
-
-    return focal_loss_fixed
-
-
-def f1_score(precision, recall):
-    return 2 * ((precision * recall) / (precision + recall + tf.keras.backend.epsilon()))
 
 
 class SkinCancerDetector:
@@ -133,12 +117,11 @@ class SkinCancerDetector:
         input_shape = (self.img_size[0], self.img_size[1], 3)
         self.model = self.build_complex_model(input_shape, num_classes)
 
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-                           loss=focal_loss(),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                           loss='binary_crossentropy',
                            metrics=[
                                Recall(name='recall'),
                                tf.keras.metrics.AUC(name='auc'),
-                               f1_score,
                                Precision(name='precision'),
                                'accuracy',
                                tf.keras.metrics.BinaryAccuracy(name='binary_accuracy'),
@@ -149,19 +132,20 @@ class SkinCancerDetector:
     def build_complex_model(self, input_shape, num_classes):
         inputs = Input(shape=input_shape)
         x = Rescaling(1. / 255)(inputs)
-        x = Conv2D(64, kernel_size=7, strides=2, padding='same')(x)
+        x = Conv2D(256, kernel_size=7, strides=2, padding='same')(x)
+        x = Dropout(0.2)(x)
         x = BatchNormalization()(x)
         x = Activation('relu')(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=2, padding='same')(x)
 
-        for filters in [64, 64, 128, 128, 256]:
+        for filters in [128, 128, 256, 512]:
             strides = 1 if filters == 64 else 2
             x = self.residual_block(x, filters, stride=strides)
 
         x = GlobalAveragePooling2D()(x)
         x = Dense(256, activation='relu')(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
+        x = Dropout(0.3)(x)
         outputs = Dense(1, activation='sigmoid')(x)
 
         model = Model(inputs=inputs, outputs=outputs)
@@ -207,28 +191,28 @@ class SkinCancerDetector:
     def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
         tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
                                            update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_recall', factor=0.2, patience=patience_lr, min_lr=min_lr,
+        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr,
+                                               min_lr=min_lr,
                                                min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(self.model_dir, f"{current_time}_best_model.h5"), save_best_only=True,
-            monitor='val_recall', mode='max', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_recall', patience=patience_es, restore_best_weights=True,
+            monitor='val_loss', mode='min', verbose=1)
+        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
                                                 verbose=1)
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
     def evaluate_model(self, test_datagen):
         self._check_model()
-        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score = \
+        test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy = \
             self.model.evaluate(test_datagen)
         print(
             f'Test accuracy: {test_acc}, '
             f'Test precision: {test_precision}, '
             f'Test recall: {test_recall}, '
             f'Test AUC: {test_auc}, '
-            f'Test F1 Score: {test_f1_score}'
         )
-        return test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy, test_f1_score
+        return test_loss, test_acc, test_precision, test_recall, test_auc, test_binary_accuracy
 
     def save_model(self, filename='models/skin_cancer_detector.h5'):
         self._check_model()
@@ -240,8 +224,7 @@ class SkinCancerDetector:
         print(f"Model saved as {filename} and {tflite_model_path}")
 
     def load_model(self, filename):
-        self.model = tf.keras.models.load_model(filename, custom_objects={"Precision": Precision, "Recall": Recall,
-                                                                          "f1_score": f1_score})
+        self.model = tf.keras.models.load_model(filename)
         print(f"Model loaded from {filename}")
 
     def _check_model(self):
@@ -275,7 +258,7 @@ class SkinCancerDetector:
             model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
             # Tuning the learning rate
-            hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+            hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
 
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
                           loss='binary_crossentropy',
@@ -289,12 +272,12 @@ class SkinCancerDetector:
             return model
 
         tuner = kt.Hyperband(model_builder,
-                             objective='val_recall',
+                             objective='val_loss',
                              max_epochs=epochs,
                              factor=5,
                              directory='hyperband_logs',
                              seed=42,
-                             hyperband_iterations=2,
+                             hyperband_iterations=10,
                              project_name='skin_cancer_detection')
 
         class ClearTrainingOutput(tf.keras.callbacks.Callback):
