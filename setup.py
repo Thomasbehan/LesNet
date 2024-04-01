@@ -39,7 +39,7 @@ tests_require = [
 
 setup(
     name='skinvestigatorai',
-    version='2.0.0',
+    version='3.0.2',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
@@ -48,9 +48,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
-    author='',
-    author_email='',
-    url='',
+    author='Thomas Behan',
+    author_email='https://github.com/Thomasbehan',
+    url='https://skinvestigator.onrender.com/',
     keywords='web pyramid pylons',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
