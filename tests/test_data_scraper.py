@@ -1,16 +1,14 @@
 import os
 import shutil
 from unittest.mock import patch
-from skinvestigatorai.services.data_scaper_service import DataScraper
+from skinvestigatorai.services.data_scaper import DataScraper
 
 
 def test_create_output_folders():
     data_dir = "test_data/"
-    test_dir = "test_data/test"
     train_dir = "test_data/train"
-    temp_dir = "test_data/temp"
-    benign_dir = "test_data/temp/benign"
-    malignant_dir = "test_data/temp/malignant"
+    benign_dir = "test_data/train/benign"
+    malignant_dir = "test_data/train/malignant"
 
     data_scraper = DataScraper(data_dir, 1)
 
@@ -18,9 +16,7 @@ def test_create_output_folders():
     data_scraper._create_output_folders()
 
     # Check if the directories were created
-    assert os.path.exists(test_dir)
     assert os.path.exists(train_dir)
-    assert os.path.exists(temp_dir)
     assert os.path.exists(benign_dir)
     assert os.path.exists(malignant_dir)
 
