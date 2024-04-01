@@ -258,7 +258,7 @@ class SkinCancerDetector:
             model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
             # Tuning the learning rate
-            hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+            hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4, 1e-5, 1e-6])
 
             model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=hp_learning_rate),
                           loss='binary_crossentropy',
@@ -272,12 +272,12 @@ class SkinCancerDetector:
             return model
 
         tuner = kt.Hyperband(model_builder,
-                             objective='val_recall',
+                             objective='val_loss',
                              max_epochs=epochs,
                              factor=5,
                              directory='hyperband_logs',
                              seed=42,
-                             hyperband_iterations=2,
+                             hyperband_iterations=10,
                              project_name='skin_cancer_detection')
 
         class ClearTrainingOutput(tf.keras.callbacks.Callback):
