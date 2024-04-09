@@ -13,7 +13,7 @@ requires = [
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'waitress',
-    'Pillow==10.2.0',
+    'Pillow==10.3.0',
     'requests==2.31.0',
     'scipy==1.10.1',
     'sympy==1.12',
