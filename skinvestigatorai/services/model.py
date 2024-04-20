@@ -61,9 +61,16 @@ class SVModel:
         features = np.concatenate(features, axis=0)
         self.dataset_embedding = np.mean(features, axis=0)
 
-    def build_model(self, num_classes=ModelConfig.CATEGORIES):
+    def build_model(self):
+        num_classes = ModelConfig.CATEGORIES
         input_shape = (self.img_size[0], self.img_size[1], 3)
         base_model = ResNet50(include_top=False, weights='imagenet', input_tensor=Input(shape=input_shape))
+
+        for layer in base_model.layers:
+            layer.trainable = False
+
+        for layer in base_model.layers[-10:]:
+            layer.trainable = True
 
         x = base_model.output
         x = GlobalAveragePooling2D()(x)
