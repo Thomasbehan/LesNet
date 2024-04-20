@@ -117,7 +117,8 @@ class Data:
             seed=42,
             label_mode='categorical',
             image_size=self.img_size,
-            batch_size=ModelConfig.BATCH_SIZE
+            batch_size=ModelConfig.BATCH_SIZE,
+            classes=sorted(os.listdir(ModelConfig.TRAIN_DIR))
         )
 
         validation_ds = tf.keras.preprocessing.image_dataset_from_directory(
@@ -127,6 +128,7 @@ class Data:
             seed=42,
             label_mode='categorical',
             image_size=self.img_size,
-            batch_size=ModelConfig.BATCH_SIZE
+            batch_size=ModelConfig.BATCH_SIZE,
+            classes=sorted(os.listdir(ModelConfig.TRAIN_DIR))
         )
         return train_ds, validation_ds
