@@ -82,9 +82,7 @@ class SVModel:
         self.model.summary()
 
     def compute_class_weights(self, class_series):
-        print("Class Series: ", class_series)
         class_labels = np.unique(class_series)
-        print("Class Labels: ", class_labels)
         class_weights = compute_class_weight('balanced', classes=class_labels, y=class_series)
         class_weight_dict = dict(zip(class_labels, class_weights))
         return class_weight_dict
