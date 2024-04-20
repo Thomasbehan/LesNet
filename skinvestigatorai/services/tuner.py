@@ -4,9 +4,9 @@ import os
 
 import numpy as np
 import tensorflow as tf
-import tensorflow_addons as tfa
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+from tensorflow.keras.optimizers import Adam
 
 from skinvestigatorai.config.model import ModelConfig
 from skinvestigatorai.services.model import SVModel
@@ -37,7 +37,7 @@ class SVModelHPTuner(SVModel):
                 self._log_results(history, param_combination, run_dir)
 
     def _get_optimizer(self, learning_rate):
-        return tfa.optimizers.RectifiedAdam(learning_rate=learning_rate)
+        return Adam(learning_rate=learning_rate)
 
     def _generate_param_combinations(self):
         combinations = []
