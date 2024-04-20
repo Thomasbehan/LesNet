@@ -155,7 +155,7 @@ class SVModel:
         callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                            cooldown_lr)
 
-        sorted_labels = sorted(train_generator.class_names, key=train_generator.class_names.get)
+        sorted_labels = sorted(train_generator.class_names)
 
         class_weights = self.compute_class_weights(sorted_labels)
 
