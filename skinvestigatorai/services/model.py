@@ -24,7 +24,7 @@ class SVModel:
         self.dataset_embedding = None
         self.log_dir = ModelConfig.LOG_DIR
         self.img_size = ModelConfig.IMG_SIZE
-        self.optimizer = Adam(0.01)
+        self.optimizer = Adam(0.001)
 
     def create_feature_extractor(self):
         if self.model_type == 'KERAS':
@@ -75,8 +75,8 @@ class SVModel:
         x = base_model.output
         x = GlobalAveragePooling2D()(x)
         x = BatchNormalization()(x)
-        x = Dense(1024, activation='relu', kernel_regularizer=l2(0.005))(x)
-        x = Dropout(0.25)(x)
+        x = Dense(2048, activation='relu', kernel_regularizer=l2(0.005))(x)
+        x = Dropout(0.15)(x)
         x = Dense(1024, activation='relu', kernel_regularizer=l2(0.005))(x)
         outputs = Dense(num_classes, activation='softmax')(x)
 
@@ -152,7 +152,7 @@ class SVModel:
 
         return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
-    def train_model(self, train_generator, val_generator, epochs=ModelConfig.EPOCHS, patience_lr=15, patience_es=40, min_lr=1e-8,
+    def train_model(self, train_generator, val_generator, epochs=ModelConfig.EPOCHS, patience_lr=10, patience_es=40, min_lr=1e-8,
                     min_delta=1e-4, cooldown_lr=5):
         self._check_model()
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
