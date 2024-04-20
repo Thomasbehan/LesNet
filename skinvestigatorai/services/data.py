@@ -116,6 +116,7 @@ class Data:
             subset="training",
             seed=42,
             label_mode='categorical',
+            labels='inferred',
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
@@ -126,6 +127,7 @@ class Data:
             subset="validation",
             seed=42,
             label_mode='categorical',
+            labels='inferred',
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
