@@ -11,7 +11,7 @@ class ModelConfig(object):
     BATCH_SIZE = 16
     AUG_TOTAL = 50000
     CATEGORIES = 28
-    EPOCHS = 2
+    EPOCHS = 3000
     MAX_AUG_PER_IMAGE = 10
     TRAIN_DIR = 'data/train'
     MODEL_TYPE = "KERAS"
