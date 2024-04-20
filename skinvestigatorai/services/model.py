@@ -155,10 +155,9 @@ class SVModel:
         callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                            cooldown_lr)
 
-        all_labels = np.concatenate([labels for _, labels in train_generator], axis=0)
-        all_labels = np.argmax(all_labels, axis=1)
+        sorted_labels = sorted(train_generator.class_indices, key=train_generator.class_indices.get)
 
-        class_weights = self.compute_class_weights(all_labels)
+        class_weights = self.compute_class_weights(sorted_labels)
 
         history = self.model.fit(
             train_generator,
