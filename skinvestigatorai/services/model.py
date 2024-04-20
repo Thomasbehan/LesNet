@@ -155,7 +155,7 @@ class SVModel:
                                            cooldown_lr)
 
         all_labels = np.concatenate([labels for _, labels in train_generator], axis=0)
-        all_labels = np.argmax(all_labels, axis=1)
+        all_labels = np.argmax(sorted(all_labels), axis=1)
 
         class_weights = self.compute_class_weights(all_labels)
 
@@ -163,7 +163,8 @@ class SVModel:
             train_generator,
             epochs=epochs,
             validation_data=val_generator,
-            callbacks=callbacks
+            callbacks=callbacks,
+            class_weight=class_weights
         )
         return history
 
