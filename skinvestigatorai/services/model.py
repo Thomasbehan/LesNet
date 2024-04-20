@@ -83,9 +83,8 @@ class SVModel:
 
     def compute_class_weights(self, class_series):
         class_labels = np.unique(class_series)
-        sorted_class_labels = np.sort(class_labels)
-        class_weights = compute_class_weight('balanced', classes=sorted_class_labels, y=class_series)
-        class_weight_dict = dict(zip(sorted_class_labels, class_weights))
+        class_weights = compute_class_weight('balanced', classes=class_labels, y=class_series)
+        class_weight_dict = dict(zip(class_labels, class_weights))
         return class_weight_dict
 
     def get_latest_model(self, model_dir=ModelConfig.MODEL_DIRECTORY, extension=ModelConfig.MODEL_TYPE):
@@ -155,7 +154,11 @@ class SVModel:
         callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                            cooldown_lr)
 
-        class_weights = self.compute_class_weights(train_generator.class_names)
+        all_labels = np.concatenate([labels for _, labels in train_generator], axis=0)
+        all_labels = np.argmax(all_labels, axis=1)
+        print(all_labels)
+        exit(1)
+        class_weights = self.compute_class_weights(all_labels)
 
         history = self.model.fit(
             train_generator,
