@@ -155,7 +155,7 @@ class SVModel:
         callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                            cooldown_lr)
 
-        class_weights = self.compute_class_weights(train_generator.class_indices)
+        class_weights = self.compute_class_weights(train_generator.class_names)
 
         history = self.model.fit(
             train_generator,
