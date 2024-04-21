@@ -3,13 +3,14 @@ import json
 import numpy as np
 from PIL import Image
 from pyramid.response import Response
-from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.view import view_config
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
 from skinvestigatorai.services.feature_extraction_service import FeatureExtractionService
 
+# Load your trained model
 model_dir = 'models/'
 
 MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
@@ -79,6 +80,8 @@ def predict_view(request):
         # Make a prediction
         if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
             model.allocate_tensors()
+            input_details = model.get_input_details()
+            model.set_tensor(input_details[0]['index'], image_array)
             model.invoke()
             output_details = model.get_output_details()
             predictions = model.get_tensor(output_details[0]['index'])
@@ -93,7 +96,7 @@ def predict_view(request):
             'confidence': float(predictions[0][np.argmax(predictions)]) * 100
         }
     except Exception as e:
-        return HTTPBadRequest(reason=str(e))
+        return HTTPBadRequest(detail=str(e))
 
 
 @view_config(route_name='dashboard', renderer='skinvestigatorai:templates/dashboard.jinja2')
