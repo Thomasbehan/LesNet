@@ -27,3 +27,5 @@ test
 # prevent models being commited to github
 **/*.h5
 *.h5
+**/*.tflite
+*.tflite

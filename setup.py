@@ -13,7 +13,7 @@ requires = [
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'waitress',
-    'Pillow==10.2.0',
+    'Pillow==10.3.0',
     'requests==2.31.0',
     'scipy==1.10.1',
     'sympy==1.12',
@@ -26,18 +26,20 @@ requires = [
     'vit-keras==0.1.2',
     'tensorflow_addons==0.20.0',
     'albumentations',
+    'keras-tuner',
 ]
 
 tests_require = [
     'WebTest',
     'pytest',
     'pytest-cov',
+    'pytest-mock',
     'flake8',
 ]
 
 setup(
     name='skinvestigatorai',
-    version='2.0.0',
+    version='3.0.2',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
@@ -46,9 +48,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
-    author='',
-    author_email='',
-    url='',
+    author='Thomas Behan',
+    author_email='https://github.com/Thomasbehan',
+    url='https://skinvestigator.onrender.com/',
     keywords='web pyramid pylons',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
