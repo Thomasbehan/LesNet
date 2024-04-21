@@ -1,8 +1,9 @@
 import os
+import json
 import numpy as np
 from PIL import Image
-from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.view import view_config
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
@@ -80,7 +81,7 @@ def predict_view(request):
             'confidence': float(predictions[0][np.argmax(predictions)]) * 100
         }
     except Exception as e:
-        return HTTPBadRequest(reason=str(e))
+        return HTTPBadRequest(detail=str(e))
 
 
 @view_config(route_name='dashboard', renderer='skinvestigatorai:templates/dashboard.jinja2')
