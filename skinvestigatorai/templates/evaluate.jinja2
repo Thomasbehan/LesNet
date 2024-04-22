@@ -299,8 +299,7 @@ footer a:hover {
                 error: function(data) {
                     $("#loading").hide();
                     var errorMessage = "An error occurred while processing the image.";
-
-                    if (data.error && data.error.includes("Please make sure the image is of a skin lesion")) {
+                    if (data.error) {
                         errorMessage = "<div class='alert alert-info'><span class='emoji'>&#129300;</span> " +
                                        "I'm not too sure about this one. Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the frame while leaving sufficient space around the edges.</div>";
                     } else {
