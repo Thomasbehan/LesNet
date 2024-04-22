@@ -1,4 +1,5 @@
 import json
+import logging
 
 import numpy as np
 from PIL import Image
@@ -9,6 +10,8 @@ from tensorflow.lite.python.interpreter import Interpreter
 
 from skinvestigatorai.config.model import ModelConfig
 from skinvestigatorai.services.model import SVModel
+
+log = logging.getLogger(__name__)
 
 
 class Inference:
@@ -70,28 +73,43 @@ class Inference:
             image_array = img_to_array(image)
             image_array = image_array / 255.0
             image_array = np.expand_dims(image_array, axis=0)
+            threshold = 0.50
 
-            is_similar = self.is_image_similar(image_array)
-            if not is_similar:
-                error_message = "Please ensure the image is of a skin lesion and meets quality standards."
-                return Response(status=400, body=json.dumps({"error": error_message}),
-                                content_type='application/json')
-
+            # Make a prediction
             if isinstance(self.model, Interpreter):
+                self.model.allocate_tensors()
                 input_details = self.model.get_input_details()
-                output_details = self.model.get_output_details()
                 self.model.set_tensor(input_details[0]['index'], image_array)
                 self.model.invoke()
+                output_details = self.model.get_output_details()
                 predictions = self.model.get_tensor(output_details[0]['index'])
             else:
                 predictions = self.model.predict(image_array)
 
-            predicted_class = sorted(self.class_labels)[np.argmax(predictions)]
-            confidence = float(predictions[0][np.argmax(predictions)]) * 100
+            max_confidence = np.max(predictions)
 
-            return {
-                'prediction': predicted_class,
-                'confidence': confidence
-            }
+            # Check if the image is similar based on the highest confidence score
+            if max_confidence < threshold:
+                error_message = """
+                                I'm not too sure about this one?
+                                Please make sure the image is of a skin lesion, is clear, focused, and occupies most of 
+                                the frame while leaving sufficient space around the edges.
+                                """
+                return Response(status=400, body=json.dumps({"error": error_message.strip()}),
+                                content_type='application/json; charset=UTF-8')
+            else:
+
+                print("Predictions: ", predictions)
+                print("Predictions MAXARG: ", np.argmax(predictions))
+                print("Class Labels: ", self.class_labels)
+
+                predicted_class = self.class_labels[np.argmax(predictions)]
+
+                # Return the prediction result
+                return {
+                    'prediction': predicted_class,
+                    'confidence': float(predictions[0][np.argmax(predictions)]) * 100
+                }
         except Exception as e:
-            return HTTPBadRequest(reason=str(e))
+            log.exception(e)
+            return HTTPBadRequest(detail=str(e))

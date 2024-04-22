@@ -42,6 +42,13 @@ cameraTrigger.onclick = function() {
     }, 'image/jpeg');
 };
 
+function handleFileChange(event) {
+    const file = event.target.files[0];
+    if (file) {
+        makePrediction(file);
+    }
+}
+
 function makePrediction(blob) {
     const formData = new FormData();
     formData.append('image', blob, 'capture.jpeg');
@@ -61,7 +68,15 @@ function makePrediction(blob) {
         if (data.prediction) {
             resultsContainer.innerHTML = `<span>${data.confidence.toFixed(2)}% it is ${data.prediction}</span>`;
         } else {
-            resultsContainer.innerHTML = "<span>No prediction available.</span>";
+            var errorMessage = "An error occurred while processing the image.";
+            if (data.error) {
+                errorMessage = "<div class='alert alert-info'><span class='emoji'>&#129300;</span> " +
+                               data.error + "</div>";
+            } else {
+                errorMessage = "<div class='alert alert-danger'>" + errorMessage + "</div>";
+            }
+
+            resultsContainer.innerHTML = errorMessage;
         }
     })
     .catch(() => {

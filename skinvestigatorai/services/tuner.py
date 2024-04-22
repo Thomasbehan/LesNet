@@ -31,7 +31,7 @@ class SVModelHPTuner(SVModel):
             with tf.summary.create_file_writer(run_dir).as_default():
                 hp.hparams(hparams)
                 callbacks = self._create_hparam_callbacks(run_dir)
-                self.build_model(param_combination['num_classes'])
+                self.build_model()
                 self.optimizer = self._get_optimizer(param_combination['learning_rate'])
                 history = self.train_model(train_generator, val_generator, callbacks)
                 self._log_results(history, param_combination, run_dir)

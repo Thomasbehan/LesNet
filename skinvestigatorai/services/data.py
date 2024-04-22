@@ -49,19 +49,11 @@ class Data:
         # Random 90-degree rotation
         image = tf.image.rot90(image, k=tf.random.uniform(shape=[], minval=0, maxval=4, dtype=tf.int32))
 
-        # Random brightness and contrast adjustments
-        image = tf.image.random_brightness(image, max_delta=0.2)
-        image = tf.image.random_contrast(image, lower=0.95, upper=1.2)
-
         # Random cropping and zooming
         crop_size = tf.random.uniform(shape=[], minval=int(image.shape[0] * 0.7), maxval=int(image.shape[0]),
                                       dtype=tf.int32)
         image = tf.image.random_crop(image, size=[crop_size, crop_size, 3])
         image = tf.image.resize(image, [image.shape[0], image.shape[1]])  # Resize back to original dimensions
-
-        # Random hue and saturation adjustment
-        image = tf.image.random_hue(image, max_delta=0.02)
-        image = tf.image.random_saturation(image, lower=0.8, upper=1.2)
 
         # Clip to ensure pixel values are still in [0, 1]
         image = tf.clip_by_value(image, 0.0, 1.0)

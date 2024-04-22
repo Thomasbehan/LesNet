@@ -1,19 +1,14 @@
-import os
-import json
-import numpy as np
-from PIL import Image
-from pyramid.response import Response
-from pyramid.view import view_config
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
-from tensorflow.lite.python.interpreter import Interpreter
-from skinvestigatorai.services.feature_extraction_service import FeatureExtractionService
 import logging
+import os
+
+from pyramid.view import view_config
+
+from skinvestigatorai.services.inference import Inference
 
 log = logging.getLogger(__name__)
 model_dir = 'models/'
 
-MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
+MODEL_TYPE = 'TFLITE'  # Set this to 'KERAS' or 'TFLite' as needed
 
 
 def get_latest_model(model_dir, extension):
@@ -27,7 +22,6 @@ def get_latest_model(model_dir, extension):
     print(latest_model)
     return latest_model
 
-from skinvestigatorai.services.inference import Inference
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
 def predict_view(request):

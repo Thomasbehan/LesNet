@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="content">
-    <h1><span class="smaller">SkinVestigator<span class="font-semi-bold">AI</span></span></h1>
+    <h1><span class="smaller">Les<span class="font-semi-bold">Net</span></span></h1>
     <p class="lead">Welcome to <span class="font-normal">{{project}}</span>, &nbsp;Always consult a <span class="font-normal">Medical Professional</span>, this application is not intended to be used as a definitive diagnosis&nbsp;.</p>
 </div>
 <section class="evaluation">
@@ -21,8 +21,17 @@
                 <img src="//:0" alt="" id="camera--output">
 
                 <!-- Camera trigger -->
-                <button id="camera--trigger">Take a picture</button>
-
+                <button id="camera--trigger"><span class="material-symbols-outlined">photo_camera</span> Take a picture</button>
+                <button class="bottom-floating--button">
+                 <form class="upload-form" name="UploadForm" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
+                    <div class="custom-file-upload">
+                        <input type="file" name="image" id="image" accept="image/*" onchange="handleFileChange(event)">
+                        <label for="image">
+                            <span class="material-symbols-outlined">upload</span> Upload an Image
+                        </label>
+                    </div>
+                 </form>
+                </button>
             </main>
 	</div>
 	<div class="evaluation__info">
@@ -41,54 +50,19 @@
             </div>
             {% endif %}
         </div>
-        <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
-            <label for="image">Upload an image:</label>
-
-            <div class="custom-file-upload">
-                <input type="file" name="image" id="image" accept="image/*" onchange="updateFileName(this)">
-                <label for="image">
-                    <i class="fa fa-cloud-upload"></i> Choose File
-                </label>
-                <span id="file-name"></span>
-            </div>
-
-            <br>
-
-            <button class="analyse--btn" type="submit">Analyze</button>
-        </form>
 	</div>
 </section>
 
 <style>
-.custom-file-upload {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 300px;
-    height: 300px;
-    margin: 0 auto;
-    background-image: url({{ request.static_url('skinvestigatorai:static/min/camera.png') }});
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 120%;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-}
 
 .custom-file-upload input[type='file'] {
     display: none;
 }
 
 .custom-file-upload label {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #000;
-    color: #fff;
-    font-weight: bold;
-    font-size: 1.5em;
+    font:inherit!important;
+    font-weight: normal;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .custom-file-upload label:hover {

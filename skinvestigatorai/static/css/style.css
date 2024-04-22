@@ -16,6 +16,20 @@ html, body{
     transform: scaleX(-1);
     filter: FlipH;
 }
+.bottom-floating--button{
+    width: 200px;
+    background-color: black;
+    color: white;
+    font-size: 16px;
+    border-radius: 30px;
+    border: none;
+    padding: 15px 20px;
+    text-align: center;
+    box-shadow: 0 5px 10px 0 rgba(0,0,0,0.2);
+    position: fixed;
+    bottom: 80px;
+    left: calc(70% - 100px);
+}
 
 #camera--trigger{
     width: 200px;
@@ -28,8 +42,8 @@ html, body{
     text-align: center;
     box-shadow: 0 5px 10px 0 rgba(0,0,0,0.2);
     position: fixed;
-    bottom: 30px;
-    left: calc(50% - 100px);
+    bottom: 80px;
+    left: calc(30% - 100px);
 }
 
 .taken{
