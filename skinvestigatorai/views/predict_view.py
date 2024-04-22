@@ -3,14 +3,15 @@ import json
 import numpy as np
 from PIL import Image
 from pyramid.response import Response
-from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import exception_response
 from pyramid.view import view_config
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
 from skinvestigatorai.services.feature_extraction_service import FeatureExtractionService
+import logging
 
-# Load your trained model
+log = logging.getLogger(__name__)
 model_dir = 'models/'
 
 MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
@@ -67,15 +68,8 @@ def predict_view(request):
         image_array = img_to_array(image)
         image_array = image_array / 255.0
         image_array = np.expand_dims(image_array, axis=0)
+        threshold = 0.65
 
-        is_similar = feature_service.is_image_similar(image_array)
-        if not is_similar:
-            error_message = """
-                            Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the 
-                            frame while leaving sufficient space around the edges.
-                            """
-            return Response(status=400, body=json.dumps({"error": error_message.strip()}),
-                            content_type='application/json')
 
         # Make a prediction
         if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
@@ -88,15 +82,31 @@ def predict_view(request):
         else:  # If the model is a full Keras model
             predictions = model.predict(image_array)
 
-        predicted_class = class_labels[np.argmax(predictions)]
+        max_confidence = np.max(predictions)
 
-        # Return the prediction result
-        return {
-            'prediction': predicted_class,
-            'confidence': float(predictions[0][np.argmax(predictions)]) * 100
-        }
+        # Check if the image is similar based on the highest confidence score
+        if max_confidence < threshold:
+            error_message = """
+                            I'm not too sure about this one?
+                            Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the 
+                            frame while leaving sufficient space around the edges.
+                            """
+            return Response(status=400, body=json.dumps({"error": error_message.strip()}),
+                            content_type='application/json; charset=UTF-8')
+        else:
+            predicted_class = class_labels[np.argmax(predictions)]
+
+            # Return the prediction result
+            return {
+                'prediction': predicted_class,
+                'confidence': float(predictions[0][np.argmax(predictions)]) * 100
+            }
+
+
+
     except Exception as e:
-        return HTTPBadRequest(detail=str(e))
+        log.exception(e)
+        return exception_response(500)
 
 
 @view_config(route_name='dashboard', renderer='skinvestigatorai:templates/dashboard.jinja2')
