@@ -41,7 +41,21 @@
             </div>
             {% endif %}
         </div>
+        <form class="upload-form" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
+            <label for="image">Upload an image:</label>
 
+            <div class="custom-file-upload">
+                <input type="file" name="image" id="image" accept="image/*" onchange="updateFileName(this)">
+                <label for="image">
+                    <i class="fa fa-cloud-upload"></i> Choose File
+                </label>
+                <span id="file-name"></span>
+            </div>
+
+            <br>
+
+            <button class="analyse--btn" type="submit">Analyze</button>
+        </form>
 	</div>
 </section>
 
@@ -91,4 +105,56 @@
 <!-- Add jQuery -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <!-- Add AJAX script -->
+<script>
+    $(document).ready(function() {
+        $(".upload-form").on("submit", function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $(".photo-container img").attr("src", e.target.result);
+                $(".photo-container img").attr("alt", "Uploaded image");
+            }
+            reader.readAsDataURL($("#image")[0].files[0]);
+
+            $("#loading").show();
+
+            $.ajax({
+                url: "{{ request.route_url('predict') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(data) {
+                    $("#loading").hide();
+                    $(".results-container").html(`
+                        <div class="result">
+                            <span>${(data.confidence).toFixed(2)}% it is ${data.prediction}</span>
+                        </div>
+                    `);
+                },
+                error: function(data) {
+                    $("#loading").hide();
+                    var errorMessage = "An error occurred while processing the image.";
+                    if (data.error) {
+                        errorMessage = "<div class='alert alert-info'><span class='emoji'>&#129300;</span> " +
+                                       "I'm not too sure about this one. Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the frame while leaving sufficient space around the edges.</div>";
+                    } else {
+                        errorMessage = "<div class='alert alert-danger'>" + errorMessage + "</div>";
+                    }
+
+                    $(".results-container").html(errorMessage);
+                }
+
+            });
+        });
+    });
+
+    function updateFileName(inputElement) {
+        var fileName = inputElement.files[0].name;
+        document.getElementById('file-name').innerText = " " + fileName;
+    }
+</script>
 {% endblock content %}
