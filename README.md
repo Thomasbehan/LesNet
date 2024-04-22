@@ -1,17 +1,16 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
-# SkinVestigatorAI  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/SkinVestigatorAI?color=232323&label=SkinVestigatorAI&logo=github&labelColor=232323)
-![Precision Score](https://img.shields.io/badge/Precision-0.6753-blue)
-![Recall Score](https://img.shields.io/badge/Recall-0.3701-blue)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-94.34%25-darkgreen)
-![Loss Score](https://img.shields.io/badge/Loss-0.1501-blue)
-![AUC Score](https://img.shields.io/badge/AUC-0.9286-darkgreen)
-![GitHub license](https://img.shields.io/github/license/Thomasbehan/SkinVestigatorAI) [![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
-[![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+# LesNet  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/LesNet?color=232323&label=LesNet&logo=github&labelColor=232323)
+![Precision Score](https://img.shields.io/badge/Precision-94.22%25-darkgreen)
+![Recall Score](https://img.shields.io/badge/Recall-80.43%25-darkgreen)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-86.17%25-darkgreen)
+![Loss Score](https://img.shields.io/badge/Loss-0.4621-blue)
+![GitHub license](https://img.shields.io/github/license/Thomasbehan/LesNet) [![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
+[![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 
-> SkinVestigatorAI is an open-source project for deep learning-based skin cancer detection. It aims to create a reliable tool and foster community involvement in critical AI problems. The repository includes code for data preprocessing, model building, and performance evaluation. Contribute and shape the future of skin cancer detection.
+> LesNet is an open-source project for deep learning-based skin cancer detection. It aims to create a reliable tool and foster community involvement in critical AI problems. The repository includes code for data preprocessing, model building, and performance evaluation. Contribute and shape the future of skin cancer detection.
 
-[![Demo](https://img.shields.io/badge/-Live_Demo-black?style=for-the-badge&logo=render)](https://skinvestigator.onrender.com/) 
+[![Demo](https://img.shields.io/badge/-Live_Demo-black?style=for-the-badge&logo=render)](https://lesnet.onrender.com/) 
 
 <sub><i>Please note that the application enters a dormant state when not in use to conserve resources. This means it might take a moment to warm up when you first access the site. Any initial slow down will ease after a moment. Thank you for your patience.
 </i></sub>
@@ -34,7 +33,7 @@ These instructions will help you set up the project on your local machine for de
 
 ## Quick Setup for Development
 
-To quickly set up SkinVestigatorAI for development, follow these steps
+To quickly set up LesNet for development, follow these steps
 (Requires Python >=3.9<=3.11):
 
 1. **Upgrade Your Packaging Tools:**
@@ -43,7 +42,7 @@ To quickly set up SkinVestigatorAI for development, follow these steps
    python -m pip install --upgrade pip setuptools
    ```
 
-2. **Install SkinVestigatorAI:**
+2. **Install LesNet:**
    In the project directory, install the project in editable mode with:
    ```bash
    python -m pip install -e .[testing]
@@ -56,8 +55,8 @@ To quickly set up SkinVestigatorAI for development, follow these steps
    ```
 
 ## Running the Tests and Linting
-[![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
-[![Actions Status](https://github.com/Thomasbehan/SkinVestigatorAI/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/SkinVestigatorAI/actions)
+[![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
+[![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 
 ### Running the Tests
 To run the tests, run the following command:
@@ -97,7 +96,7 @@ python .\commands\download_model.py -m M-0310s
 ```
 
 ## Data
-The DataScraper tool within this application is designed to download and preprocess skin lesion images. The M-3.1 dataset is 52,379 images.
+The DataScraper tool within this application is designed to download and preprocess skin lesion images. The M-3.1 dataset is 837,628 images.
 
 ### Data Source
 The dataset used for training the model is sourced from the International Skin Imaging Collaboration (ISIC) Archive. The ISIC Archive is a large-scale resource for skin image analysis, providing open access to a wide variety of images for the development and evaluation of automated diagnostic systems.
@@ -111,32 +110,32 @@ The images are organized into three folders:
 2. Images are placed in folders with their label as its name, for example `data/train/melanoma`
 
 ## Model
-The `SVModel` model employs a sophisticated deep learning architecture based on resnet50 but tailored for skin lesion classification. 
-To learn more, Visit [the model section of the wiki](https://github.com/Thomasbehan/SkinVestigatorAI/wiki#model)
+The `SVModel` model employs a sophisticated deep learning architecture based on InvceptionV3 but tailored for skin lesion classification. 
+To learn more, Visit [the model section of the wiki](https://github.com/Thomasbehan/LesNet/wiki#model)
 
 ## Performance
 The updated model demonstrates significant improvements in its ability to classify skin lesions accurately, achieving an accuracy of 84% and a loss of 0.23 on the testing dataset. The model's sensitivity, specificity, precision, and F1 score have also seen considerable enhancements, with the following scores reported on the testing dataset:
 
-- Recall: 69.24%
-- Precision: 77.94%
-- Accuracy: 72%
-- Loss: 1.04571
+- Recall: 80.43%
+- Precision: 94.22%
+- Accuracy: 86.17%
+- Loss: 0.4621
 
 
 ### Targets
 
-| Metric            | Target Range  | Progress                                                                        |
-|-------------------|---------------|---------------------------------------------------------------------------------|
-| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/0/?scale=0..0.6932&title=progress&suffix=) |
-| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/72/?scale=85..95&title=progress&suffix=)   |
-| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/77/?scale=80..90&title=progress&suffix=)   |
-| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/69/?scale=85..95&title=progress&suffix=)   |
+| Metric            | Target Range  | Progress                                                                      |
+|-------------------|---------------|-------------------------------------------------------------------------------|
+| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/94/?scale=0..100&title=progress&suffix=) |
+| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/86/?scale=85..95&title=progress&suffix=) |
+| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/94/?scale=80..90&title=progress&suffix=) |
+| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/80/?scale=85..95&title=progress&suffix=) |
 
 ## Contributing
-contributions to SkinVestigatorAI are welcome! For guidelines on contributing, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
+contributions to LesNet are welcome! For guidelines on contributing, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
 
 ## License
-SkinVestigatorAI is released under the Mozilla Public License 2.0 (MPL 2.0). For more details, see the [LICENSE](License) file.
+LesNet is released under the Mozilla Public License 2.0 (MPL 2.0). For more details, see the [LICENSE](License) file.
 
 ## Acknowledgments
 Gratitude to the International Skin Imaging Collaboration (ISIC) for providing access to their extensive archive of skin lesion images, which has been instrumental in the development and refinement of this model.
@@ -147,8 +146,8 @@ Gratitude to the International Skin Imaging Collaboration (ISIC) for providing a
 ## Citation
 For academic and research use, please cite this work as follows:
 
-"SkinVestigator: A Deep Learning-Based Skin Cancer Detection Tool, available at: https://github.com/Thomasbehan/SkinVestigatorAI", 2024.
+"LesNet: A Deep Learning-Based Skin Cancer Detection Tool, available at: https://github.com/Thomasbehan/LesNet", 2024.
 
 ## Disclaimer
-SkinVestigatorAI is not intended for clinical diagnosis or medical use. It is a research tool aimed at fostering developments in the field of automated skin lesion analysis. Always consult a qualified healthcare provider for medical advice and diagnosis.
+LesNet is not intended for clinical diagnosis or medical use. It is a research tool aimed at fostering developments in the field of automated skin lesion analysis. Always consult a qualified healthcare provider for medical advice and diagnosis.
 

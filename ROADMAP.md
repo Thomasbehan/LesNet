@@ -15,12 +15,12 @@ This development roadmap is designed to iteratively enhance capabilities, focusi
 
 ### M3: Expanded Dataset
 - **Objective:** Further increase the dataset size to improve the model's ability to generalize and accurately identify skin cancer from a wider variety of images.
-- **Dataset:** 52,379 images, 28 Categories
+- **Dataset:** 837,628 images, 30 Categories
 - **Focus:** Target substantial improvements in model performance, particularly in handling diverse and challenging cases.
 
 ### M4: Advanced Features and Security
 - **Objective:** Implement a new Duel model approach one model processing images and the other a natural language model processing a contextual conversational about these images. 
-- **Dataset:** 200k~ Images, TBD
+- **Dataset:** 1M~ Images, TBD Categories
 - **Focus:** Focusing on improving the model with a bigger improved dataset, natural language capabilities and moving to a duel model approach.
 
 ### M5: TBD
