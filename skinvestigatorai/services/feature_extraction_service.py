@@ -35,7 +35,7 @@ class FeatureExtractionService:
             for imgs, _ in data_generator:
                 # Preprocess images to match TFLite input requirements
                 for img in imgs:
-                    img = self.preprocess_image_for_tflite(img)  # Implement this based on your model needs
+                    img = self.preprocess_image_for_tflite(img)
                     img = np.expand_dims(img, axis=0).astype(input_details[0]['dtype'])
                     self.model.set_tensor(input_details[0]['index'], img)
                     self.model.invoke()
@@ -63,8 +63,13 @@ class FeatureExtractionService:
 
     def is_image_similar(self, image, threshold=0.8):
         image_embedding = self.predict_image(image)
+        print("------------------------------------------------")
+        print(self.dataset_embedding)
+        print("------------------------------------------------")
+        print(image_embedding)
         if image_embedding is not None and self.dataset_embedding is not None:
             similarity = np.dot(image_embedding, self.dataset_embedding) / (
                     np.linalg.norm(image_embedding) * np.linalg.norm(self.dataset_embedding))
+            print("SIMILARITY: " + similarity)
             return similarity >= threshold
         return False
