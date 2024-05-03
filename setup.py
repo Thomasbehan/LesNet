@@ -22,7 +22,7 @@ requires = [
     'tensorflow==2.12.0',
     'torch==2.0.0',
     'torchvision==0.15.1',
-    'tqdm==4.65.0',
+    'tqdm==4.66.3',
     'vit-keras==0.1.2',
     'tensorflow_addons==0.20.0',
     'albumentations',
