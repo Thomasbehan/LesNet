@@ -1,6 +1,5 @@
 import os
 
-from tensorboard.plugins.hparams import api as hp
 
 from run_data_scraper import main as DownloadData
 from skinvestigatorai.config.model import ModelConfig
