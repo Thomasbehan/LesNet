@@ -32,7 +32,7 @@ jobs:
           python setup.py install
       - name: Download latest model from GitHub Releases
         run: |
-          curl -L -o models/skinvestigator-sm.tflite https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-sm.tflite
+          curl -L -o models/LesNet.keras https://github.com/Thomasbehan/LesNet/releases/download/3.1.0/LesNet.keras
       - name: Download some data for testing
         run: |
           python commands/run_data_scraper.py -p 2

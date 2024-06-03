@@ -16,7 +16,7 @@ RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
 # Get the latest available model
-RUN curl -L -o models/skinvestigator-sm.tflite https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-sm.tflite
+RUN curl -L -o models/LesNet.keras https://github.com/Thomasbehan/LesNet/releases/download/3.1.0/LesNet.keras
 
 # Add a new user to avoid running the application as root
 RUN useradd -ms /bin/bash appuser

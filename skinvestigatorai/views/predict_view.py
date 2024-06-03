@@ -1,20 +1,14 @@
-import os
-import json
-import numpy as np
-from PIL import Image
-from pyramid.response import Response
-from pyramid.httpexceptions import exception_response
-from pyramid.view import view_config
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
-from tensorflow.lite.python.interpreter import Interpreter
-from skinvestigatorai.services.feature_extraction_service import FeatureExtractionService
 import logging
+import os
+
+from pyramid.view import view_config
+
+from skinvestigatorai.services.inference import Inference
 
 log = logging.getLogger(__name__)
 model_dir = 'models/'
 
-MODEL_TYPE = 'TFLITE'  # Set this to 'H5' or 'TFLite' as needed
+MODEL_TYPE = 'TFLITE'  # Set this to 'KERAS' or 'TFLite' as needed
 
 
 def get_latest_model(model_dir, extension):
@@ -29,84 +23,12 @@ def get_latest_model(model_dir, extension):
     return latest_model
 
 
-def load_model_type(model_type):
-    """
-    Load the latest model based on the provided model type.
-    """
-    if model_type.upper() == 'H5':
-        model_path = get_latest_model(model_dir, '.h5')
-        model = load_model(model_path)
-    elif model_type.upper() == 'TFLITE':
-        model_path = get_latest_model(model_dir, '.tflite')
-        model = Interpreter(model_path)
-    else:
-        raise ValueError(f"Unsupported model type {model_type}. Please choose 'H5' or 'TFLite'.")
-
-    return model
-
-
-model = load_model_type(MODEL_TYPE)
-print('Model loaded. Start serving...')
-
-# Define the class labels
-class_labels = ['benign', 'malignant', 'unknown']
-
-# Initialize the feature extraction service
-feature_service = FeatureExtractionService(model, MODEL_TYPE)
-feature_service.create_feature_extractor()
-
-
 @view_config(route_name='predict', request_method='POST', renderer='json')
 def predict_view(request):
-    # Read the image file from the request
     image_file = request.POST['image'].file
+    inference_service = Inference()
 
-    try:
-        # Open and preprocess the image
-        image = Image.open(image_file).convert('RGB')
-        image = image.resize((128, 128))
-        image_array = img_to_array(image)
-        image_array = image_array / 255.0
-        image_array = np.expand_dims(image_array, axis=0)
-        threshold = 0.65
-
-
-        # Make a prediction
-        if isinstance(model, Interpreter):  # If the model is a TFLite Interpreter
-            model.allocate_tensors()
-            input_details = model.get_input_details()
-            model.set_tensor(input_details[0]['index'], image_array)
-            model.invoke()
-            output_details = model.get_output_details()
-            predictions = model.get_tensor(output_details[0]['index'])
-        else:  # If the model is a full Keras model
-            predictions = model.predict(image_array)
-
-        max_confidence = np.max(predictions)
-
-        # Check if the image is similar based on the highest confidence score
-        if max_confidence < threshold:
-            error_message = """
-                            I'm not too sure about this one?
-                            Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the 
-                            frame while leaving sufficient space around the edges.
-                            """
-            return Response(status=400, body=json.dumps({"error": error_message.strip()}),
-                            content_type='application/json; charset=UTF-8')
-        else:
-            predicted_class = class_labels[np.argmax(predictions)]
-
-            # Return the prediction result
-            return {
-                'prediction': predicted_class,
-                'confidence': float(predictions[0][np.argmax(predictions)]) * 100
-            }
-
-
-
-    except Exception as e:
-        log.exception(e)
-        return exception_response(500)
+    return inference_service.predict(image_file)
 
 
 @view_config(route_name='dashboard', renderer='skinvestigatorai:templates/dashboard.jinja2')
