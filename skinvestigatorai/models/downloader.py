@@ -2,18 +2,11 @@ import os
 import requests
 from tqdm import tqdm
 from urllib.parse import urlparse, unquote
-
-MODEL_DIRECTORY = 'models/'
-MODEL_URLS = {
-    'M-0003':
-        'https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.0.3/skinvestigator_nano_40MB_91_38_acc.h5',
-    'M-0015': 'https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-lg.h5',
-    'M-0015s': 'https://github.com/Thomasbehan/SkinVestigatorAI/releases/download/0.1.5/skinvestigator-sm.tflite',
-}
+from skinvestigatorai.config.model import ModelConfig
 
 
 def downloader(model_name):
-    url = MODEL_URLS.get(model_name)
+    url = ModelConfig.MODEL_URLS.get(model_name)
     if not url:
         print(f"URL for model '{model_name}' not found.")
         return False
@@ -27,10 +20,10 @@ def downloader(model_name):
         total_size_in_bytes = int(response.headers.get('content-length', 0))
         block_size = 1024  # 1 Kilobyte
         progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-        model_path = os.path.join(MODEL_DIRECTORY, filename)
+        model_path = os.path.join(ModelConfig.MODEL_DIRECTORY, filename)
 
-        if not os.path.exists(MODEL_DIRECTORY):
-            os.makedirs(MODEL_DIRECTORY)
+        if not os.path.exists(ModelConfig.MODEL_DIRECTORY):
+            os.makedirs(ModelConfig.MODEL_DIRECTORY)
 
         with open(model_path, 'wb') as file:
             for data in response.iter_content(block_size):

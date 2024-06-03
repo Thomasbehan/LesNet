@@ -29,3 +29,5 @@ test
 *.h5
 **/*.tflite
 *.tflite
+**/*.keras
+*.keras
