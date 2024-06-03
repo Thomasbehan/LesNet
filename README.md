@@ -88,7 +88,7 @@ Here is a list of all the available models you can download using the script:
 * M-0015: Best Model (Legacy).
 * M-0015s: Fastest Model (Legacy)
 * M-0310: Best Model.
-* M-0310s: Efficient Model.
+* M-0310s: Efficient Model. (Coming Soon)
 
 * Example: 
 ```bash
