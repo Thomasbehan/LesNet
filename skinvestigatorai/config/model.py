@@ -30,5 +30,5 @@ class ModelConfig(object):
     MAX_AUG_PER_IMAGE = 5000000
     TRAIN_DIR = 'data/train'
     MODEL_TYPE = "KERAS"
-    MODEL_NAME = "LesNetM31.keras"
+    MODEL_NAME = "LesNet.keras"
     LABELS_NAME = "LesNet_labels.json"
