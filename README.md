@@ -1,10 +1,10 @@
 <img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
 
 # LesNet  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/LesNet?color=232323&label=LesNet&logo=github&labelColor=232323)
-![Precision Score](https://img.shields.io/badge/Precision-94.22%25-darkgreen)
-![Recall Score](https://img.shields.io/badge/Recall-80.43%25-darkgreen)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-86.17%25-darkgreen)
-![Loss Score](https://img.shields.io/badge/Loss-0.4621-blue)
+![Precision Score](https://img.shields.io/badge/Precision-93.35%25-darkgreen)
+![Recall Score](https://img.shields.io/badge/Recall-80.27%25-darkgreen)
+![Accuracy Score](https://img.shields.io/badge/Accuracy-85.40%25-darkgreen)
+![Loss Score](https://img.shields.io/badge/Loss-0.5113-blue)
 ![GitHub license](https://img.shields.io/github/license/Thomasbehan/LesNet) [![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 [![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 
@@ -114,22 +114,21 @@ The `SVModel` model employs a sophisticated deep learning architecture based on 
 To learn more, Visit [the model section of the wiki](https://github.com/Thomasbehan/LesNet/wiki#model)
 
 ## Performance
-The updated model demonstrates significant improvements in its ability to classify skin lesions accurately, achieving an accuracy of 84% and a loss of 0.23 on the testing dataset. The model's sensitivity, specificity, precision, and F1 score have also seen considerable enhancements, with the following scores reported on the testing dataset:
 
-- Recall: 80.43%
-- Precision: 94.22%
-- Accuracy: 86.17%
-- Loss: 0.4621
+- Recall: 80.27%
+- Precision: 93.35%
+- Accuracy: 85.40%
+- Loss: 0.5113
 
 
-### Targets
+### Model 3 Targets
 
-| Metric            | Target Range  | Progress                                                                      |
-|-------------------|---------------|-------------------------------------------------------------------------------|
-| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/94/?scale=0..100&title=progress&suffix=) |
-| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/86/?scale=85..95&title=progress&suffix=) |
-| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/94/?scale=80..90&title=progress&suffix=) |
-| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/80/?scale=85..95&title=progress&suffix=) |
+| Metric            | Target Range  | Progress                                                                       |
+|-------------------|---------------|--------------------------------------------------------------------------------|
+| **Loss**          | Close to 0    | ![Progress](https://progress-bar.dev/51/?scale=0..100&title=progress&suffix=)  |
+| **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/90/?scale=85..95&title=progress&suffix=)  |
+| **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/100/?scale=80..90&title=progress&suffix=) |
+| **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/92/?scale=85..95&title=progress&suffix=)  |
 
 ## Contributing
 contributions to LesNet are welcome! For guidelines on contributing, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
