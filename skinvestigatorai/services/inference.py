@@ -73,7 +73,7 @@ class Inference:
             image_array = img_to_array(image)
             image_array = image_array / 255.0
             image_array = np.expand_dims(image_array, axis=0)
-            threshold = 0.50
+            threshold = 0.5
 
             # Make a prediction
             if isinstance(self.model, Interpreter):
@@ -86,9 +86,13 @@ class Inference:
             else:
                 predictions = self.model.predict(image_array)
 
-            max_confidence = np.max(predictions)
+            print("Predictions: ", predictions)
+            print("Predictions MAXARG: ", np.argmax(predictions))
+            print("Class Labels: ", self.class_labels)
 
-            # Check if the image is similar based on the highest confidence score
+            max_confidence = np.max(predictions)
+            print("Max Confidence:", max_confidence)
+
             if max_confidence < threshold:
                 error_message = """
                                 I'm not too sure about this one?
@@ -98,18 +102,14 @@ class Inference:
                 return Response(status=400, body=json.dumps({"error": error_message.strip()}),
                                 content_type='application/json; charset=UTF-8')
             else:
+                predicted_class_index = np.argmax(predictions)
+                predicted_class = self.class_labels[predicted_class_index]
 
-                print("Predictions: ", predictions)
-                print("Predictions MAXARG: ", np.argmax(predictions))
-                print("Class Labels: ", self.class_labels)
-
-                predicted_class = self.class_labels[np.argmax(predictions)]
-
-                # Return the prediction result
                 return {
                     'prediction': predicted_class,
-                    'confidence': float(predictions[0][np.argmax(predictions)]) * 100
+                    'confidence': float(predictions[0][predicted_class_index]) * 100
                 }
         except Exception as e:
             log.exception(e)
             return HTTPBadRequest(detail=str(e))
+

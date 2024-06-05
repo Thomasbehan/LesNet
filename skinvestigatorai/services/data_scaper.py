@@ -103,10 +103,13 @@ class DataScraper:
                 diagnosis = image['metadata']['clinical'].get('diagnosis', 'unknown')
                 if diagnosis == 'unknown':
                     diagnosis = image['metadata']['clinical'].get('benign_malignant', 'unknown')
+                    if diagnosis == 'unknown':
+                        print(image['metadata']['clinical'])
 
                 if image_url not in failed_downloads:
                     file_path = os.path.join(temp_folder, diagnosis, f"{isic_id}.jpg")
-                    download_tasks.append((image_url, file_path))
+                    if diagnosis not in ['unknown', 'benign', 'malignant', 'other']:
+                        download_tasks.append((image_url, file_path))
 
             with ThreadPoolExecutor(max_workers=200) as executor:
                 future_to_url = {executor.submit(self._download_image, task): task for task in download_tasks}

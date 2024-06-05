@@ -19,19 +19,6 @@
 
                 <!-- Camera output -->
                 <img src="//:0" alt="" id="camera--output">
-
-                <!-- Camera trigger -->
-                <button id="camera--trigger"><span class="material-symbols-outlined">photo_camera</span> Take a picture</button>
-                <button class="bottom-floating--button">
-                 <form class="upload-form" name="UploadForm" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
-                    <div class="custom-file-upload">
-                        <input type="file" name="image" id="image" accept="image/*" onchange="handleFileChange(event)">
-                        <label for="image">
-                            <span class="material-symbols-outlined">upload</span> Upload an Image
-                        </label>
-                    </div>
-                 </form>
-                </button>
             </main>
 	</div>
 	<div class="evaluation__info">
@@ -43,13 +30,23 @@
             <img src="{{ request.static_url('skinvestigatorai:static/loading.gif') }}">
         </div>
 		<div class="results-container">
-            <div id="response-data" class="result"></div>
-            {% if prediction %}
-            <div class="result">
-                <span>{{ confidence|round(2) }}% it is {{ prediction }}</span>
+            <div id="response-data" class="result">
+                <span>Hey &#128075; take a picture or upload an existing photo and I'll see what it could be!</span>
             </div>
-            {% endif %}
         </div>
+
+        <button id="camera--trigger" class="button-margin"><span class="material-symbols-outlined">photo_camera</span> Take a picture</button>
+        <button class="bottom-floating--button button-margin">
+         <form class="upload-form" name="UploadForm" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
+            <div class="custom-file-upload">
+                <input type="file" name="image" id="image" accept="image/*" onchange="handleFileChange(event)">
+                <label for="image">
+                    <span class="material-symbols-outlined">upload</span> Upload an Image
+                </label>
+            </div>
+         </form>
+        </button>
+
 	</div>
 </section>
 
@@ -105,7 +102,7 @@
                     $("#loading").hide();
                     $(".results-container").html(`
                         <div class="result">
-                            <span>${(data.confidence).toFixed(2)}% it is ${data.prediction}</span>
+                            <span>After reviewing this image it looks like it could be ${data.prediction} with a ${(data.confidence).toFixed(2)}% probability.</span>
                         </div>
                     `);
                 },

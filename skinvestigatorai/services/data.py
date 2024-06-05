@@ -123,4 +123,52 @@ class Data:
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
+        # Rescale pixel values (0, 255) to [0, 1]
+        normalization_layer = tf.keras.layers.Rescaling(1. / 255)
+
+        train_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
+        validation_ds = validation_ds.map(lambda x, y: (normalization_layer(x), y))
+
         return train_ds, validation_ds
+
+    def load_support_set(self, support_dir=ModelConfig.SUPPORT_DIR):
+        """Load support set for few-shot learning."""
+        support_ds = tf.keras.preprocessing.image_dataset_from_directory(
+            support_dir,
+            label_mode='categorical',
+            labels='inferred',
+            image_size=self.img_size,
+            batch_size=ModelConfig.BATCH_SIZE
+        )
+
+        support_images = []
+        support_labels = []
+        for images, labels in support_ds:
+            support_images.append(images)
+            support_labels.append(labels)
+
+        support_images = tf.concat(support_images, axis=0)
+        support_labels = tf.concat(support_labels, axis=0)
+
+        return support_images, support_labels
+
+    def load_query_set(self, query_dir=ModelConfig.QUERY_DIR):
+        """Load query set for few-shot learning."""
+        query_ds = tf.keras.preprocessing.image_dataset_from_directory(
+            query_dir,
+            label_mode='categorical',
+            labels='inferred',
+            image_size=self.img_size,
+            batch_size=ModelConfig.BATCH_SIZE
+        )
+
+        query_images = []
+        query_labels = []
+        for images, labels in query_ds:
+            query_images.append(images)
+            query_labels.append(labels)
+
+        query_images = tf.concat(query_images, axis=0)
+        query_labels = tf.concat(query_labels, axis=0)
+
+        return query_images, query_labels

@@ -9,7 +9,7 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 
 requires = [
     'plaster_pastedeploy',
-    'pyserve',
+    'waitress',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
@@ -40,7 +40,7 @@ tests_require = [
 
 setup(
     name='skinvestigatorai',
-    version='3.1.0',
+    version='3.1.1',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
@@ -51,7 +51,7 @@ setup(
     ],
     author='Thomas Behan',
     author_email='https://github.com/Thomasbehan',
-    url='https://skinvestigator.onrender.com/',
+    url='https://lesnet.onrender.com/',
     keywords='web pyramid pylons',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,

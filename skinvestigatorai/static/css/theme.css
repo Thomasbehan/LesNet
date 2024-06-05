@@ -242,7 +242,7 @@ img {
 }
 .result span {
   padding-left: 0.15em;
-  font-size: 2.9em;
+  font-size: 2.0em;
 }
 
 .variant {
@@ -312,19 +312,29 @@ footer a {
 footer a:hover {
   color: #003964;
 }
+.custom-file-upload label {
+    font-size: 16px !important;
+    margin-bottom:0px!important;
+}
+.material-symbols-outlined{
+    font-size:16px!important;
+}
+
+.button-margin {
+    margin-top: 10px;
+}
 
 .bottom-floating--button{
-    width: 200px;
+    width: auto;
     background-color: black;
     color: white;
     font-size: 16px;
     border-radius: 30px;
     border: none;
     font:inherit!important;
-    padding: 15px 20px;
+    padding: 10px 10px;
     text-align: center;
     box-shadow: 0 5px 10px 0 rgba(0,0,0,0.2);
-    position: fixed;
     bottom: 80px;
     left: calc(70% - 100px);
 }

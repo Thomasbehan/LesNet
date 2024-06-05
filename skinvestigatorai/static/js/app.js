@@ -27,6 +27,8 @@ function cameraStart() {
 
 // Take a picture when cameraTrigger is tapped
 cameraTrigger.onclick = function() {
+    cameraSensor.style.display = "none";
+    cameraView.style.display = "block";
     cameraSensor.width = cameraView.videoWidth;
     cameraSensor.height = cameraView.videoHeight;
     const context = cameraSensor.getContext("2d");
@@ -45,7 +47,27 @@ cameraTrigger.onclick = function() {
 function handleFileChange(event) {
     const file = event.target.files[0];
     if (file) {
-        makePrediction(file);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                cameraSensor.width = img.width;
+                cameraSensor.height = img.height;
+                const context = cameraSensor.getContext("2d");
+                context.drawImage(img, 0, 0);
+
+                cameraOutput.src = img.src;
+                cameraOutput.classList.add("taken");
+                cameraSensor.style.display = "block";
+                cameraView.style.display = "none";
+
+                cameraSensor.toBlob(function(blob) {
+                    makePrediction(blob);
+                }, 'image/jpeg');
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 }
 
@@ -66,7 +88,7 @@ function makePrediction(blob) {
     .then(data => {
         loadingElement.style.display = "none";
         if (data.prediction) {
-            resultsContainer.innerHTML = `<span>${data.confidence.toFixed(2)}% it is ${data.prediction}</span>`;
+            resultsContainer.innerHTML = `<span>After reviewing this image it looks like it could be ${data.prediction} with a ${(data.confidence).toFixed(2)}% probability.</span>`;
         } else {
             var errorMessage = "An error occurred while processing the image.";
             if (data.error) {
