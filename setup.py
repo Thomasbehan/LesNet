@@ -9,17 +9,18 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 
 requires = [
     'plaster_pastedeploy',
+    'pyserve',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'waitress',
     'Pillow==10.3.0',
-    'requests==2.31.0',
+    'requests==2.32.2',
     'scipy==1.10.1',
     'sympy==1.12',
-    'tensorboard==2.12.2',
+    'tensorboard==2.16.2',
     'termcolor==2.3.0',
-    'tensorflow==2.12.0',
+    'tensorflow==2.16.1',
     'torch==2.0.0',
     'torchvision==0.15.1',
     'tqdm==4.66.3',
@@ -39,7 +40,7 @@ tests_require = [
 
 setup(
     name='skinvestigatorai',
-    version='3.0.3',
+    version='3.1.0',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
