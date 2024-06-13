@@ -40,7 +40,7 @@ tests_require = [
 
 setup(
     name='skinvestigatorai',
-    version='3.1.1',
+    version='3.2',
     description='SkinVestigatorAI',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
