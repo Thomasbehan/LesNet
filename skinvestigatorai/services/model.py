@@ -89,13 +89,18 @@ class SVModel:
         """
         A bottleneck residual block with optional convolutional shortcut.
         """
-        regularizer = l2(ModelConfig.RB_L2_LAYER_1)
+        regularizer = tf.keras.regularizers.l2(ModelConfig.L2_LAYER_1)
 
         # Shortcut connection
         shortcut = x
         if conv_shortcut:
             shortcut = layers.Conv2D(4 * filters, 1, strides=stride, kernel_regularizer=regularizer)(x)
             shortcut = layers.BatchNormalization()(shortcut)
+        else:
+            if stride != 1 or x.shape[-1] != 4 * filters:
+                shortcut = layers.Conv2D(4 * filters, 1, strides=stride, use_bias=False,
+                                         kernel_regularizer=regularizer)(x)
+                shortcut = layers.BatchNormalization()(shortcut)
 
         # Pre-activation block
         x = layers.BatchNormalization()(x)
