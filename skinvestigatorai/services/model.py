@@ -13,6 +13,7 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
 from tensorflow import keras
+from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Reshape, multiply
@@ -31,7 +32,7 @@ class SVModel:
         self.dataset_embedding = None
         self.log_dir = ModelConfig.LOG_DIR
         self.img_size = ModelConfig.IMG_SIZE
-        self.optimizer = Adam(ModelConfig.LEARNING_RATE)
+        self.optimizer = SGD(learning_rate=ModelConfig.LEARNING_RATE, momentum=ModelConfig.MOMENTUM)  # Changed to SGD with momentum
         self.support_set = None  # Few-shot learning support set
         self.query_set = None  # Few-shot learning query set
 

@@ -14,7 +14,8 @@ class ModelConfig(object):
     LOG_DIR = "logs"
     IMG_SIZE = (160, 160)
     BATCH_SIZE = 32
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.1
+    MOMENTUM = 0.9
     CONV_LAYER_1 = 64
     BN_LAYER_1 = 64
     BN_LAYER_2 = 128
@@ -31,7 +32,7 @@ class ModelConfig(object):
     AUG_TOTAL = 50000
     CATEGORIES = 27
     EPOCHS = 100
-    MIN_LR = 1e-6
+    MIN_LR = 0.00001
     MIN_LR_DELTA = 1e-4
     LR_PATIENCE = 5
     LR_COOLDOWN = 3
