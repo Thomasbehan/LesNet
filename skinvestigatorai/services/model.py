@@ -2,8 +2,18 @@ import datetime
 import itertools
 import json
 import os
+
 import numpy as np
 import tensorflow as tf
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
 import tensorflow_model_optimization as tfmot
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
@@ -17,6 +27,7 @@ from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import mixed_precision
 from skinvestigatorai.config.model import ModelConfig
+
 
 class SVModel:
     def __init__(self, model=None, model_type=ModelConfig.MODEL_TYPE):
@@ -38,7 +49,9 @@ class SVModel:
         def focal_loss_fixed(y_true, y_pred):
             pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
             pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
-            return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(pt_1)) - K.sum((1 - alpha) * K.pow(pt_0, gamma) * K.log(1. - pt_0))
+            return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(pt_1)) - K.sum(
+                (1 - alpha) * K.pow(pt_0, gamma) * K.log(1. - pt_0))
+
         return focal_loss_fixed
 
     def f1_score(self, y_true, y_pred):
@@ -47,12 +60,12 @@ class SVModel:
         predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
         precision = true_positives / (predicted_positives + K.epsilon())
         recall = true_positives / (possible_positives + K.epsilon())
-        f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
+        f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
         return f1_val
 
     def specificity(self, y_true, y_pred):
-        true_negatives = K.sum(K.round(K.clip((1-y_true) * (1-y_pred), 0, 1)))
-        possible_negatives = K.sum(K.round(K.clip(1-y_true, 0, 1)))
+        true_negatives = K.sum(K.round(K.clip((1 - y_true) * (1 - y_pred), 0, 1)))
+        possible_negatives = K.sum(K.round(K.clip(1 - y_true, 0, 1)))
         return true_negatives / (possible_negatives + K.epsilon())
 
     def create_feature_extractor(self):
@@ -323,7 +336,8 @@ class SVModel:
 
         lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
 
-        return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback, lr_scheduler]
+        return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback,
+                lr_scheduler]
 
     def train_model(self, train_generator, val_generator, support_set=None, query_set=None, epochs=ModelConfig.EPOCHS,
                     patience_lr=ModelConfig.LR_PATIENCE, patience_es=ModelConfig.ES_PATIENCE,
