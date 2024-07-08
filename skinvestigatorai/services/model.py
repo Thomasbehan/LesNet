@@ -115,67 +115,78 @@ class SVModel:
         se = Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(se)
         return multiply([input_tensor, se])
 
-    def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True, multiplier=1):
-        regularizer = tf.keras.regularizers.l2(ModelConfig.L2_LAYER_1)
-        shortcut = x
-        if conv_shortcut:
-            shortcut = layers.Conv2D(multiplier * filters, 1, strides=stride, kernel_regularizer=regularizer)(x)
-            shortcut = layers.BatchNormalization()(shortcut)
-        else:
-            if stride != 1 or x.shape[-1] != multiplier * filters:
-                shortcut = layers.Conv2D(multiplier * filters, 1, strides=stride, use_bias=False,
-                                         kernel_regularizer=regularizer)(x)
-                shortcut = layers.BatchNormalization()(shortcut)
+    def mbconv_block(self, x, filters, kernel_size, inputs, strides=1, expansion_factor=6, se_ratio=0.25, drop_rate=0.2):
+        regularizer = l2(ModelConfig.L2_LAYER_1)
+        input_channels = x.shape[-1]
+        expanded_channels = input_channels * expansion_factor
 
+        # Expansion phase
+        if expansion_factor != 1:
+            x = layers.Conv2D(expanded_channels, 1, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.ReLU()(x)
+
+        # Depthwise convolution
+        x = layers.DepthwiseConv2D(kernel_size, strides=strides, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-        x = layers.Conv2D(filters, 1, strides=1, use_bias=False, kernel_regularizer=regularizer)(x)
+
+        # Squeeze and Excitation
+        if se_ratio:
+            se = layers.GlobalAveragePooling2D()(x)
+            se = layers.Reshape((1, 1, expanded_channels))(se)
+            se = layers.Conv2D(expanded_channels * se_ratio, 1, activation='relu', kernel_regularizer=regularizer)(se)
+            se = layers.Conv2D(expanded_channels, 1, activation='sigmoid', kernel_regularizer=regularizer)(se)
+            x = layers.Multiply()([x, se])
+
+        # Output phase
+        x = layers.Conv2D(filters, 1, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
         x = layers.BatchNormalization()(x)
-        x = layers.ReLU()(x)
-        x = layers.Conv2D(filters, 3, strides=stride, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.ReLU()(x)
-        x = layers.Conv2D(multiplier * filters, 1, strides=1, kernel_regularizer=regularizer)(x)
-        x = layers.add([shortcut, x])
+
+        # Residual connection and dropout
+        if strides == 1 and input_channels == filters:
+            if drop_rate > 0:
+                x = layers.Dropout(drop_rate)(x)
+            x = layers.Add()([x, inputs])
+
         return x
 
     def build_model(self, input_shape, num_classes):
         regularizer = l2(ModelConfig.L2_LAYER_1)
-        inputs = keras.Input(shape=input_shape)
-        x = layers.Conv2D(ModelConfig.CONV_LAYER_1, 7, strides=2, padding='same', use_bias=False,
-                          kernel_regularizer=regularizer)(inputs)
+        inputs = tf.keras.Input(shape=input_shape)
+
+        # Stem
+        x = layers.Conv2D(ModelConfig.CONV_LAYER_1, 3, strides=2, padding='same', use_bias=False, kernel_regularizer=regularizer)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-        x = layers.MaxPooling2D(3, strides=2, padding='same')(x)
 
+        # Stages with MBConv blocks
         for _ in range(ModelConfig.STAGE_1_LAYERS):
-            x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_1, conv_shortcut=False)
-        x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_2, stride=2)
+            x = self.mbconv_block(x, ModelConfig.BN_LAYER_1, 3, inputs, expansion_factor=1)
         for _ in range(ModelConfig.STAGE_2_LAYERS):
-            x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_2, conv_shortcut=False)
-        x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_3, stride=2)
+            x = self.mbconv_block(x, ModelConfig.BN_LAYER_2, 3, inputs, strides=2)
         for _ in range(ModelConfig.STAGE_3_LAYERS):
-            x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_3, conv_shortcut=False)
-        x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_4, stride=2)
+            x = self.mbconv_block(x, ModelConfig.BN_LAYER_3, 5, inputs, strides=2)
         for _ in range(ModelConfig.STAGE_4_LAYERS):
-            x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_4, conv_shortcut=False)
+            x = self.mbconv_block(x, ModelConfig.BN_LAYER_4, 3, inputs, strides=2)
 
+        # Head
+        x = layers.Conv2D(1280, 1, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         x = layers.GlobalAveragePooling2D()(x)
         if ModelConfig.DROPOUT_1 > 0:
             x = layers.Dropout(ModelConfig.DROPOUT_1)(x)
-        outputs = layers.Dense(num_classes, activation='softmax', kernel_regularizer=l2(ModelConfig.L2_LAYER_1))(x)
+        outputs = layers.Dense(num_classes, activation='softmax', kernel_regularizer=regularizer)(x)
 
         self.model = Model(inputs, outputs)
         self.model.compile(
             optimizer=self.optimizer,
             loss=self.focal_loss(),
-            metrics=['accuracy', Precision(), Recall(), tf.keras.metrics.AUC(), self.f1_score, self.specificity]
+            metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), tf.keras.metrics.AUC(), self.f1_score, self.specificity]
         )
         self.model.summary()
         return self.model
-
     def compute_class_weights(self, class_series):
         if len(class_series) == 0:
             raise ValueError("class_series is empty")
