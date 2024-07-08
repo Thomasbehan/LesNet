@@ -141,6 +141,7 @@ def create_vit_model():
 
 # Create and compile the model
 model = create_vit_model()
+model.summary()
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -149,6 +150,7 @@ model.compile(
         tf.keras.metrics.Recall(name="recall", class_id=1),  # Assuming positive class is 1
     ],
 )
+
 
 # Train the model
 history = model.fit(
