@@ -60,24 +60,33 @@ class VisionTransformer(tf.keras.Model):
 
         self.patch_size = 16
         self.num_patches = (224 // self.patch_size) ** 2
-        self.projection = layers.Dense(d_model)
 
-        self.cls_token = self.add_weight("cls_token", shape=[1, 1, d_model])
-        self.position_embedding = self.add_weight("position_embedding", shape=[1, self.num_patches + 1, d_model])
+        # Define projection layer for patches
+        self.projection = layers.Dense(units=d_model, name="projection")
 
-        self.transformer_blocks = [
-            layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model) for _ in range(num_layers)
-        ]
+        # Initialize class token and position embeddings
+        self.cls_token = self.add_weight(shape=(1, 1, d_model), initializer="random_normal", trainable=True,
+                                         name="cls_token")
+        self.position_embedding = self.add_weight(shape=(1, self.num_patches + 1, d_model), initializer="random_normal",
+                                                  trainable=True, name="position_embedding")
 
-        self.mlp_head = keras.Sequential([
+        # Transformer blocks
+        self.transformer_blocks = []
+        for _ in range(num_layers):
+            self.transformer_blocks.append(layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model))
+
+        # MLP head for classification
+        self.mlp_head = tf.keras.Sequential([
             layers.LayerNormalization(epsilon=1e-6),
-            layers.Dense(mlp_dim, activation='relu'),
-            layers.Dropout(dropout),
-            layers.Dense(num_classes)
+            layers.Dense(units=mlp_dim, activation="relu"),
+            layers.Dropout(rate=dropout),
+            layers.Dense(units=num_classes, name="output")
         ])
 
     def call(self, inputs):
         batch_size = tf.shape(inputs)[0]
+
+        # Extract patches from images
         patches = tf.image.extract_patches(
             images=inputs,
             sizes=[1, self.patch_size, self.patch_size, 1],
@@ -85,18 +94,30 @@ class VisionTransformer(tf.keras.Model):
             rates=[1, 1, 1, 1],
             padding='VALID'
         )
+
+        # Reshape patches for projection
         patches = tf.reshape(patches, [batch_size, self.num_patches, -1])
+
+        # Project patches to d_model dimension
         x = self.projection(patches)
 
+        # Add class token to the beginning of sequence
         cls_tokens = tf.broadcast_to(self.cls_token, [batch_size, 1, self.d_model])
         x = tf.concat([cls_tokens, x], axis=1)
+
+        # Add position embeddings
         x += self.position_embedding
 
+        # Transformer blocks
         for block in self.transformer_blocks:
-            x = block(x, x)
+            x = block(x, x)  # Self-attention mechanism
 
+        # Extract class token for classification
         cls_token_final = x[:, 0]
+
+        # MLP head for classification
         output = self.mlp_head(cls_token_final)
+
         return output
 
 
