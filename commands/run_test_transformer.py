@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
-
+import tensorflow_addons as tfa
 # Set random seed for reproducibility
 tf.random.set_seed(42)
 np.random.seed(42)
@@ -19,6 +19,15 @@ EPOCHS = 50
 LEARNING_RATE = 3e-4
 AUTO = tf.data.AUTOTUNE
 
+
+def focal_loss(gamma=2., alpha=.25):
+    def loss(y_true, y_pred):
+        return tfa.losses.SigmoidFocalCrossEntropy(
+            alpha=alpha,
+            gamma=gamma,
+            reduction=tf.keras.losses.Reduction.AUTO
+        )(y_true, y_pred)
+    return loss
 
 # Load and preprocess data
 def parse_image(filename, label):
@@ -144,7 +153,7 @@ model = create_vit_model()
 model.summary()
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    loss=focal_loss(gamma=2., alpha=.25),
     metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
         tf.keras.metrics.Recall(name="recall", class_id=1),  # Assuming positive class is 1
