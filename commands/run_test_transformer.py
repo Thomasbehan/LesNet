@@ -11,7 +11,7 @@ IMAGE_SIZE = 224
 PATCH_SIZE = 16
 NUM_PATCHES = (IMAGE_SIZE // PATCH_SIZE) ** 2
 PROJECTION_DIM = 64
-NUM_HEADS = 16
+NUM_HEADS = 8
 TRANSFORMER_LAYERS = 42
 MLP_UNITS = [PROJECTION_DIM * 2, PROJECTION_DIM]
 BATCH_SIZE = 26
@@ -130,10 +130,10 @@ def create_vit_model():
 
     representation = tf.keras.layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
     representation = tf.keras.layers.Flatten()(representation)
-    representation = tf.keras.layers.Dropout(0.5)(representation)
+    representation = tf.keras.layers.Dropout(0.2)(representation)
 
     features = tf.keras.layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(representation)
-    features = tf.keras.layers.Dropout(0.5)(features)
+    features = tf.keras.layers.Dropout(0.2)(features)
     logits = tf.keras.layers.Dense(num_classes)(features)
 
     return tf.keras.Model(inputs=inputs, outputs=logits)
@@ -147,7 +147,7 @@ model.compile(
     loss=tf.keras.losses.CategoricalFocalCrossentropy(from_logits=True),
     metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
-        tf.keras.metrics.Recall(name="recall", class_id=1),  # Assuming positive class is 1
+        tf.keras.metrics.Recall(name="recall"),
     ],
 )
 
@@ -160,7 +160,7 @@ history = model.fit(
     callbacks=[
         tf.keras.callbacks.EarlyStopping(
             monitor="val_recall",
-            patience=10,
+            patience=20,
             restore_best_weights=True,
         ),
     ],
