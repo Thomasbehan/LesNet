@@ -100,7 +100,7 @@ class VisionTransformer(tf.keras.Model):
 
 # Instantiate the Vision Transformer model
 num_classes = len(train_dataset.class_names)
-model = VisionTransformer(num_classes=num_classes, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
+model = VisionTransformer(num_classes=27, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
 
 # Calculate class weights
 y_train = np.concatenate([y for x, y in train_dataset], axis=0)
