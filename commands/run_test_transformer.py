@@ -1,170 +1,162 @@
-import os
-
-import matplotlib.pyplot as plt
-import numpy as np
 import tensorflow as tf
-from sklearn.utils import class_weight
-from tensorflow import keras
+import numpy as np
+import os
 from tensorflow.keras import layers
 
-# Define the path to your dataset
-train_dir = 'data/train'
+# Set random seed for reproducibility
+tf.random.set_seed(42)
+np.random.seed(42)
 
-# Load training data
-train_dataset = tf.keras.utils.image_dataset_from_directory(
-    train_dir,
-    image_size=(224, 224),  # Resize images to 224x224
-    batch_size=32,
-    label_mode='int'
-)
+# Hyperparameters
+IMAGE_SIZE = 224
+PATCH_SIZE = 16
+NUM_PATCHES = (IMAGE_SIZE // PATCH_SIZE) ** 2
+PROJECTION_DIM = 64
+NUM_HEADS = 8
+TRANSFORMER_LAYERS = 8
+MLP_UNITS = [PROJECTION_DIM * 2, PROJECTION_DIM]
+BATCH_SIZE = 32
+EPOCHS = 50
+LEARNING_RATE = 3e-4
 
-# Split the dataset into training and validation sets
-val_size = int(0.2 * len(train_dataset))
-train_dataset = train_dataset.skip(val_size)
-val_dataset = train_dataset.take(val_size)
+
+# Load and preprocess data
+def load_data(data_dir):
+    image_data = []
+    labels = []
+    class_names = os.listdir(data_dir)
+
+    for class_name in class_names:
+        class_dir = os.path.join(data_dir, class_name)
+        for img_name in os.listdir(class_dir):
+            img_path = os.path.join(class_dir, img_name)
+            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(IMAGE_SIZE, IMAGE_SIZE))
+            img = tf.keras.preprocessing.image.img_to_array(img)
+            image_data.append(img)
+            labels.append(class_names.index(class_name))
+
+    return np.array(image_data), np.array(labels), class_names
+
+
+# Load the data
+data_dir = "data/train"
+images, labels, class_names = load_data(data_dir)
+num_classes = len(class_names)
+
+# Split the data
+train_split = 0.8
+num_samples = len(images)
+num_train = int(num_samples * train_split)
+
+x_train, x_val = images[:num_train], images[num_train:]
+y_train, y_val = labels[:num_train], labels[num_train:]
 
 # Data augmentation
-data_augmentation = keras.Sequential([
-    layers.RandomFlip("horizontal_and_vertical"),
+data_augmentation = tf.keras.Sequential([
+    layers.RandomFlip("horizontal"),
     layers.RandomRotation(0.2),
+    layers.RandomZoom(0.2),
 ])
 
-# Preprocess inputs for the model
-preprocess_input = tf.keras.applications.resnet50.preprocess_input
 
+# Patch extraction layer
+class PatchExtractor(layers.Layer):
+    def __init__(self, patch_size, **kwargs):
+        super().__init__(**kwargs)
+        self.patch_size = patch_size
 
-# Apply the preprocessing and data augmentation
-def preprocess(image, label):
-    image = preprocess_input(image)
-    image = data_augmentation(image)
-    return image, label
-
-
-train_dataset = train_dataset.map(preprocess)
-val_dataset = val_dataset.map(preprocess)
-
-# Prefetch data for performance
-train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-
-
-class VisionTransformer(tf.keras.Model):
-    def __init__(self, num_classes, num_layers, d_model, num_heads, mlp_dim, dropout=0.1):
-        super(VisionTransformer, self).__init__()
-        self.num_classes = num_classes
-        self.num_layers = num_layers
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.mlp_dim = mlp_dim
-        self.dropout = dropout
-
-        self.patch_size = 16
-        self.num_patches = (224 // self.patch_size) ** 2
-
-        # Define projection layer for patches
-        self.projection = layers.Dense(units=d_model, name="projection")
-
-        # Initialize class token and position embeddings
-        self.cls_token = self.add_weight(shape=(1, 1, d_model), initializer="random_normal", trainable=True,
-                                         name="cls_token")
-        self.position_embedding = self.add_weight(shape=(1, self.num_patches + 1, d_model), initializer="random_normal",
-                                                  trainable=True, name="position_embedding")
-
-        # Transformer blocks
-        self.transformer_blocks = []
-        for _ in range(num_layers):
-            self.transformer_blocks.append(layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model))
-
-        # MLP head for classification
-        self.mlp_head = tf.keras.Sequential([
-            layers.LayerNormalization(epsilon=1e-6),
-            layers.Dense(units=mlp_dim, activation="relu"),
-            layers.Dropout(rate=dropout),
-            layers.Dense(units=num_classes, name="output")
-        ])
-
-    def call(self, inputs, training=False):
-        batch_size = tf.shape(inputs)[0]
-        print(batch_size)
-        exit()
-        # Extract patches from images
+    def call(self, images):
+        batch_size = tf.shape(images)[0]
         patches = tf.image.extract_patches(
-            images=inputs,
+            images=images,
             sizes=[1, self.patch_size, self.patch_size, 1],
             strides=[1, self.patch_size, self.patch_size, 1],
             rates=[1, 1, 1, 1],
-            padding='VALID'
+            padding="VALID",
+        )
+        patch_dims = patches.shape[-1]
+        patches = tf.reshape(patches, [batch_size, -1, patch_dims])
+        return patches
+
+
+# Patch encoding layer
+class PatchEncoder(layers.Layer):
+    def __init__(self, num_patches, projection_dim, **kwargs):
+        super().__init__(**kwargs)
+        self.num_patches = num_patches
+        self.projection = layers.Dense(units=projection_dim)
+        self.position_embedding = layers.Embedding(
+            input_dim=num_patches, output_dim=projection_dim
         )
 
-        # Reshape patches for projection
-        patches = tf.reshape(patches, [batch_size, self.num_patches, -1])
-
-        # Project patches to d_model dimension
-        x = self.projection(patches)
-
-        # Add class token to the beginning of sequence
-        cls_tokens = tf.broadcast_to(self.cls_token, [batch_size, 1, self.d_model])
-        x = tf.concat([cls_tokens, x], axis=1)
-
-        # Add position embeddings
-        x += self.position_embedding
-
-        # Transformer blocks
-        for block in self.transformer_blocks:
-            x = block(x, x)  # Self-attention mechanism
-
-        # Extract class token for classification
-        cls_token_final = x[:, 0]
-
-        # MLP head for classification
-        output = self.mlp_head(cls_token_final)
-
-        return output
+    def call(self, patch):
+        positions = tf.range(start=0, limit=self.num_patches, delta=1)
+        encoded = self.projection(patch) + self.position_embedding(positions)
+        return encoded
 
 
-# Instantiate the Vision Transformer model
-# Get the list of all directories (classes) in the train_dir
-classes = os.listdir(train_dir)
+# Build the ViT model
+def create_vit_model():
+    inputs = layers.Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
+    augmented = data_augmentation(inputs)
+    patches = PatchExtractor(PATCH_SIZE)(augmented)
+    encoded_patches = PatchEncoder(NUM_PATCHES, PROJECTION_DIM)(patches)
 
-# Count the number of classes (folders)
-num_classes = len(classes)
-model = VisionTransformer(num_classes=num_classes, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
+    for _ in range(TRANSFORMER_LAYERS):
+        x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+        attention_output = layers.MultiHeadAttention(
+            num_heads=NUM_HEADS, key_dim=PROJECTION_DIM, dropout=0.1
+        )(x1, x1)
+        x2 = layers.Add()([attention_output, encoded_patches])
+        x3 = layers.LayerNormalization(epsilon=1e-6)(x2)
+        x3 = layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(x3)
+        x3 = layers.Dropout(0.1)(x3)
+        x3 = layers.Dense(MLP_UNITS[1], activation=tf.nn.gelu)(x3)
+        x3 = layers.Dropout(0.1)(x3)
+        encoded_patches = layers.Add()([x3, x2])
 
-# Calculate class weights
-y_train = np.concatenate([y for x, y in train_dataset], axis=0)
-class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-class_weights = {i: class_weights[i] for i in range(len(class_weights))}
+    representation = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+    representation = layers.Flatten()(representation)
+    representation = layers.Dropout(0.5)(representation)
 
-# Compile the model
+    features = layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(representation)
+    features = layers.Dropout(0.5)(features)
+    logits = layers.Dense(num_classes)(features)
+
+    return tf.keras.Model(inputs=inputs, outputs=logits)
+
+
+# Create and compile the model
+model = create_vit_model()
 model.compile(
-    optimizer=keras.optimizers.Adam(learning_rate=1e-4),
-    loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    metrics=[keras.metrics.SparseCategoricalAccuracy()]
+    optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=[
+        tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
+        tf.keras.metrics.Recall(name="recall"),
+    ],
 )
 
 # Train the model
 history = model.fit(
-    train_dataset,
-    validation_data=val_dataset,
-    epochs=50,
-    class_weight=class_weights
+    x_train,
+    y_train,
+    batch_size=BATCH_SIZE,
+    epochs=EPOCHS,
+    validation_data=(x_val, y_val),
+    callbacks=[
+        tf.keras.callbacks.EarlyStopping(
+            monitor="val_recall",
+            patience=10,
+            restore_best_weights=True,
+        ),
+    ],
 )
 
 # Evaluate the model
-val_loss, val_accuracy = model.evaluate(val_dataset)
-print(f'Validation loss: {val_loss}')
-print(f'Validation accuracy: {val_accuracy}')
+test_loss, test_accuracy, test_recall = model.evaluate(x_val, y_val)
+print(f"Test accuracy: {test_accuracy:.4f}")
+print(f"Test recall: {test_recall:.4f}")
 
-# Plot training history
-plt.figure(figsize=(12, 4))
-plt.subplot(1, 2, 1)
-plt.plot(history.history['loss'], label='train_loss')
-plt.plot(history.history['val_loss'], label='val_loss')
-plt.legend()
-plt.title('Loss')
-plt.subplot(1, 2, 2)
-plt.plot(history.history['sparse_categorical_accuracy'], label='train_accuracy')
-plt.plot(history.history['val_sparse_categorical_accuracy'], label='val_accuracy')
-plt.legend()
-plt.title('Accuracy')
-plt.show()
+# Save the model
+model.save("skin_lesion_classifier.h5")
