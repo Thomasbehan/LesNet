@@ -159,4 +159,4 @@ print(f"Test accuracy: {test_accuracy:.4f}")
 print(f"Test recall: {test_recall:.4f}")
 
 # Save the model
-model.save("skin_lesion_classifier.h5")
+model.save("lesnet.h5")
