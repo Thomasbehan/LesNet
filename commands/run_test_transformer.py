@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 train_dir = 'data/train'
 
 # Load training data
-train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+train_dataset = tf.keras.utils.image_dataset_from_directory(
     train_dir,
     image_size=(224, 224),  # Resize images to 224x224
     batch_size=32,
@@ -24,13 +24,12 @@ val_dataset = train_dataset.take(val_size)
 
 # Data augmentation
 data_augmentation = keras.Sequential([
-    layers.preprocessing.RandomFlip("horizontal_and_vertical"),
-    layers.preprocessing.RandomRotation(0.2),
+    layers.RandomFlip("horizontal_and_vertical"),
+    layers.RandomRotation(0.2),
 ])
 
 # Preprocess inputs for the model
 preprocess_input = tf.keras.applications.resnet50.preprocess_input
-
 
 # Apply the preprocessing and data augmentation
 def preprocess(image, label):
@@ -38,13 +37,13 @@ def preprocess(image, label):
     image = data_augmentation(image)
     return image, label
 
-
 train_dataset = train_dataset.map(preprocess)
 val_dataset = val_dataset.map(preprocess)
 
 # Prefetch data for performance
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
 val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+
 
 
 class VisionTransformer(tf.keras.Model):
