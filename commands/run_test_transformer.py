@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import os
-from tensorflow.keras import layers
 
 # Set random seed for reproducibility
 tf.random.set_seed(42)
@@ -18,49 +17,57 @@ MLP_UNITS = [PROJECTION_DIM * 2, PROJECTION_DIM]
 BATCH_SIZE = 32
 EPOCHS = 50
 LEARNING_RATE = 3e-4
+AUTO = tf.data.AUTOTUNE
 
 
 # Load and preprocess data
-def load_data(data_dir):
-    image_data = []
-    labels = []
-    class_names = os.listdir(data_dir)
+def parse_image(filename, label):
+    image = tf.io.read_file(filename)
+    image = tf.image.decode_jpeg(image, channels=3)
+    image = tf.image.resize(image, [IMAGE_SIZE, IMAGE_SIZE])
+    image = tf.cast(image, tf.float32) / 255.0
+    return image, label
 
-    for class_name in class_names:
-        class_dir = os.path.join(data_dir, class_name)
-        for img_name in os.listdir(class_dir):
-            img_path = os.path.join(class_dir, img_name)
-            img = tf.keras.preprocessing.image.load_img(img_path, target_size=(IMAGE_SIZE, IMAGE_SIZE))
-            img = tf.keras.preprocessing.image.img_to_array(img)
-            image_data.append(img)
-            labels.append(class_names.index(class_name))
 
-    return np.array(image_data), np.array(labels), class_names
+def create_dataset(data_dir, batch_size):
+    dataset = tf.data.Dataset.list_files(data_dir + "/*/*.jpg", shuffle=True)
+    class_names = np.array(sorted([item.name for item in os.scandir(data_dir) if item.is_dir()]))
+    label_to_index = dict((name, index) for index, name in enumerate(class_names))
+
+    def get_label(file_path):
+        parts = tf.strings.split(file_path, os.path.sep)
+        return label_to_index[parts[-2]]
+
+    dataset = dataset.map(lambda x: (x, get_label(x)))
+    dataset = dataset.map(parse_image, num_parallel_calls=AUTO)
+    dataset = dataset.cache()
+    dataset = dataset.shuffle(buffer_size=1000)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.prefetch(AUTO)
+    return dataset, len(class_names)
 
 
 # Load the data
 data_dir = "data/train"
-images, labels, class_names = load_data(data_dir)
-num_classes = len(class_names)
+train_dataset, num_classes = create_dataset(data_dir, BATCH_SIZE)
 
-# Split the data
-train_split = 0.8
-num_samples = len(images)
-num_train = int(num_samples * train_split)
+# Split the dataset into train and validation
+train_size = int(0.8 * tf.data.experimental.cardinality(train_dataset).numpy())
+val_size = tf.data.experimental.cardinality(train_dataset).numpy() - train_size
 
-x_train, x_val = images[:num_train], images[num_train:]
-y_train, y_val = labels[:num_train], labels[num_train:]
+train_dataset = train_dataset.take(train_size)
+val_dataset = train_dataset.skip(train_size)
 
 # Data augmentation
 data_augmentation = tf.keras.Sequential([
-    layers.RandomFlip("horizontal"),
-    layers.RandomRotation(0.2),
-    layers.RandomZoom(0.2),
+    tf.keras.layers.RandomFlip("horizontal"),
+    tf.keras.layers.RandomRotation(0.2),
+    tf.keras.layers.RandomZoom(0.2),
 ])
 
 
 # Patch extraction layer
-class PatchExtractor(layers.Layer):
+class PatchExtractor(tf.keras.layers.Layer):
     def __init__(self, patch_size, **kwargs):
         super().__init__(**kwargs)
         self.patch_size = patch_size
@@ -80,12 +87,12 @@ class PatchExtractor(layers.Layer):
 
 
 # Patch encoding layer
-class PatchEncoder(layers.Layer):
+class PatchEncoder(tf.keras.layers.Layer):
     def __init__(self, num_patches, projection_dim, **kwargs):
         super().__init__(**kwargs)
         self.num_patches = num_patches
-        self.projection = layers.Dense(units=projection_dim)
-        self.position_embedding = layers.Embedding(
+        self.projection = tf.keras.layers.Dense(units=projection_dim)
+        self.position_embedding = tf.keras.layers.Embedding(
             input_dim=num_patches, output_dim=projection_dim
         )
 
@@ -97,31 +104,31 @@ class PatchEncoder(layers.Layer):
 
 # Build the ViT model
 def create_vit_model():
-    inputs = layers.Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
+    inputs = tf.keras.layers.Input(shape=(IMAGE_SIZE, IMAGE_SIZE, 3))
     augmented = data_augmentation(inputs)
     patches = PatchExtractor(PATCH_SIZE)(augmented)
     encoded_patches = PatchEncoder(NUM_PATCHES, PROJECTION_DIM)(patches)
 
     for _ in range(TRANSFORMER_LAYERS):
-        x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
-        attention_output = layers.MultiHeadAttention(
+        x1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+        attention_output = tf.keras.layers.MultiHeadAttention(
             num_heads=NUM_HEADS, key_dim=PROJECTION_DIM, dropout=0.1
         )(x1, x1)
-        x2 = layers.Add()([attention_output, encoded_patches])
-        x3 = layers.LayerNormalization(epsilon=1e-6)(x2)
-        x3 = layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(x3)
-        x3 = layers.Dropout(0.1)(x3)
-        x3 = layers.Dense(MLP_UNITS[1], activation=tf.nn.gelu)(x3)
-        x3 = layers.Dropout(0.1)(x3)
-        encoded_patches = layers.Add()([x3, x2])
+        x2 = tf.keras.layers.Add()([attention_output, encoded_patches])
+        x3 = tf.keras.layers.LayerNormalization(epsilon=1e-6)(x2)
+        x3 = tf.keras.layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(x3)
+        x3 = tf.keras.layers.Dropout(0.1)(x3)
+        x3 = tf.keras.layers.Dense(MLP_UNITS[1], activation=tf.nn.gelu)(x3)
+        x3 = tf.keras.layers.Dropout(0.1)(x3)
+        encoded_patches = tf.keras.layers.Add()([x3, x2])
 
-    representation = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
-    representation = layers.Flatten()(representation)
-    representation = layers.Dropout(0.5)(representation)
+    representation = tf.keras.layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
+    representation = tf.keras.layers.Flatten()(representation)
+    representation = tf.keras.layers.Dropout(0.5)(representation)
 
-    features = layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(representation)
-    features = layers.Dropout(0.5)(features)
-    logits = layers.Dense(num_classes)(features)
+    features = tf.keras.layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(representation)
+    features = tf.keras.layers.Dropout(0.5)(features)
+    logits = tf.keras.layers.Dense(num_classes)(features)
 
     return tf.keras.Model(inputs=inputs, outputs=logits)
 
@@ -139,11 +146,9 @@ model.compile(
 
 # Train the model
 history = model.fit(
-    x_train,
-    y_train,
-    batch_size=BATCH_SIZE,
+    train_dataset,
     epochs=EPOCHS,
-    validation_data=(x_val, y_val),
+    validation_data=val_dataset,
     callbacks=[
         tf.keras.callbacks.EarlyStopping(
             monitor="val_recall",
@@ -154,9 +159,9 @@ history = model.fit(
 )
 
 # Evaluate the model
-test_loss, test_accuracy, test_recall = model.evaluate(x_val, y_val)
+test_loss, test_accuracy, test_recall = model.evaluate(val_dataset)
 print(f"Test accuracy: {test_accuracy:.4f}")
 print(f"Test recall: {test_recall:.4f}")
 
 # Save the model
-model.save("lesnet.h5")
+model.save("LesNet.h5")
