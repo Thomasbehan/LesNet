@@ -21,10 +21,10 @@ class ModelConfig(object):
     BN_LAYER_2 = 128
     BN_LAYER_3 = 256
     BN_LAYER_4 = 512
-    STAGE_1_LAYERS = 3
-    STAGE_2_LAYERS = 7
-    STAGE_3_LAYERS = 10
-    STAGE_4_LAYERS = 2
+    STAGE_1_LAYERS = 1
+    STAGE_2_LAYERS = 1
+    STAGE_3_LAYERS = 1
+    STAGE_4_LAYERS = 1
     DROPOUT_1 = 0.5
     DROPOUT_2 = 0.5
     RB_L2_LAYER_1 = 0.001
