@@ -24,8 +24,8 @@ val_dataset = train_dataset.take(val_size)
 
 # Data augmentation
 data_augmentation = keras.Sequential([
-    layers.experimental.preprocessing.RandomFlip("horizontal_and_vertical"),
-    layers.experimental.preprocessing.RandomRotation(0.2),
+    layers.preprocessing.RandomFlip("horizontal_and_vertical"),
+    layers.preprocessing.RandomRotation(0.2),
 ])
 
 # Preprocess inputs for the model
