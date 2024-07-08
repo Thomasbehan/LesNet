@@ -8,7 +8,7 @@ np.random.seed(42)
 
 # Hyperparameters
 IMAGE_SIZE = 224
-PATCH_SIZE = 8
+PATCH_SIZE = 12
 NUM_PATCHES = (IMAGE_SIZE // PATCH_SIZE) ** 2
 PROJECTION_DIM = 128
 NUM_HEADS = 8
