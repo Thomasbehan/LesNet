@@ -1,10 +1,11 @@
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
+from sklearn.utils import class_weight
 from tensorflow import keras
 from tensorflow.keras import layers
-import numpy as np
-import os
-from sklearn.utils import class_weight
-import matplotlib.pyplot as plt
 
 # Define the path to your dataset
 train_dir = 'data/train'
@@ -31,11 +32,13 @@ data_augmentation = keras.Sequential([
 # Preprocess inputs for the model
 preprocess_input = tf.keras.applications.resnet50.preprocess_input
 
+
 # Apply the preprocessing and data augmentation
 def preprocess(image, label):
     image = preprocess_input(image)
     image = data_augmentation(image)
     return image, label
+
 
 train_dataset = train_dataset.map(preprocess)
 val_dataset = val_dataset.map(preprocess)
@@ -43,7 +46,6 @@ val_dataset = val_dataset.map(preprocess)
 # Prefetch data for performance
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
 val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
-
 
 
 class VisionTransformer(tf.keras.Model):
@@ -99,8 +101,12 @@ class VisionTransformer(tf.keras.Model):
 
 
 # Instantiate the Vision Transformer model
-num_classes = len(train_dataset.class_names)
-model = VisionTransformer(num_classes=27, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
+# Get the list of all directories (classes) in the train_dir
+classes = os.listdir(train_dir)
+
+# Count the number of classes (folders)
+num_classes = len(classes)
+model = VisionTransformer(num_classes=num_classes, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
 
 # Calculate class weights
 y_train = np.concatenate([y for x, y in train_dataset], axis=0)
