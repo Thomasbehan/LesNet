@@ -1,0 +1,143 @@
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import os
+from sklearn.utils import class_weight
+import matplotlib.pyplot as plt
+
+# Define the path to your dataset
+train_dir = 'data/train'
+
+# Load training data
+train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+    train_dir,
+    image_size=(224, 224),  # Resize images to 224x224
+    batch_size=32,
+    label_mode='int'
+)
+
+# Split the dataset into training and validation sets
+val_size = int(0.2 * len(train_dataset))
+train_dataset = train_dataset.skip(val_size)
+val_dataset = train_dataset.take(val_size)
+
+# Data augmentation
+data_augmentation = keras.Sequential([
+    layers.experimental.preprocessing.RandomFlip("horizontal_and_vertical"),
+    layers.experimental.preprocessing.RandomRotation(0.2),
+])
+
+# Preprocess inputs for the model
+preprocess_input = tf.keras.applications.resnet50.preprocess_input
+
+
+# Apply the preprocessing and data augmentation
+def preprocess(image, label):
+    image = preprocess_input(image)
+    image = data_augmentation(image)
+    return image, label
+
+
+train_dataset = train_dataset.map(preprocess)
+val_dataset = val_dataset.map(preprocess)
+
+# Prefetch data for performance
+train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+val_dataset = val_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+
+
+class VisionTransformer(tf.keras.Model):
+    def __init__(self, num_classes, num_layers, d_model, num_heads, mlp_dim, dropout=0.1):
+        super(VisionTransformer, self).__init__()
+        self.num_classes = num_classes
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.mlp_dim = mlp_dim
+        self.dropout = dropout
+
+        self.patch_size = 16
+        self.num_patches = (224 // self.patch_size) ** 2
+        self.projection = layers.Dense(d_model)
+
+        self.cls_token = self.add_weight("cls_token", shape=[1, 1, d_model])
+        self.position_embedding = self.add_weight("position_embedding", shape=[1, self.num_patches + 1, d_model])
+
+        self.transformer_blocks = [
+            layers.MultiHeadAttention(num_heads=num_heads, key_dim=d_model) for _ in range(num_layers)
+        ]
+
+        self.mlp_head = keras.Sequential([
+            layers.LayerNormalization(epsilon=1e-6),
+            layers.Dense(mlp_dim, activation='relu'),
+            layers.Dropout(dropout),
+            layers.Dense(num_classes)
+        ])
+
+    def call(self, inputs):
+        batch_size = tf.shape(inputs)[0]
+        patches = tf.image.extract_patches(
+            images=inputs,
+            sizes=[1, self.patch_size, self.patch_size, 1],
+            strides=[1, self.patch_size, self.patch_size, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID'
+        )
+        patches = tf.reshape(patches, [batch_size, self.num_patches, -1])
+        x = self.projection(patches)
+
+        cls_tokens = tf.broadcast_to(self.cls_token, [batch_size, 1, self.d_model])
+        x = tf.concat([cls_tokens, x], axis=1)
+        x += self.position_embedding
+
+        for block in self.transformer_blocks:
+            x = block(x, x)
+
+        cls_token_final = x[:, 0]
+        output = self.mlp_head(cls_token_final)
+        return output
+
+
+# Instantiate the Vision Transformer model
+num_classes = len(train_dataset.class_names)
+model = VisionTransformer(num_classes=num_classes, num_layers=8, d_model=64, num_heads=4, mlp_dim=128, dropout=0.1)
+
+# Calculate class weights
+y_train = np.concatenate([y for x, y in train_dataset], axis=0)
+class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+class_weights = {i: class_weights[i] for i in range(len(class_weights))}
+
+# Compile the model
+model.compile(
+    optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+    loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=[keras.metrics.SparseCategoricalAccuracy()]
+)
+
+# Train the model
+history = model.fit(
+    train_dataset,
+    validation_data=val_dataset,
+    epochs=50,
+    class_weight=class_weights
+)
+
+# Evaluate the model
+val_loss, val_accuracy = model.evaluate(val_dataset)
+print(f'Validation loss: {val_loss}')
+print(f'Validation accuracy: {val_accuracy}')
+
+# Plot training history
+plt.figure(figsize=(12, 4))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='train_loss')
+plt.plot(history.history['val_loss'], label='val_loss')
+plt.legend()
+plt.title('Loss')
+plt.subplot(1, 2, 2)
+plt.plot(history.history['sparse_categorical_accuracy'], label='train_accuracy')
+plt.plot(history.history['val_sparse_categorical_accuracy'], label='val_accuracy')
+plt.legend()
+plt.title('Accuracy')
+plt.show()
