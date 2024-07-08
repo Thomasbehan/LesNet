@@ -31,18 +31,12 @@ def parse_image(filename, label):
 
 def create_dataset(data_dir, batch_size):
     dataset = tf.data.Dataset.list_files(data_dir + "/*/*.jpg", shuffle=True)
-    class_names = np.array(sorted([item.name for item in os.scandir(data_dir) if item.is_dir()]))
-    label_to_index = tf.lookup.StaticHashTable(
-        tf.lookup.KeyValueTensorInitializer(
-            tf.constant(class_names),
-            tf.range(len(class_names), dtype=tf.int32)
-        ),
-        default_value=-1
-    )
+    class_names = sorted([item.name for item in os.scandir(data_dir) if item.is_dir()])
+    num_classes = len(class_names)
 
     def get_label(file_path):
         parts = tf.strings.split(file_path, os.path.sep)
-        return label_to_index.lookup(parts[-2])
+        return tf.argmax(tf.cast(tf.equal(class_names, parts[-2]), tf.int64))
 
     dataset = dataset.map(lambda x: (x, get_label(x)), num_parallel_calls=AUTO)
     dataset = dataset.map(parse_image, num_parallel_calls=AUTO)
@@ -50,7 +44,7 @@ def create_dataset(data_dir, batch_size):
     dataset = dataset.shuffle(buffer_size=1000)
     dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(AUTO)
-    return dataset, len(class_names)
+    return dataset, num_classes
 
 
 # Load the data
@@ -63,6 +57,12 @@ val_size = tf.data.experimental.cardinality(train_dataset).numpy() - train_size
 
 train_dataset = train_dataset.take(train_size)
 val_dataset = train_dataset.skip(train_size)
+
+# Print dataset info for debugging
+for images, labels in train_dataset.take(1):
+    print("Image shape:", images.shape)
+    print("Labels shape:", labels.shape)
+    print("Labels:", labels)
 
 # Data augmentation
 data_augmentation = tf.keras.Sequential([
@@ -146,7 +146,7 @@ model.compile(
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
-        tf.keras.metrics.Recall(name="recall"),
+        tf.keras.metrics.Recall(name="recall", class_id=1),  # Assuming positive class is 1
     ],
 )
 
