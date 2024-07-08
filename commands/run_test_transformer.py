@@ -11,8 +11,8 @@ IMAGE_SIZE = 224
 PATCH_SIZE = 16
 NUM_PATCHES = (IMAGE_SIZE // PATCH_SIZE) ** 2
 PROJECTION_DIM = 64
-NUM_HEADS = 8
-TRANSFORMER_LAYERS = 8
+NUM_HEADS = 16
+TRANSFORMER_LAYERS = 42
 MLP_UNITS = [PROJECTION_DIM * 2, PROJECTION_DIM]
 BATCH_SIZE = 26
 EPOCHS = 50
@@ -123,9 +123,9 @@ def create_vit_model():
         x2 = tf.keras.layers.Add()([attention_output, encoded_patches])
         x3 = tf.keras.layers.LayerNormalization(epsilon=1e-6)(x2)
         x3 = tf.keras.layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(x3)
-        x3 = tf.keras.layers.Dropout(0.1)(x3)
+        x3 = tf.keras.layers.Dropout(0.5)(x3)
         x3 = tf.keras.layers.Dense(MLP_UNITS[1], activation=tf.nn.gelu)(x3)
-        x3 = tf.keras.layers.Dropout(0.1)(x3)
+        x3 = tf.keras.layers.Dropout(0.3)(x3)
         encoded_patches = tf.keras.layers.Add()([x3, x2])
 
     representation = tf.keras.layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
