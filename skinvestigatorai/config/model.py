@@ -13,7 +13,7 @@ class ModelConfig(object):
     }
     LOG_DIR = "logs"
     IMG_SIZE = (160, 160)
-    BATCH_SIZE = 32
+    BATCH_SIZE = 16
     LEARNING_RATE = 0.1
     MOMENTUM = 0.9
     CONV_LAYER_1 = 64
@@ -23,7 +23,7 @@ class ModelConfig(object):
     BN_LAYER_4 = 512
     STAGE_1_LAYERS = 3
     STAGE_2_LAYERS = 7
-    STAGE_3_LAYERS = 35
+    STAGE_3_LAYERS = 24
     STAGE_4_LAYERS = 2
     DROPOUT_1 = 0.5
     DROPOUT_2 = 0.5

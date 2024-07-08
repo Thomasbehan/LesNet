@@ -304,9 +304,15 @@ class SVModel:
         reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
                                                min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
         model_checkpoint_callback = ModelCheckpoint(
-            filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"), save_best_only=True,
-            monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_f1_score', mode='max', patience=patience_es, restore_best_weights=True, verbose=1)
+            filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"),
+            save_best_only=True,
+            monitor='val_loss',
+            mode='min',
+            verbose=1
+        )
+        early_stopping_callback = EarlyStopping(
+            monitor='val_f1_score', mode='max', patience=patience_es, restore_best_weights=True, verbose=1
+        )
 
         # Custom learning rate scheduler
         def lr_schedule(epoch, current_lr):
@@ -357,8 +363,10 @@ class SVModel:
 
         history = self.model.fit(
             train_generator,
-            epochs=epochs,
+            steps_per_epoch=len(train_generator),
             validation_data=val_generator,
+            validation_steps=len(val_generator),
+            epochs=epochs,
             callbacks=callbacks,
             class_weight=class_weights
         )
