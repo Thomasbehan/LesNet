@@ -85,7 +85,8 @@ class VisionTransformer(tf.keras.Model):
 
     def call(self, inputs, training=False):
         batch_size = tf.shape(inputs)[0]
-
+        print(batch_size)
+        exit()
         # Extract patches from images
         patches = tf.image.extract_patches(
             images=inputs,
