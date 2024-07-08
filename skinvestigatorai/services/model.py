@@ -2,27 +2,21 @@ import datetime
 import itertools
 import json
 import os
-
 import numpy as np
 import tensorflow as tf
-
-# Ensure the model and data are stored on the GPU
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
-
+import tensorflow_model_optimization as tfmot
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
 from tensorflow import keras
+from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping, TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Reshape, multiply
 from tensorflow.keras import layers, Model
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import Precision, Recall
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras import mixed_precision
 from skinvestigatorai.config.model import ModelConfig
-
 
 class SVModel:
     def __init__(self, model=None, model_type=ModelConfig.MODEL_TYPE):
@@ -32,9 +26,34 @@ class SVModel:
         self.dataset_embedding = None
         self.log_dir = ModelConfig.LOG_DIR
         self.img_size = ModelConfig.IMG_SIZE
-        self.optimizer = SGD(learning_rate=ModelConfig.LEARNING_RATE, momentum=ModelConfig.MOMENTUM)  # Changed to SGD with momentum
-        self.support_set = None  # Few-shot learning support set
-        self.query_set = None  # Few-shot learning query set
+        self.optimizer = SGD(learning_rate=ModelConfig.LEARNING_RATE, momentum=ModelConfig.MOMENTUM)
+        self.support_set = None
+        self.query_set = None
+
+        # Enable mixed precision
+        policy = mixed_precision.Policy('mixed_float16')
+        mixed_precision.set_global_policy(policy)
+
+    def focal_loss(self, gamma=2., alpha=.25):
+        def focal_loss_fixed(y_true, y_pred):
+            pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
+            pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
+            return -K.sum(alpha * K.pow(1. - pt_1, gamma) * K.log(pt_1)) - K.sum((1 - alpha) * K.pow(pt_0, gamma) * K.log(1. - pt_0))
+        return focal_loss_fixed
+
+    def f1_score(self, y_true, y_pred):
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        recall = true_positives / (possible_positives + K.epsilon())
+        f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
+        return f1_val
+
+    def specificity(self, y_true, y_pred):
+        true_negatives = K.sum(K.round(K.clip((1-y_true) * (1-y_pred), 0, 1)))
+        possible_negatives = K.sum(K.round(K.clip(1-y_true, 0, 1)))
+        return true_negatives / (possible_negatives + K.epsilon())
 
     def create_feature_extractor(self):
         if self.model_type == 'KERAS':
@@ -51,10 +70,7 @@ class SVModel:
     def compute_prototypes(self, support_set):
         self.create_feature_extractor()
         support_embeddings = self.feature_extractor.predict(support_set[0])
-
-        # Ensure support_set[1] dimensions are corrected
         support_labels = np.argmax(support_set[1], axis=1) if len(support_set[1].shape) > 1 else support_set[1]
-
         prototypes = []
         for class_id in np.unique(support_labels):
             class_embeddings = support_embeddings[support_labels == class_id]
@@ -87,12 +103,7 @@ class SVModel:
         return multiply([input_tensor, se])
 
     def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True):
-        """
-        A bottleneck residual block with optional convolutional shortcut.
-        """
         regularizer = tf.keras.regularizers.l2(ModelConfig.L2_LAYER_1)
-
-        # Shortcut connection
         shortcut = x
         if conv_shortcut:
             shortcut = layers.Conv2D(4 * filters, 1, strides=stride, kernel_regularizer=regularizer)(x)
@@ -103,63 +114,39 @@ class SVModel:
                                          kernel_regularizer=regularizer)(x)
                 shortcut = layers.BatchNormalization()(shortcut)
 
-        # Pre-activation block
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-
-        # First convolutional layer
         x = layers.Conv2D(filters, 1, strides=1, use_bias=False, kernel_regularizer=regularizer)(x)
-
-        # Pre-activation block
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-
-        # Second convolutional layer
         x = layers.Conv2D(filters, 3, strides=stride, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
-
-        # Pre-activation block
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-
-        # Third convolutional layer
         x = layers.Conv2D(4 * filters, 1, strides=1, kernel_regularizer=regularizer)(x)
-
-        # Add shortcut and return
         x = layers.add([shortcut, x])
         return x
 
     def build_model(self, input_shape, num_classes):
         regularizer = l2(ModelConfig.L2_LAYER_1)
-
         inputs = keras.Input(shape=input_shape)
-
-        # Initial convolutional layer
         x = layers.Conv2D(ModelConfig.CONV_LAYER_1, 7, strides=2, padding='same', use_bias=False,
                           kernel_regularizer=regularizer)(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         x = layers.MaxPooling2D(3, strides=2, padding='same')(x)
 
-        # Stage 1
         for _ in range(ModelConfig.STAGE_1_LAYERS):
             x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_1, conv_shortcut=False)
-
-        # Stage 2
         x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_2, stride=2)
         for _ in range(ModelConfig.STAGE_2_LAYERS):
             x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_2, conv_shortcut=False)
-
-        # Stage 3
         x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_3, stride=2)
         for _ in range(ModelConfig.STAGE_3_LAYERS):
             x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_3, conv_shortcut=False)
-
-        # Stage 4
         x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_4, stride=2)
         for _ in range(ModelConfig.STAGE_4_LAYERS):
             x = self.bottleneck_block_v2(x, ModelConfig.BN_LAYER_4, conv_shortcut=False)
 
-        # Final layers
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         x = layers.GlobalAveragePooling2D()(x)
@@ -170,8 +157,8 @@ class SVModel:
         self.model = Model(inputs, outputs)
         self.model.compile(
             optimizer=self.optimizer,
-            loss='categorical_crossentropy',
-            metrics=['accuracy', Precision(), Recall()]
+            loss=self.focal_loss(),
+            metrics=['accuracy', Precision(), Recall(), tf.keras.metrics.AUC(), self.f1_score, self.specificity]
         )
         self.model.summary()
         return self.model
@@ -179,7 +166,6 @@ class SVModel:
     def compute_class_weights(self, class_series):
         if len(class_series) == 0:
             raise ValueError("class_series is empty")
-
         class_labels = np.unique(class_series)
         class_weights = compute_class_weight('balanced', classes=class_labels, y=class_series)
         class_weight_dict = dict(zip(class_labels, class_weights))
@@ -189,8 +175,7 @@ class SVModel:
         list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
                          basename.endswith(extension)]
         latest_model = max(list_of_files, key=os.path.getctime)
-        print("LATEST MODEL:")
-        print(latest_model)
+        print("LATEST MODEL:", latest_model)
         return latest_model
 
     def _check_model(self):
@@ -202,14 +187,11 @@ class SVModel:
         if self.support_set is not None and self.query_set is not None:
             return self.evaluate_few_shot()
         else:
-            test_loss, test_acc, test_precision, test_recall = self.model.evaluate(test_datagen)
-            print(
-                f'Test Accuracy: {test_acc}, '
-                f'Test Precision: {test_precision}, '
-                f'Test Recall: {test_recall} '
-                f'Test Loss: {test_loss}'
-            )
-            return test_loss, test_acc, test_precision, test_recall
+            metrics = self.model.evaluate(test_datagen)
+            metric_names = ['loss', 'accuracy', 'precision', 'recall', 'auc', 'f1_score', 'specificity']
+            for name, value in zip(metric_names, metrics):
+                print(f'Test {name.capitalize()}: {value}')
+            return metrics
 
     def run_experiments(self, train_ds, val_ds):
         # Define hyperparameters using TensorBoard HParams API
@@ -324,10 +306,18 @@ class SVModel:
         model_checkpoint_callback = ModelCheckpoint(
             filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"), save_best_only=True,
             monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
-                                                verbose=1)
+        early_stopping_callback = EarlyStopping(monitor='val_f1_score', mode='max', patience=patience_es, restore_best_weights=True, verbose=1)
 
-        return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
+        # Custom learning rate scheduler
+        def lr_schedule(epoch, current_lr):
+            if epoch < 10:
+                return current_lr
+            else:
+                return current_lr * tf.math.exp(-0.1)
+
+        lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
+
+        return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback, lr_scheduler]
 
     def train_model(self, train_generator, val_generator, support_set=None, query_set=None, epochs=ModelConfig.EPOCHS,
                     patience_lr=ModelConfig.LR_PATIENCE, patience_es=ModelConfig.ES_PATIENCE,
@@ -348,6 +338,23 @@ class SVModel:
 
         class_weights = self.compute_class_weights(all_labels)
 
+        # Gradient Accumulation
+        n_gradients = 4  # Accumulate gradients over 4 batches
+        self.model = GradientAccumulation(self.model, n_gradients=n_gradients)
+
+        # Model Pruning
+        pruning_params = {
+            'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(
+                initial_sparsity=0.0, final_sparsity=0.5,
+                begin_step=0, end_step=len(train_generator) * epochs // n_gradients)
+        }
+        self.model = tfmot.sparsity.keras.prune_low_magnitude(self.model, **pruning_params)
+        callbacks.append(tfmot.sparsity.keras.UpdatePruningStep())
+
+        # Optimize dataset
+        train_generator = self.optimize_dataset(train_generator)
+        val_generator = self.optimize_dataset(val_generator)
+
         history = self.model.fit(
             train_generator,
             epochs=epochs,
@@ -363,7 +370,11 @@ class SVModel:
             raise FileNotFoundError(f"Model file {filename} not found.")
 
         if ModelConfig.MODEL_TYPE == 'KERAS':
-            self.model = tf.keras.models.load_model(file_location)
+            self.model = tf.keras.models.load_model(file_location, custom_objects={
+                'focal_loss_fixed': self.focal_loss(),
+                'f1_score': self.f1_score,
+                'specificity': self.specificity
+            })
         elif ModelConfig.MODEL_TYPE == 'TFLITE':
             self.model = tf.lite.Interpreter(model_path=file_location)
             self.model.allocate_tensors()
@@ -381,3 +392,44 @@ class SVModel:
 
         print(f"Model loaded from {filename} with class labels.")
         return self.model, class_labels
+
+    def optimize_dataset(self, dataset):
+        AUTOTUNE = tf.data.experimental.AUTOTUNE
+        return dataset.cache().shuffle(buffer_size=1000).prefetch(buffer_size=AUTOTUNE)
+
+    class GradientAccumulation(tf.keras.Model):
+        def __init__(self, model, n_gradients=2):
+            super().__init__()
+            self.model = model
+            self.n_gradients = tf.constant(n_gradients, dtype=tf.int32)
+            self.n_acum_step = tf.Variable(0, dtype=tf.int32, trainable=False)
+            self.gradient_accumulation = [tf.Variable(tf.zeros_like(v, dtype=tf.float32), trainable=False) for v in
+                                          model.trainable_variables]
+
+        def train_step(self, data):
+            self.n_acum_step.assign_add(1)
+
+            x, y = data
+            with tf.GradientTape() as tape:
+                y_pred = self.model(x, training=True)
+                loss = self.compiled_loss(y, y_pred, regularization_losses=self.model.losses)
+            gradients = tape.gradient(loss, self.model.trainable_variables)
+
+            for i in range(len(self.gradient_accumulation)):
+                self.gradient_accumulation[i].assign_add(gradients[i])
+
+            tf.cond(tf.equal(self.n_acum_step, self.n_gradients), self.apply_accu_gradients, lambda: None)
+
+            self.compiled_metrics.update_state(y, y_pred)
+            return {m.name: m.result() for m in self.metrics}
+
+        def apply_accu_gradients(self):
+            self.optimizer.apply_gradients(zip(self.gradient_accumulation, self.model.trainable_variables))
+
+            for i in range(len(self.gradient_accumulation)):
+                self.gradient_accumulation[i].assign(tf.zeros_like(self.model.trainable_variables[i], dtype=tf.float32))
+
+            self.n_acum_step.assign(0)
+
+        def call(self, inputs, training=None):
+            return self.model(inputs, training=training)
