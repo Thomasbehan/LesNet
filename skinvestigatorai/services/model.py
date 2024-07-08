@@ -115,7 +115,7 @@ class SVModel:
         se = Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(se)
         return multiply([input_tensor, se])
 
-    def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True, multiplier=2):
+    def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True, multiplier=1):
         regularizer = tf.keras.regularizers.l2(ModelConfig.L2_LAYER_1)
         shortcut = x
         if conv_shortcut:
