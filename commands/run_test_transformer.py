@@ -32,13 +32,19 @@ def parse_image(filename, label):
 def create_dataset(data_dir, batch_size):
     dataset = tf.data.Dataset.list_files(data_dir + "/*/*.jpg", shuffle=True)
     class_names = np.array(sorted([item.name for item in os.scandir(data_dir) if item.is_dir()]))
-    label_to_index = dict((name, index) for index, name in enumerate(class_names))
+    label_to_index = tf.lookup.StaticHashTable(
+        tf.lookup.KeyValueTensorInitializer(
+            tf.constant(class_names),
+            tf.range(len(class_names), dtype=tf.int32)
+        ),
+        default_value=-1
+    )
 
     def get_label(file_path):
         parts = tf.strings.split(file_path, os.path.sep)
-        return label_to_index[parts[-2]]
+        return label_to_index.lookup(parts[-2])
 
-    dataset = dataset.map(lambda x: (x, get_label(x)))
+    dataset = dataset.map(lambda x: (x, get_label(x)), num_parallel_calls=AUTO)
     dataset = dataset.map(parse_image, num_parallel_calls=AUTO)
     dataset = dataset.cache()
     dataset = dataset.shuffle(buffer_size=1000)
@@ -164,4 +170,4 @@ print(f"Test accuracy: {test_accuracy:.4f}")
 print(f"Test recall: {test_recall:.4f}")
 
 # Save the model
-model.save("LesNet.h5")
+model.save("skin_lesion_classifier.h5")
