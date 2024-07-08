@@ -26,7 +26,7 @@ class Data:
                         print('Deleted invalid file:', img_path)
         return invalid_images
 
-    def prepare_for_training(self, ds, take_num=None, augment=False, cache=True, shuffle_buffer_size=1000,
+    def prepare_for_training(self, ds, take_num=None, augment=False, cache=True, shuffle_buffer_size=512,
                              repeat=False):
         if take_num:
             ds = ds.take(take_num)
