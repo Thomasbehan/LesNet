@@ -10,12 +10,12 @@ np.random.seed(42)
 IMAGE_SIZE = 224
 PATCH_SIZE = 16
 NUM_PATCHES = (IMAGE_SIZE // PATCH_SIZE) ** 2
-PROJECTION_DIM = 64
+PROJECTION_DIM = 128
 NUM_HEADS = 8
-TRANSFORMER_LAYERS = 42
+TRANSFORMER_LAYERS = 16
 MLP_UNITS = [PROJECTION_DIM * 2, PROJECTION_DIM]
 BATCH_SIZE = 26
-EPOCHS = 150
+EPOCHS = 50
 LEARNING_RATE = 3e-4
 AUTO = tf.data.AUTOTUNE
 
@@ -130,10 +130,10 @@ def create_vit_model():
 
     representation = tf.keras.layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
     representation = tf.keras.layers.Flatten()(representation)
-    representation = tf.keras.layers.Dropout(0.2)(representation)
+    representation = tf.keras.layers.Dropout(0.5)(representation)
 
     features = tf.keras.layers.Dense(MLP_UNITS[0], activation=tf.nn.gelu)(representation)
-    features = tf.keras.layers.Dropout(0.2)(features)
+    features = tf.keras.layers.Dropout(0.5)(features)
     logits = tf.keras.layers.Dense(num_classes)(features)
 
     return tf.keras.Model(inputs=inputs, outputs=logits)
@@ -147,7 +147,7 @@ model.compile(
     loss=tf.keras.losses.CategoricalFocalCrossentropy(from_logits=True),
     metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
-        tf.keras.metrics.Recall(name="recall"),
+        tf.keras.metrics.Recall(name="recall", class_id=1),  # Assuming positive class is 1
     ],
 )
 
@@ -160,7 +160,7 @@ history = model.fit(
     callbacks=[
         tf.keras.callbacks.EarlyStopping(
             monitor="val_recall",
-            patience=20,
+            patience=10,
             restore_best_weights=True,
         ),
     ],
@@ -172,4 +172,4 @@ print(f"Test accuracy: {test_accuracy:.4f}")
 print(f"Test recall: {test_recall:.4f}")
 
 # Save the model
-model.save("LesNet.keras")
+model.save("skin_lesion_classifier.h5")
