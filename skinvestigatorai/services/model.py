@@ -102,15 +102,15 @@ class SVModel:
         se = Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(se)
         return multiply([input_tensor, se])
 
-    def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True):
+    def bottleneck_block_v2(self, x, filters, stride=1, conv_shortcut=True, multiplier=2):
         regularizer = tf.keras.regularizers.l2(ModelConfig.L2_LAYER_1)
         shortcut = x
         if conv_shortcut:
-            shortcut = layers.Conv2D(4 * filters, 1, strides=stride, kernel_regularizer=regularizer)(x)
+            shortcut = layers.Conv2D(multiplier * filters, 1, strides=stride, kernel_regularizer=regularizer)(x)
             shortcut = layers.BatchNormalization()(shortcut)
         else:
-            if stride != 1 or x.shape[-1] != 4 * filters:
-                shortcut = layers.Conv2D(4 * filters, 1, strides=stride, use_bias=False,
+            if stride != 1 or x.shape[-1] != multiplier * filters:
+                shortcut = layers.Conv2D(multiplier * filters, 1, strides=stride, use_bias=False,
                                          kernel_regularizer=regularizer)(x)
                 shortcut = layers.BatchNormalization()(shortcut)
 
@@ -122,7 +122,7 @@ class SVModel:
         x = layers.Conv2D(filters, 3, strides=stride, padding='same', use_bias=False, kernel_regularizer=regularizer)(x)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
-        x = layers.Conv2D(4 * filters, 1, strides=1, kernel_regularizer=regularizer)(x)
+        x = layers.Conv2D(multiplier * filters, 1, strides=1, kernel_regularizer=regularizer)(x)
         x = layers.add([shortcut, x])
         return x
 
