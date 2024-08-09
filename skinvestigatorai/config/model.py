@@ -32,3 +32,4 @@ class ModelConfig(object):
     MODEL_TYPE = "KERAS"
     MODEL_NAME = "LesNet.keras"
     LABELS_NAME = "LesNet_labels.json"
+    PATCH_SIZE = 16

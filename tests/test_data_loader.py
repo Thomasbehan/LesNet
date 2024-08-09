@@ -6,12 +6,12 @@ import tensorflow as tf
 from PIL import Image, UnidentifiedImageError
 
 from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.data import Data
+from skinvestigatorai.services.data_loader import DataLoader
 
 
 @pytest.fixture
 def data_instance():
-    return Data()
+    return DataLoader()
 
 
 def test_verify_images(data_instance):
@@ -66,7 +66,6 @@ def test_load_dataset(data_instance):
             subset="training",
             seed=42,
             label_mode='categorical',
-            labels='inferred',
             image_size=ModelConfig.IMG_SIZE,
             batch_size=ModelConfig.BATCH_SIZE
         )
@@ -76,7 +75,28 @@ def test_load_dataset(data_instance):
             subset="validation",
             seed=42,
             label_mode='categorical',
-            labels='inferred',
             image_size=ModelConfig.IMG_SIZE,
             batch_size=ModelConfig.BATCH_SIZE
         )
+
+
+def test_preprocess_and_patch_image(data_instance):
+    """Test the patch creation process."""
+    with patch.object(data_instance, 'preprocess_image', return_value=tf.random.uniform([160, 160, 3])):
+        image = tf.random.uniform([160, 160, 3])
+        label = tf.constant([1, 0, 0])  # Example one-hot label
+        patches, output_label = data_instance.preprocess_and_patch_image(image, label)
+
+        assert patches.shape == (data_instance.num_patches, data_instance.patch_size * data_instance.patch_size * 3)
+        assert tf.reduce_all(output_label == label)
+
+
+def test_augment_image(data_instance):
+    """Test the augmentation function to ensure correct behavior."""
+    image = tf.random.uniform([160, 160, 3])
+    label = tf.constant([1, 0, 0])  # Example one-hot label
+
+    augmented_image, output_label = data_instance.augment_image(image, label)
+
+    assert augmented_image.shape == image.shape
+    assert tf.reduce_all(output_label == label)
