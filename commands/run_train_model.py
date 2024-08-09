@@ -2,7 +2,7 @@ import os
 
 from run_data_scraper import main as DownloadData
 from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.data import Data
+from skinvestigatorai.services.data_loader import Data
 from skinvestigatorai.services.model import SVModel
 
 

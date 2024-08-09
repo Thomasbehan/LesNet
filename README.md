@@ -45,7 +45,7 @@ To quickly set up LesNet for development, follow these steps
 2. **Install LesNet:**
    In the project directory, install the project in editable mode with:
    ```bash
-   python -m pip install -e .[testing]
+   python -m pip install -e .
    ```
 
 3. **Run the Application:**

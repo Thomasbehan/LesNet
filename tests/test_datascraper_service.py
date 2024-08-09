@@ -4,7 +4,7 @@ from unittest.mock import patch, mock_open
 import pytest
 
 from skinvestigatorai.config.data import DataConfig
-from skinvestigatorai.services.data import Data
+from skinvestigatorai.services.data_loader import Data
 from skinvestigatorai.services.data_scaper import DataScraper
 
 
