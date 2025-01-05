@@ -31,3 +31,9 @@ test
 *.tflite
 **/*.keras
 *.keras
+_DEP/*
+
+/models/
+/mlruns/
+/predictions/
+/_DEP/
