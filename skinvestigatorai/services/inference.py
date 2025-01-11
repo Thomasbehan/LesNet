@@ -73,7 +73,7 @@ class Inference:
             image_array = img_to_array(image)
             image_array = image_array / 255.0
             image_array = np.expand_dims(image_array, axis=0)
-            threshold = 0.50
+            threshold = 0.40
 
             # Make a prediction
             if isinstance(self.model, Interpreter):
@@ -103,7 +103,7 @@ class Inference:
                 print("Predictions MAXARG: ", np.argmax(predictions))
                 print("Class Labels: ", self.class_labels)
 
-                predicted_class = self.class_labels[np.argmax(predictions)]
+                predicted_class = self.class_labels[(np.argmax(predictions) - 1)]
 
                 # Return the prediction result
                 return {

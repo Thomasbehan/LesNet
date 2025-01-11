@@ -1,134 +1,168 @@
 {% extends "layout.jinja2" %}
 
 {% block content %}
-
-<div class="content">
-    <h1><span class="smaller">Les<span class="font-semi-bold">Net</span></span></h1>
-    <p class="lead">Welcome to <span class="font-normal">{{project}}</span>, &nbsp;Always consult a <span class="font-normal">Medical Professional</span>, this application is not intended to be used as a definitive diagnosis&nbsp;.</p>
+<div class="dashboard-header mb-4">
+  <h1>Welcome to LesNet</h1>
+  <p>Your AI-powered assistant for medical image analysis.</p>
 </div>
-<section class="evaluation">
-	<div class="evaluation__photo">
-            <!-- Camera -->
-            <main id="camera" class="photo-container">
 
-                <!-- Camera sensor -->
-                <canvas id="camera--sensor" style="display: none;"></canvas>
+<div class="row">
+  <!-- Upload Section -->
+  <div class="col-md-8">
+    <div class="card mb-4 p-4 shadow-sm">
+      <h5>Upload an Image for Analysis</h5>
+      <form id="upload-form" method="post" enctype="multipart/form-data">
+        <input type='file' name='image' id='image' accept='image/*' required>
+        <button type='submit' class='btn btn-primary mt-3'>Analyze Image</button>
+      </form>
 
-                <!-- Camera view -->
-                <video id="camera--view" autoplay playsinline></video>
+      <!-- Loading Indicator -->
+      <div id='loading' style='display: none;' class='mt-3'>
+        Analyzing image... Please wait.
+      </div>
 
-                <!-- Camera output -->
-                <img src="//:0" alt="" id="camera--output">
+      <!-- Results Container -->
+      <div id='response-data' class='result mt-3'></div>
+    </div>
 
-                <!-- Camera trigger -->
-                <button id="camera--trigger"><span class="material-symbols-outlined">photo_camera</span> Take a picture</button>
-                <button class="bottom-floating--button">
-                 <form class="upload-form" name="UploadForm" action="{{ request.route_url('predict') }}" method="post" enctype="multipart/form-data">
-                    <div class="custom-file-upload">
-                        <input type="file" name="image" id="image" accept="image/*" onchange="handleFileChange(event)">
-                        <label for="image">
-                            <span class="material-symbols-outlined">upload</span> Upload an Image
-                        </label>
-                    </div>
-                 </form>
-                </button>
-            </main>
-	</div>
-	<div class="evaluation__info">
-        <div class="title">
-            <h1>Image Analysis Dashboard</h1>
-            <span>Upload a photo to evaluate this model</span>
-		</div>
-        <div id="loading" style="display: none;">
-            <img src="{{ request.static_url('skinvestigatorai:static/loading.gif') }}">
-        </div>
-		<div class="results-container">
-            <div id="response-data" class="result"></div>
-            {% if prediction %}
-            <div class="result">
-                <span>{{ confidence|round(2) }}% it is {{ prediction }}</span>
-            </div>
-            {% endif %}
-        </div>
-	</div>
-</section>
+    <!-- Diagnosis Information -->
+    <div class="card mb-4 p-3 shadow-sm">
+      <h5>Diagnosis Information</h5>
+      {% if prediction %}
+        {% if prediction == "benign" %}
+          The lesion appears benign. Continue monitoring for changes.
+        {% else %}
+          This lesion may be malignant. Consult a dermatologist for further evaluation.
+        {% endif %}
+      {% else %}
+        Upload an image to get started.
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Statistics & Analysis Details -->
+  <div class="col-md-4">
+    <div class="card mb-4 p-4 shadow-sm text-center">
+      <h5>Statistics</h5>
+      <canvas id="probabilityChart" width="400" height="200"></canvas>
+    </div>
+
+    <div class="card mb-4 p-3 shadow-sm">
+      <h5>Latest Analysis</h5>
+      <p><strong>Case:</strong> Skin Lesion - Melanoma Detection</p>
+      <p><strong>Date:</strong> {{ current_date }}</p>
+      {% if prediction %}
+        <p><strong>Result:</strong> {{ confidence|round(2) }}% confidence it is {{ prediction }}</p>
+      {% else %}
+        <p>No analysis available yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
 
 <style>
-
-.custom-file-upload input[type='file'] {
-    display: none;
+/* Custom Styles */
+body {
+  font-family: 'Inter', sans-serif;
 }
-
-.custom-file-upload label {
-    font:inherit!important;
-    font-weight: normal;
-    cursor: pointer;
+.card {
+  border-radius: 10px;
 }
-
-.custom-file-upload label:hover {
-    background-color: #444;
-    transform: scale(1.05);
+.result {
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 5px;
 }
-
-.custom-file-upload i.fa {
-    margin-right: 10px;
+#loading {
+  font-weight: bold;
 }
 </style>
 
-
-<!-- Add jQuery -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<!-- Add AJAX script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    $(document).ready(function() {
-        $(".upload-form").on("submit", function(event) {
-            event.preventDefault();
+// Handle form submission with AJAX
+document.getElementById('upload-form').addEventListener('submit', function(event) {
+  event.preventDefault(); // Prevent default form submission
 
-            var formData = new FormData(this);
+  const formData = new FormData(this); // Gather form data
+  const loadingIndicator = document.getElementById('loading');
+  const responseData = document.getElementById('response-data');
 
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                $(".photo-container img").attr("src", e.target.result);
-                $(".photo-container img").attr("alt", "Uploaded image");
-            }
-            reader.readAsDataURL($("#image")[0].files[0]);
+  // Show loading indicator
+  loadingIndicator.style.display = 'block';
+  responseData.innerHTML = ''; // Clear previous results
 
-            $("#loading").show();
-
-            $.ajax({
-                url: "{{ request.route_url('predict') }}",
-                type: "POST",
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function(data) {
-                    $("#loading").hide();
-                    $(".results-container").html(`
-                        <div class="result">
-                            <span>${(data.confidence).toFixed(2)}% it is ${data.prediction}</span>
-                        </div>
-                    `);
-                },
-                error: function(data) {
-                    $("#loading").hide();
-                    var errorMessage = "An error occurred while processing the image.";
-                    if (data.error) {
-                        errorMessage = "<div class='alert alert-info'><span class='emoji'>&#129300;</span> " +
-                                       "I'm not too sure about this one. Please make sure the image is of a skin lesion, is clear, focused, and occupies most of the frame while leaving sufficient space around the edges.</div>";
-                    } else {
-                        errorMessage = "<div class='alert alert-danger'>" + errorMessage + "</div>";
-                    }
-
-                    $(".results-container").html(errorMessage);
-                }
-
-            });
-        });
-    });
-
-    function updateFileName(inputElement) {
-        var fileName = inputElement.files[0].name;
-        document.getElementById('file-name').innerText = " " + fileName;
+  // Make AJAX request
+  fetch("{{ request.route_url('predict') }}", {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
     }
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json(); // Parse JSON response
+    })
+    .then(data => {
+      // Hide loading indicator
+      loadingIndicator.style.display = 'none';
+
+      // Display results dynamically
+      if (data.prediction && data.confidence) {
+        responseData.innerHTML = `
+          <strong>Result:</strong> ${data.confidence.toFixed(2)}% confidence it is ${data.prediction}.
+        `;
+
+        // Update Probability Chart
+        updateProbabilityChart(data.confidence, data.prediction);
+      } else {
+        responseData.innerHTML = `<span>No valid result returned. Please try again.</span>`;
+      }
+    })
+    .catch(error => {
+      // Hide loading indicator and show error message
+      loadingIndicator.style.display = 'none';
+      responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
+    });
+});
+
+// Update Probability Chart
+function updateProbabilityChart(confidence, prediction) {
+  const ctx = document.getElementById('probabilityChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Confidence', 'Remaining'],
+      datasets: [{
+        label: 'Probability',
+        data: [confidence, 100 - confidence],
+        backgroundColor: ['#007bff', '#e9ecef'],
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        tooltip: {
+          callbacks: {
+            label(context) {
+              return `${context.label}: ${context.raw.toFixed(2)}%`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
 </script>
+
 {% endblock content %}

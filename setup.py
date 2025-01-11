@@ -17,6 +17,7 @@ requires = [
     'Pillow==10.3.0',
     'requests==2.32.2',
     'scipy==1.10.1',
+    'scikit-learn==1.6.1',
     'sympy==1.12',
     'tensorboard==2.16.2',
     'termcolor==2.3.0',
