@@ -4,6 +4,7 @@ import os
 from pyramid.view import view_config
 
 from skinvestigatorai.services.inference import Inference
+from skinvestigatorai.services.model import SVModel
 
 log = logging.getLogger(__name__)
 model_dir = 'models/'
@@ -29,6 +30,12 @@ def predict_view(request):
     inference_service = Inference()
 
     return inference_service.predict(image_file)
+
+@view_config(route_name='labels', request_method='GET', renderer='json')
+def labels_view(request):
+    model_service = SVModel()
+
+    return model_service.load_labels()
 
 
 @view_config(route_name='dashboard', renderer='skinvestigatorai:templates/dashboard.jinja2')

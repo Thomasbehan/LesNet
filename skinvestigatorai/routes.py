@@ -9,4 +9,5 @@ def includeme(config):
     config.add_route('train', generate_route_name())
     config.add_route('tensorboard', '/tensorboard')
     config.add_route('predict', '/predict')
+    config.add_route('labels', '/labels')
     config.add_route('dashboard', '/dashboard')

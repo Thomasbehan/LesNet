@@ -7,59 +7,104 @@
 </div>
 
 <div class="row">
-  <!-- Upload Section -->
-  <div class="col-md-8">
-    <div class="card mb-4 p-4 shadow-sm">
-      <h5>Upload an Image for Analysis</h5>
-      <form id="upload-form" method="post" enctype="multipart/form-data">
-        <input type='file' name='image' id='image' accept='image/*' required>
-        <button type='submit' class='btn btn-primary mt-3'>Analyze Image</button>
-      </form>
 
-      <!-- Loading Indicator -->
-      <div id='loading' style='display: none;' class='mt-3'>
-        Analyzing image... Please wait.
+  <div class="col-md-4">
+    <!-- Upload Section -->
+    <div class="card mb-4 p-3 shadow border-0">
+      <div class="card-body p-4">
+        <h5 class="card-title text-center text-primary mb-4">Upload an Image for Analysis</h5>
+        <form id="upload-form" method="post" enctype="multipart/form-data" class="text-center">
+          <!-- Drag and Drop Area -->
+          <div id="drop-area" class="drop-area position-relative mb-3">
+            <div class="drop-message">
+              <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-2"></i>
+              <p class="mb-0 text-muted">Drag & Drop your image here</p>
+              <small class="text-secondary">or click to browse</small>
+            </div>
+            <input type="file" id="image" name="image" accept="image/*" hidden required>
+          </div>
+
+          <!-- Preview Area -->
+          <div id="preview-container" class="preview-container mb-3" style="display: none;">
+            <img id="preview-image" class="img-fluid rounded shadow-sm" alt="Image preview">
+            <p class="mt-2 text-secondary small">Preview of your selected image</p>
+          </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center mt-4" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <p  class="mt-3 text-muted">Analyzing image... Please wait.</p>
+        </div>
+
+        <!-- Results Container -->
+        <div style="display: none;" id="response-data" class="result mt-4 text-center"></div>
       </div>
+    </div>
 
-      <!-- Results Container -->
-      <div id='response-data' class='result mt-3'></div>
+    <!-- Statistics & Analysis Details -->
+    <div class="card mb-4 p-4 shadow border-0 text-center">
+      <h5>Supported Diagnoses</h5>
+      <div id="accordion">
+            <!-- Accordion items will be populated here by JavaScript -->
+      </div>
+    </div>
+
+
+  </div>
+
+  <div class="col-md-8">
+
+    <!-- Latest Analysis -->
+    <div id="analysis-box" class="mb-4 card shadow border-0">
+        <div class="card-body">
+            <h5 class="card-title">Latest Analysis</h5>
+            <hr>
+            <p><strong>Case:</strong> Skin Lesion - Melanoma Detection</p>
+            <p><strong>Date:</strong> <span id="analysis-date">N/A</span></p>
+            <div id="analysis-result" class="text-center py-4">
+                <p>No analysis available yet.</p>
+            </div>
+            <div id="analysis-actions" class="text-center d-none" style="display:none;">
+                <button class="btn btn-primary btn-sm mt-3">Download Report</button>
+            </div>
+        </div>
     </div>
 
     <!-- Diagnosis Information -->
-    <div class="card mb-4 p-3 shadow-sm">
-      <h5>Diagnosis Information</h5>
-      {% if prediction %}
-        {% if prediction == "benign" %}
-          The lesion appears benign. Continue monitoring for changes.
-        {% else %}
-          This lesion may be malignant. Consult a dermatologist for further evaluation.
-        {% endif %}
-      {% else %}
-        Upload an image to get started.
-      {% endif %}
+    <div id="diagnosis-info" class="card mb-4 p-3 shadow border-0">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img id="diagnosis-image" src="{{request.static_url('skinvestigatorai:static/doc.webp') }}" class="img-fluid rounded-start" alt="Diagnosis Image" style="display:none;">
+                <img id="default-diagnosis-image" src="{{request.static_url('skinvestigatorai:static/doc.webp') }}" class="img-fluid rounded-start" alt="Default Diagnosis Image of a flat material style doctor">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title">Diagnosis Information</h5>
+                    <p id="diagnosis-description" class="card-text">Upload an image to get started.</p>
+                    <p class="card-text">
+                        <small id="diagnosis-last-updated" class="text-muted">Last updated: N/A</small>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 
-  <!-- Statistics & Analysis Details -->
-  <div class="col-md-4">
-    <div class="card mb-4 p-4 shadow-sm text-center">
-      <h5>Statistics</h5>
-      <canvas id="probabilityChart" width="400" height="200"></canvas>
-    </div>
 
-    <div class="card mb-4 p-3 shadow-sm">
-      <h5>Latest Analysis</h5>
-      <p><strong>Case:</strong> Skin Lesion - Melanoma Detection</p>
-      <p><strong>Date:</strong> {{ current_date }}</p>
-      {% if prediction %}
-        <p><strong>Result:</strong> {{ confidence|round(2) }}% confidence it is {{ prediction }}</p>
-      {% else %}
-        <p>No analysis available yet.</p>
-      {% endif %}
-    </div>
-  </div>
+
+
+
 </div>
 
+<div class="position-fixed" style="bottom: 28px; right: 28px;">
+  <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="explicitToggle" checked>
+    <label class="form-check-label" for="explicitToggle">Hide Explicit Imagery</label>
+  </div>
+</div>
 
 
 <style>
@@ -81,88 +126,6 @@ body {
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-// Handle form submission with AJAX
-document.getElementById('upload-form').addEventListener('submit', function(event) {
-  event.preventDefault(); // Prevent default form submission
 
-  const formData = new FormData(this); // Gather form data
-  const loadingIndicator = document.getElementById('loading');
-  const responseData = document.getElementById('response-data');
-
-  // Show loading indicator
-  loadingIndicator.style.display = 'block';
-  responseData.innerHTML = ''; // Clear previous results
-
-  // Make AJAX request
-  fetch("{{ request.route_url('predict') }}", {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json(); // Parse JSON response
-    })
-    .then(data => {
-      // Hide loading indicator
-      loadingIndicator.style.display = 'none';
-
-      // Display results dynamically
-      if (data.prediction && data.confidence) {
-        responseData.innerHTML = `
-          <strong>Result:</strong> ${data.confidence.toFixed(2)}% confidence it is ${data.prediction}.
-        `;
-
-        // Update Probability Chart
-        updateProbabilityChart(data.confidence, data.prediction);
-      } else {
-        responseData.innerHTML = `<span>No valid result returned. Please try again.</span>`;
-      }
-    })
-    .catch(error => {
-      // Hide loading indicator and show error message
-      loadingIndicator.style.display = 'none';
-      responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
-    });
-});
-
-// Update Probability Chart
-function updateProbabilityChart(confidence, prediction) {
-  const ctx = document.getElementById('probabilityChart').getContext('2d');
-
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Confidence', 'Remaining'],
-      datasets: [{
-        label: 'Probability',
-        data: [confidence, 100 - confidence],
-        backgroundColor: ['#007bff', '#e9ecef'],
-        borderWidth: 1,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'top',
-        },
-        tooltip: {
-          callbacks: {
-            label(context) {
-              return `${context.label}: ${context.raw.toFixed(2)}%`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-</script>
 
 {% endblock content %}

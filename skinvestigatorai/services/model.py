@@ -264,6 +264,18 @@ class SVModel:
         )
         return history
 
+    def load_labels(self):
+        labels_filename = os.path.join(ModelConfig.MODEL_DIRECTORY, ModelConfig.LABELS_NAME)
+        try:
+            with open(labels_filename, 'r') as f:
+                class_labels = json.load(f)
+        except FileNotFoundError:
+            class_labels = None
+            print("No class labels file found. Please ensure you have downloaded the class_labels.json file.")
+            exit(1)
+
+        return class_labels
+
     def load_model(self, filename=ModelConfig.MODEL_NAME):
         file_location = os.path.join(ModelConfig.MODEL_DIRECTORY, filename)
         if not os.path.exists(file_location):
@@ -277,14 +289,5 @@ class SVModel:
         else:
             raise ValueError("Unsupported model type. Please use 'KERAS' or 'TFLITE'.")
 
-        labels_filename = os.path.join(ModelConfig.MODEL_DIRECTORY, ModelConfig.LABELS_NAME)
-        try:
-            with open(labels_filename, 'r') as f:
-                class_labels = json.load(f)
-        except FileNotFoundError:
-            class_labels = None
-            print("No class labels file found. Please ensure you have downloaded the class_labels.json file.")
-            exit(1)
-
         print(f"Model loaded from {filename} with class labels.")
-        return self.model, class_labels
+        return self.model, self.load_labels()
