@@ -87,16 +87,16 @@ Here is a list of all the available models you can download using the script:
 * M-0003: Simple Testing (Legacy).
 * M-0015: Best Model (Legacy).
 * M-0015s: Fastest Model (Legacy)
-* M-0310: Best Model.
-* M-0310s: Efficient Model. (Coming Soon)
+* M-0310: Legacy Model (Inefficient & Low Accuracy)
+* M-4: Best Mobel
 
 * Example: 
 ```bash
-python .\commands\download_model.py -m M-0310s
+python .\commands\download_model.py -m M-4
 ```
 
 ## Data
-The DataScraper tool within this application is designed to download and preprocess skin lesion images. The M-3.1 dataset is 837,628 images.
+The DataScraper tool within this application is designed to downloads skin lesion images. The M-4 dataset is 42,600 images.
 
 ### Data Source
 The dataset used for training the model is sourced from the International Skin Imaging Collaboration (ISIC) Archive. The ISIC Archive is a large-scale resource for skin image analysis, providing open access to a wide variety of images for the development and evaluation of automated diagnostic systems.
@@ -110,7 +110,7 @@ The images are organized into three folders:
 2. Images are placed in folders with their label as its name, for example `data/train/melanoma`
 
 ## Model
-The `SVModel` model employs a sophisticated deep learning architecture based on InvceptionV3 but tailored for skin lesion classification. 
+The `SVModel` model employs a sophisticated deep learning architecture tailored for skin lesion classification. 
 To learn more, Visit [the model section of the wiki](https://github.com/Thomasbehan/LesNet/wiki#model)
 
 ## Performance
@@ -131,7 +131,7 @@ To learn more, Visit [the model section of the wiki](https://github.com/Thomasbe
 | **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/92/?scale=85..95&title=progress&suffix=)  |
 
 ## Contributing
-contributions to LesNet are welcome! For guidelines on contributing, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
+contributions to LesNet are welcome! For guidelines on contributing, and learning how to contribute, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.
 
 ## License
 LesNet is released under the Mozilla Public License 2.0 (MPL 2.0). For more details, see the [LICENSE](License) file.
