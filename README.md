@@ -96,12 +96,12 @@ You can download the following models using the script:
 
 - **M-4**: Best Model **🏆 Best Choice!** - Offers superior performance and accuracy for demanding applications.
 
-### Notes
+#### Notes
 - Most legacy models are outdated and may not perform well.
 - **M-4** is the recommended choice for optimal results.
 
 
-* Example: 
+#### Example: 
 ```bash
 python .\commands\download_model.py -m M-4
 ```
