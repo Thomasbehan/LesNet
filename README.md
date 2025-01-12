@@ -81,18 +81,24 @@ Run the following command from the root of the project directory:
 ```bash
 python .\commands\download_model.py -m <model_id>
 ```
+
 ### Available Models
-Here is a list of all the available models you can download using the script:
 
-- **M-0003**: Simple Testing <span style="background-color: #FFABAB; color: #A00000; border-radius: 12px; padding: 4px 10px; font-size: 0.9em;">💾 Depreciated</span> - Basic functionality, but not very accurate.
+You can download the following models using the script:
+
+- **M-0003**: Simple Testing **💾 Depreciated** - Basic functionality, but not very accurate.
   
-- **M-0015**: Simple Model <span style="background-color: #FFABAB; color: #A00000; border-radius: 12px; padding: 4px 10px; font-size: 0.9em;">💾 Depreciated</span> - Reliable for basic tasks, though limited in performance.
+- **M-0015**: Simple Model **💾 Depreciated** - Reliable for basic tasks, though limited in performance.
 
-- **M-0015s**: Fast Model <span style="background-color: #FFABAB; color: #A00000; border-radius: 12px; padding: 4px 10px; font-size: 0.9em;">💾 Depreciated</span> - Quicker than M-0015, but still lacks accuracy.
+- **M-0015s**: Fast Model **💾 Depreciated** - Quicker than M-0015, but still lacks accuracy.
 
-- **M-0310**: Legacy Model <span style="background-color: #B0BEC5; color: #A00000; border-radius: 12px; padding: 2px 8px; font-size: 0.9em;">⏳ Legacy</span> - Inefficient and low accuracy; not recommended for serious use.
+- **M-0310**: Legacy Model **⏳ Legacy** - Inefficient and low accuracy; not recommended for serious use.
 
-- **M-4**: Best Model <span style="background-color: #4CAF50; color: black; border-radius: 12px; padding: 4px 10px; font-size: 0.9em;">🏆 Best Choice!</span> - Offers superior performance and accuracy for demanding applications.
+- **M-4**: Best Model **🏆 Best Choice!** - Offers superior performance and accuracy for demanding applications.
+
+### Notes
+- Most legacy models are outdated and may not perform well.
+- **M-4** is the recommended choice for optimal results.
 
 
 * Example: 
