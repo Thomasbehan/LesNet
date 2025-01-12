@@ -84,9 +84,9 @@ python .\commands\download_model.py -m <model_id>
 ### Available Models
 Here is a list of all the available models you can download using the script:
 
-* M-0003: Simple Testing (Legacy).
-* M-0015: Best Model (Legacy).
-* M-0015s: Fastest Model (Legacy)
+* M-0003: Simple Testing (Legacy)
+* M-0015: Simple Model (Legacy)
+* M-0015s: Fast Model (Legacy)
 * M-0310: Legacy Model (Inefficient & Low Accuracy)
 * M-4: Best Mobel
 
