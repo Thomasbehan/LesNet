@@ -17,12 +17,11 @@
     <!-- Custom styles -->
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: Roboto;
         background-color: #e9f1fc;
       }
       .sidebar {
         background-color: #d6e4f7;
-        height: 100vh;
         padding-top: 20px;
       }
       .sidebar h4 {
@@ -49,8 +48,7 @@
         padding: 20px;
       }
       .logo {
-        width: 42px;
-        float: left;
+        width: 100%;
       }
       /* Hamburger Menu Styles */
       .navbar-toggler {
@@ -80,22 +78,41 @@
       <div class="row">
         <!-- Sidebar -->
         <div class="col-md-2 sidebar d-none d-md-block">
-          <a href="#"><img class="logo img-responsive" src="{{request.static_url('skinvestigatorai:static/min/logo.png') }}" alt="SknVestigatorAI"><h4>LesNet</h4></a>
-          <hr>
+          <a href="/"><img class="logo img-responsive" src="{{request.static_url('skinvestigatorai:static/logo-with-text.png') }}" alt="LesNet"></a>
+          <hr/>
+          <a href="/">Image Analyser</a>
+          <a href="/supported-diagnoses">Supported Diagnoses</a>
+          <hr/>
           <a href="#">GitHub Project</a>
           <a href="#">Vote on Features</a>
           <a href="#">Documentation</a>
+          <hr/>
+          <a href="#">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="explicitToggle" checked>
+                <label class="form-check-label" for="explicitToggle">Hide Explicit Imagery</label>
+              </div>
+          </a>
           <!--<button class="btn btn-primary w-100 mt-3">Upgrade</button>-->
         </div>
 
         <!-- Collapsible Sidebar for Mobile -->
         <div class="col-md-2 sidebar collapse d-md-none" id="navbarNav">
-          <a href="#"><img class="logo img-responsive" src="{{request.static_url('skinvestigatorai:static/min/logo.png') }}" alt="SknVestigatorAI"><h4>LesNet</h4></a>
-          <hr>
+          <a href="/"><img class="logo img-responsive" src="{{request.static_url('skinvestigatorai:static/logo-with-text.png') }}" alt="LesNet"></a>
+          <hr/>
+          <a href="/">Image Analyser</a>
+          <a href="/supported-diagnoses">Supported Diagnoses</a>
+          <hr/>
           <a href="#">GitHub Project</a>
           <a href="#">Vote on Features</a>
           <a href="#">Documentation</a>
-          <!--<button class="btn btn-primary w-100 mt-3">Upgrade</button>-->
+          <hr/>
+          <a href="#">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="explicitToggle" checked>
+                <label class="form-check-label" for="explicitToggle">Hide Explicit Imagery</label>
+              </div>
+          </a>
         </div>
 
         <!-- Main Content -->
