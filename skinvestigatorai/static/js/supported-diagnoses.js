@@ -63,12 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.thumbnail && data.thumbnail.source) {
         imageElement.src = data.thumbnail.source;
       } else {
-        imageElement.src = "https://via.placeholder.com/150"; // Fallback image
+        imageElement.src = "/static/doc.webp"; // Fallback image
       }
+
     } catch (error) {
       console.error(`Error fetching details for ${diagnosisName}:`, error);
       document.getElementById(`description-${diagnosisId}`).innerHTML = "Failed to load description.";
-      document.getElementById(`image-${diagnosisId}`).src = "https://via.placeholder.com/150";
+      document.getElementById(`image-${diagnosisId}`).src = "/static/doc.webp";
     }
   }
 
