@@ -100,9 +100,11 @@ class DataScraper:
             for image in data['results']:
                 isic_id = image['isic_id']
                 image_url = image['files']['thumbnail_256']['url']
-                diagnosis = image['metadata']['clinical'].get('diagnosis', 'unknown')
+                diagnosis = image['metadata']['clinical'].get('diagnosis_3', 'unknown')
                 if diagnosis == 'unknown':
-                    diagnosis = image['metadata']['clinical'].get('benign_malignant', 'unknown')
+                    diagnosis = image['metadata']['clinical'].get('diagnosis_2', 'unknown')
+                if diagnosis == 'unknown':
+                    diagnosis = image['metadata']['clinical'].get('diagnosis_1', 'unknown')
 
                 if image_url not in failed_downloads:
                     file_path = os.path.join(temp_folder, diagnosis, f"{isic_id}.jpg")

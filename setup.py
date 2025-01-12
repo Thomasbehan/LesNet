@@ -37,6 +37,7 @@ tests_require = [
     'pytest-cov',
     'pytest-mock',
     'flake8',
+    'ruff',
 ]
 
 setup(

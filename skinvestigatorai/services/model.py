@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
-from tensorflow.keras.applications import InceptionV3
+from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.layers import Input, Dense, BatchNormalization, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.metrics import Precision, Recall
@@ -67,7 +67,7 @@ class SVModel:
         num_classes = ModelConfig.CATEGORIES
         input_shape = (self.img_size[0], self.img_size[1], 3)
 
-        base_model = InceptionV3(
+        base_model = EfficientNetB0(
             include_top=False,
             weights='imagenet',
             input_tensor=Input(shape=input_shape)
