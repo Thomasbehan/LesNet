@@ -5,11 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const previewImage = document.getElementById("preview-image");
   const loading = document.getElementById("loading");
   const responseData = document.getElementById("response-data");
-  const explicitToggle = document.getElementById("explicitToggle");
-  const defaultDiagnosisImage = document.getElementById("default-diagnosis-image");
   const diagnosisImage = document.getElementById("diagnosis-image");
-
-  let chartInstance = null; // Track the current chart instance
 
   // Handle drag-and-drop functionality
   dropArea.addEventListener("click", () => input.click());
@@ -60,11 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     responseData.style.display = "none"
     responseData.innerHTML = "";
 
-    // Destroy previous chart if it exists
-    if (chartInstance) {
-      chartInstance.destroy();
-    }
-
     // AJAX request
     fetch("predict", {
       method: "POST",
@@ -97,19 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
         responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
       });
   }
-
-  // Event listener for the toggle switch
-  explicitToggle.addEventListener("change", (event) => {
-    if (event.target.checked) {
-      // Show the default image if toggle is checked
-      defaultDiagnosisImage.style.display = "block";
-      diagnosisImage.style.display = "none";
-    } else {
-      // Hide the diagnosis image if toggle is unchecked
-      defaultDiagnosisImage.style.display = "none";
-      diagnosisImage.style.display = "block";
-    }
-  });
 
   async function updateDiagnosisInfo(prediction) {
       const diagnosisInfo = document.getElementById("diagnosis-info");
@@ -189,74 +167,4 @@ document.addEventListener("DOMContentLoaded", () => {
         analysisActions.classList.add("d-none");
       }
     }
-
-    // Function to fetch diagnoses and populate the accordion
-  async function populateDiagnosisAccordion() {
-    const accordion = document.getElementById("accordion");
-
-    try {
-      const response = await fetch("labels");
-      if (!response.ok) throw new Error("Failed to fetch diagnoses.");
-
-      const diagnoses = await response.json();
-
-      // Clear existing accordion items
-      accordion.innerHTML = '';
-
-      // Iterate through diagnoses and create accordion items
-      for (const diagnosis of diagnoses) {
-        const diagnosisName = diagnosis;
-        const diagnosisId = diagnosisName.replace(/\s+/g, '-').toLowerCase();
-
-        // Create a new accordion item
-        const accordionItem = document.createElement("div");
-        accordionItem.classList.add("card");
-
-        accordionItem.innerHTML = `
-          <div class="card-header" id="heading-${diagnosisId}">
-            <h5 class="mb-0">
-              <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse-${diagnosisId}" aria-expanded="false" aria-controls="collapse-${diagnosisId}">
-                ${diagnosisName}
-              </button>
-            </h5>
-          </div>
-          <div id="collapse-${diagnosisId}" class="collapse" aria-labelledby="heading-${diagnosisId}" data-parent="#accordion">
-            <div class="card-body" id="description-${diagnosisId}">
-              Loading description...
-            </div>
-          </div>
-        `;
-
-        accordion.appendChild(accordionItem);
-
-        // Fetch description for each diagnosis
-        await updateDiagnosisDescription(diagnosisName, diagnosisId);
-      }
-    } catch (error) {
-      console.error("Error populating accordion:", error);
-    }
-  }
-
-  // Function to update the description for a specific diagnosis
-  async function updateDiagnosisDescription(diagnosisName, diagnosisId) {
-    try {
-      const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(diagnosisName)}`);
-      if (!response.ok) throw new Error("Failed to fetch diagnosis description.");
-
-      const data = await response.json();
-      const descriptionElement = document.getElementById(`description-${diagnosisId}`);
-
-      if (data.extract) {
-        descriptionElement.innerHTML = data.extract;
-      } else {
-        descriptionElement.innerHTML = "Description not available.";
-      }
-    } catch (error) {
-      console.error(`Error fetching description for ${diagnosisName}:`, error);
-      document.getElementById(`description-${diagnosisId}`).innerHTML = "Failed to load description.";
-    }
-  }
-
-  // Call the function to populate the accordion on page load
-  populateDiagnosisAccordion();
 });

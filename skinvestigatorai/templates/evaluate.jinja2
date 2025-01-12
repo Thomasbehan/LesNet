@@ -43,16 +43,6 @@
         <div style="display: none;" id="response-data" class="result mt-4 text-center"></div>
       </div>
     </div>
-
-    <!-- Supported Diagnoses -->
-    <div class="card mb-4 p-4 shadow border-0 text-center">
-      <h5>Supported Diagnoses</h5>
-      <div id="accordion">
-            <!-- Accordion items will be populated here by JavaScript -->
-      </div>
-    </div>
-
-
   </div>
 
   <div class="col-md-8">
@@ -77,8 +67,8 @@
     <div id="diagnosis-info" class="card mb-4 p-3 shadow border-0">
         <div class="row g-0">
             <div class="col-md-4">
-                <img id="diagnosis-image" src="{{request.static_url('skinvestigatorai:static/doc.webp') }}" class="img-fluid rounded-start" alt="Diagnosis Image" style="display:none;">
-                <img id="default-diagnosis-image" src="{{request.static_url('skinvestigatorai:static/doc.webp') }}" class="img-fluid rounded-start" alt="Default Diagnosis Image of a flat material style doctor">
+                <img src="{{request.static_url('skinvestigatorai:static/doc.webp') }}" id="diagnosis-image" class="diagnosis-image img-fluid rounded-start" alt="Diagnosis Image" style="display:none;">
+                <img src="{{request.static_url('skinvestigatorai:static/doc2.webp') }}" class="default-diagnosis-image img-fluid rounded-start" alt="Default Diagnosis Image of a flat material style doctor">
             </div>
             <div class="col-md-8">
                 <div class="card-body">
@@ -101,34 +91,11 @@
         </p>
       </div>
     </div>
-
   </div>
-
-
-
-
-
 </div>
 
-<style>
-/* Custom Styles */
-body {
-  font-family: 'Inter', sans-serif;
-}
-.card {
-  border-radius: 10px;
-}
-.result {
-  background-color: #e9ecef;
-  padding: 10px;
-  border-radius: 5px;
-}
-#loading {
-  font-weight: bold;
-}
-</style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script src="{{ request.static_url('skinvestigatorai:static/js/file-upload.js') }}"></script>
 
 {% endblock content %}

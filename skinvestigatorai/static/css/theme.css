@@ -1,0 +1,103 @@
+
+body {
+    font-family: Roboto, sans-serif;
+    background-color: #d6e4f7;
+}
+.sidebar {
+    background-color: #e9f1fc;
+    padding-top: 20px;
+    min-height: 100vh;
+}
+.sidebar h4 {
+    text-align: center;
+    font-weight: bold;
+}
+.sidebar a {
+    color: #333;
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+}
+.sidebar a:hover {
+    background-color: #d6e4f7;
+    border-radius: 5px;
+}
+.main-content {
+    padding: 20px;
+}
+.right-panel {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+.logo {
+    width: 100%;
+}
+/* Hamburger Menu Styles */
+.navbar-toggler {
+    border: none;
+}
+.card {
+    background-color: #ffffff;
+}
+
+.switch {
+    display: flex; /* Use flexbox for better alignment */
+    align-items: center; /* Center items vertically */
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: relative;
+    cursor: pointer;
+    width: 80px; /* Width of the toggle */
+    height: 20px; /* Height of the toggle */
+    background-color: #ccc; /* Background color when off */
+    border-radius: 20px; /* Rounded corners */
+    margin-right: 10px; /* Space between toggle and text */
+    transition: background-color .4s; /* Smooth transition for background color */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; /* Height of the toggle knob */
+    width: 16px; /* Width of the toggle knob */
+    left: 2px; /* Position from left */
+    bottom: 2px; /* Position from bottom */
+    background-color: white; /* Color of the knob */
+    border-radius: 50%; /* Make it round */
+    transition: transform .4s; /* Smooth transition for moving */
+}
+
+input:checked + .slider {
+    background-color: #2196F3; /* Color when checked */
+}
+
+input:checked + .slider:before {
+    transform: translateX(16px); /* Move knob to right when checked */
+}
+
+.card {
+    border-radius: 10px;
+}
+.result {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 5px;
+}
+#loading {
+    font-weight: bold;
+}
+
+@media (min-width: 768px) {
+    .navbar-toggler {
+      display: none; /* Hide on larger screens */
+    }
+}
