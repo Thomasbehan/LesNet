@@ -53,8 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Show loading indicator
     loading.style.display = "block";
-    responseData.style.display = "none"
-    responseData.innerHTML = "";
 
     // AJAX request
     fetch("predict", {
@@ -72,19 +70,17 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((data) => {
         loading.style.display = "none";
-        responseData.style.display = "block"
         if (data.prediction && data.confidence) {
-          responseData.innerHTML = `
-            <strong>Result:</strong> ${data.confidence.toFixed(2)}% confidence it is ${data.prediction}.
-          `;
           updateAnalysisBox(data.prediction, data.confidence, new Date().toLocaleDateString());
           updateDiagnosisInfo(data.prediction);
         } else {
+          responseData.style.display = "block"
           responseData.innerHTML = `<span>No valid result returned. Please try again.</span>`;
         }
       })
       .catch((error) => {
         loading.style.display = "none";
+        responseData.style.display = "block"
         responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
       });
   }
