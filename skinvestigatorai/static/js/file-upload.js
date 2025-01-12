@@ -121,12 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
   function updateAnalysisBox(prediction, confidence, date) {
-      const analysisDate = document.getElementById("analysis-date");
       const analysisResult = document.getElementById("analysis-result");
       const analysisActions = document.getElementById("analysis-actions");
-
-      // Update date
-      analysisDate.textContent = date || "N/A";
 
       // Clear previous result styles
       analysisResult.className = "text-center py-4";
