@@ -8,8 +8,8 @@ from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.model import SVModel
+from lesnet.config.model import ModelConfig
+from lesnet.services.model import SVModel
 
 
 class SVModelHPTuner(SVModel):

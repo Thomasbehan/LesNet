@@ -1,4 +1,4 @@
-from skinvestigatorai.services.model import SVModel
+from lesnet.services.model import SVModel
 
 def main():
     model_service = SVModel()

@@ -3,8 +3,8 @@ import os
 
 from pyramid.view import view_config
 
-from skinvestigatorai.services.inference import Inference
-from skinvestigatorai.services.model import SVModel
+from lesnet.services.inference import Inference
+from lesnet.services.model import SVModel
 
 log = logging.getLogger(__name__)
 model_dir = 'models/'

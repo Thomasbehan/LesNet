@@ -4,7 +4,7 @@ import os
 import tensorflow as tf
 from PIL import Image
 
-from skinvestigatorai.config.model import ModelConfig
+from lesnet.config.model import ModelConfig
 
 
 class Data:

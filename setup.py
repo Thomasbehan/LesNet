@@ -41,9 +41,9 @@ tests_require = [
 ]
 
 setup(
-    name='skinvestigatorai',
-    version='3.1.0',
-    description='SkinVestigatorAI',
+    name='lesnet',
+    version='4.0.0',
+    description='LesNet',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
         'Programming Language :: Python',
@@ -53,7 +53,7 @@ setup(
     ],
     author='Thomas Behan',
     author_email='https://github.com/Thomasbehan',
-    url='https://skinvestigator.onrender.com/',
+    url='https://lesnet.onrender.com/',
     keywords='web pyramid pylons',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
@@ -64,7 +64,7 @@ setup(
     install_requires=requires,
     entry_points={
         'paste.app_factory': [
-            'main = skinvestigatorai:main',
+            'main = lesnet:main',
         ],
     },
 )

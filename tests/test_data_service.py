@@ -5,8 +5,8 @@ import pytest
 import tensorflow as tf
 from PIL import Image, UnidentifiedImageError
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.data import Data
+from lesnet.config.model import ModelConfig
+from lesnet.services.data import Data
 
 
 @pytest.fixture

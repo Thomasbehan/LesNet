@@ -6,8 +6,8 @@ from pyramid.response import Response
 import pytest
 from PIL import Image
 
-from skinvestigatorai.services.inference import Inference
-from skinvestigatorai.services.model import SVModel
+from lesnet.services.inference import Inference
+from lesnet.services.model import SVModel
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def mock_svmodel():
 
 @pytest.fixture
 def inference(mock_svmodel):
-    with patch('skinvestigatorai.services.model.SVModel', return_value=mock_svmodel):
+    with patch('lesnet.services.model.SVModel', return_value=mock_svmodel):
         return Inference()
 
 
@@ -70,7 +70,7 @@ def test__predict_similar_keras(inference):
     mock_image = np.random.rand(100, 100, 3)
     inference.model.predict = MagicMock(return_value=np.random.rand(1, 2048))
 
-    with patch('skinvestigatorai.config.model.ModelConfig.MODEL_TYPE', 'KERAS'):
+    with patch('lesnet.config.model.ModelConfig.MODEL_TYPE', 'KERAS'):
         result = inference._predict_similar(mock_image)
 
     assert result is not None
@@ -84,7 +84,7 @@ def test__predict_similar_tflite(inference):
     inference.model.invoke = MagicMock()
     inference.model.get_tensor = MagicMock(return_value=np.random.rand(1, 2048))
 
-    with patch('skinvestigatorai.config.model.ModelConfig.MODEL_TYPE', 'TFLITE'):
+    with patch('lesnet.config.model.ModelConfig.MODEL_TYPE', 'TFLITE'):
         result = inference._predict_similar(mock_image)
 
     assert result is not None

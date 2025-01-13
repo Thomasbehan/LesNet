@@ -9,7 +9,7 @@ class ModelConfig(object):
     }
     LOG_DIR = "logs"
     IMG_SIZE = (160, 160)
-    BATCH_SIZE = 128
+    BATCH_SIZE = 32
     LEARNING_RATE = 0.001
     LAYER_1 = 2048
     LAYER_2 = 1024

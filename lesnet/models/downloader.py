@@ -2,7 +2,7 @@ import os
 import requests
 from tqdm import tqdm
 from urllib.parse import urlparse, unquote
-from skinvestigatorai.config.model import ModelConfig
+from lesnet.config.model import ModelConfig
 
 
 def downloader(model_name):

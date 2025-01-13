@@ -1,4 +1,4 @@
-from skinvestigatorai.config.model import ModelConfig
+from lesnet.config.model import ModelConfig
 
 
 def test_model_directory_type():

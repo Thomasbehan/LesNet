@@ -1,4 +1,4 @@
-from skinvestigatorai.services.data_scaper import DataScraper
+from lesnet.services.data_scaper import DataScraper
 
 
 def main():

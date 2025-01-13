@@ -3,8 +3,8 @@ from unittest.mock import patch, mock_open
 
 import pytest
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.models.downloader import downloader
+from lesnet.config.model import ModelConfig
+from lesnet.models.downloader import downloader
 
 
 # Mocking the requests.get function to prevent actual HTTP requests

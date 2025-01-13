@@ -15,7 +15,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 
-from skinvestigatorai.config.model import ModelConfig
+from lesnet.config.model import ModelConfig
 
 
 class SVModel:

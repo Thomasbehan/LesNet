@@ -8,8 +8,8 @@ from pyramid.response import Response
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.model import SVModel
+from lesnet.config.model import ModelConfig
+from lesnet.services.model import SVModel
 
 log = logging.getLogger(__name__)
 

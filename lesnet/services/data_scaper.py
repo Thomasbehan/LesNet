@@ -7,8 +7,8 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from tqdm import tqdm
 
-from skinvestigatorai.config.data import DataConfig
-from skinvestigatorai.services.data import Data
+from lesnet.config.data import DataConfig
+from lesnet.services.data import Data
 
 
 class DataScraper:

@@ -1,9 +1,9 @@
 import os
 
 from run_data_scraper import main as DownloadData
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.data import Data
-from skinvestigatorai.services.model import SVModel
+from lesnet.config.model import ModelConfig
+from lesnet.services.data import Data
+from lesnet.services.model import SVModel
 
 
 def main(filename='models/skinvestigator.keras'):
