@@ -99,7 +99,7 @@ class DataScraper:
             download_tasks = []
             for image in data['results']:
                 isic_id = image['isic_id']
-                image_url = image['files']['thumbnail_256']['url']
+                image_url = image['files']['full']['url']
                 diagnosis = image['metadata']['clinical'].get('diagnosis_3', 'unknown')
                 if diagnosis == 'unknown':
                     diagnosis = image['metadata']['clinical'].get('diagnosis_2', 'unknown')
