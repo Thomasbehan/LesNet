@@ -39,18 +39,6 @@
 
 ## Regulatory Compliance
 - **Target**: Achieve compliance with **HIPAA**, **GDPR**, and other regional medical regulations for patient privacy and data security.
-- **Target**: Obtain certification as a **Class I medical device** in applicable regions (e.g., FDA, CE).
-
-## Clinical Validation
-- **Target**: Complete **multi-center clinical trials** with dermatologists to validate performance in real-world settings, aiming for a **95% or higher agreement** with board-certified dermatologists.
-
-## Telemedicine Integration
-- **Target**: Achieve **≥ 90%** diagnostic accuracy in telemedicine scenarios, supporting remote consultations and mobile-based evaluations.
 
 ## User Accessibility
-- **Target**: Develop multilingual support, ensuring the model can be used in at least **5 languages**.
 - **Target**: Ensure the user interface is intuitive, with a **≤ 3-step process** for diagnosis.
-
-## Computational Efficiency
-- **Target**: Ensure **≤ 50MB** model size for mobile deployment without compromising accuracy.
-
