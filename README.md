@@ -1,4 +1,4 @@
-<img src="/skinvestigatorai/static/logo.png" align="right" width="100" height="100" />
+<img src="/lesnet/static/logo.png" align="right" width="100" height="100" />
 
 # LesNet  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/LesNet?color=232323&label=LesNet&logo=github&labelColor=232323)
 ![Precision Score](https://img.shields.io/badge/Precision-93.35%25-darkgreen)
