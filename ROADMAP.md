@@ -1,49 +1,56 @@
-# LesNet: Goals to Surpass a Board-Certified Dermatologist
+# LesNet: Performance Targets to Surpass Board-Certified Dermatologists
 
-The LesNet project aims to develop a highly accurate and reliable AI model for dermatological analysis, focusing on outperforming human dermatologists in specific areas. Below are the goals and key objectives for achieving this milestone:
+## Diagnostic Accuracy
+- **Target**: Achieve an overall diagnostic accuracy of **≥ 95%** across all skin lesion categories (e.g., melanoma, basal cell carcinoma, benign nevi).
+- **Target**: Achieve **≥ 98%** sensitivity for melanoma detection.
 
-## 1. **Accuracy and Sensitivity**
-   - Achieve a diagnostic accuracy of **95% or higher** for skin lesion classification across multiple categories (e.g., melanoma, basal cell carcinoma, benign nevi).
-   - Minimize false negatives, ensuring **sensitivity rates exceed 98%**, especially for life-threatening conditions like melanoma.
-   - Validate performance across diverse datasets to ensure robustness in real-world applications.
+## Sensitivity and Specificity
+- **Target**: Achieve **≥ 98%** sensitivity (true positive rate) for detecting malignant lesions, particularly melanoma.
+- **Target**: Achieve **≥ 95%** specificity (true negative rate) for non-malignant lesions.
 
-## 2. **Dataset Diversity and Scale**
-   - Utilize a vast and diverse dataset covering all Fitzpatrick skin types to reduce racial and ethnic biases in diagnosis.
-   - Include high-quality dermoscopic and clinical images for training, ensuring a wide range of lesion types and conditions.
-   - Incorporate edge cases and rare conditions to strengthen the model’s generalization.
+## False Negatives
+- **Target**: Limit false negatives to **< 2%** across all lesion types, especially melanoma.
 
-## 3. **Explainability and Transparency**
-   - Implement **explainable AI (XAI)** techniques to provide clear visualizations of why a specific diagnosis was made.
-   - Ensure the model outputs confidence scores, offering insights into the certainty of predictions.
+## Precision and Recall
+- **Target**: Achieve **≥ 95%** precision (positive predictive value) for malignancy diagnosis.
+- **Target**: Achieve **≥ 98%** recall (true positive rate) for detecting melanoma and other critical conditions.
 
-## 4. **Real-Time Diagnostic Capabilities**
-   - Optimize the model for **real-time inference** to support clinical use and remote consultations.
-   - Ensure low latency (<500ms) for processing and diagnosing images on both cloud and edge devices.
+## Area Under the ROC Curve (AUC)
+- **Target**: Achieve **AUC ≥ 0.98** for the model across various lesion categories.
 
-## 5. **Usability and Accessibility**
-   - Develop an intuitive user interface for medical professionals and non-specialists.
-   - Offer multilingual support to improve accessibility globally.
-   - Ensure compatibility with common hardware, such as smartphones and tablets, for telemedicine use.
+## Time to Diagnosis
+- **Target**: Achieve **≤ 500ms** latency for model inference to support real-time clinical decision-making.
 
-## 6. **Continuous Learning and Updates**
-   - Create a mechanism for continuous learning by integrating feedback from dermatologists and users.
-   - Regularly update the model with new data to stay current with emerging conditions and treatments.
+## Data Diversity
+- **Target**: Include at least **30,000** high-quality dermoscopic images across all Fitzpatrick skin types (I-VI) for training.
+- **Target**: Ensure the dataset covers **at least 100 distinct skin conditions**, including rare and edge cases.
 
-## 7. **Ethical and Regulatory Compliance**
-   - Ensure compliance with **GDPR**, **HIPAA**, and other regional regulations for data privacy and security.
-   - Adhere to medical device standards such as **ISO 13485** for software as a medical device (SaMD).
-   - Develop a robust framework for ethical AI deployment, focusing on bias reduction and patient safety.
+## Bias Reduction
+- **Target**: Achieve **≤ 5% difference** in diagnostic accuracy across all skin types and ethnicities.
 
-## 8. **Collaboration and Validation**
-   - Partner with board-certified dermatologists and leading institutions to validate model performance in clinical trials.
-   - Publish findings in peer-reviewed journals to demonstrate credibility and transparency.
+## Model Explainability
+- **Target**: Provide **visual explanations** for at least **95% of predictions** using explainable AI techniques (e.g., saliency maps).
 
-## 9. **Scalability and Cost-Effectiveness**
-   - Optimize the model for deployment on resource-constrained devices, such as mobile phones in low-resource settings.
-   - Minimize computational and hardware requirements to ensure affordability for healthcare providers.
+## Continuous Learning
+- **Target**: Incorporate user feedback and new data updates to improve model accuracy by **≥ 2% annually**.
 
-## 10. **Outreach and Awareness**
-   - Promote the use of LesNet among dermatologists, general practitioners, and telemedicine platforms.
-   - Educate healthcare providers and patients on the advantages and limitations of AI-assisted dermatology.
+## Scalability and Cost
+- **Target**: Optimize for deployment on **resource-constrained devices**, maintaining performance on smartphones and edge devices with **≤ 500MB** model size.
 
-By achieving these goals, LesNet aims to not only match but also exceed the diagnostic capabilities of board-certified dermatologists, making advanced dermatological care more accessible and effective globally.
+## Regulatory Compliance
+- **Target**: Achieve compliance with **HIPAA**, **GDPR**, and other regional medical regulations for patient privacy and data security.
+- **Target**: Obtain certification as a **Class I medical device** in applicable regions (e.g., FDA, CE).
+
+## Clinical Validation
+- **Target**: Complete **multi-center clinical trials** with dermatologists to validate performance in real-world settings, aiming for a **95% or higher agreement** with board-certified dermatologists.
+
+## Telemedicine Integration
+- **Target**: Achieve **≥ 90%** diagnostic accuracy in telemedicine scenarios, supporting remote consultations and mobile-based evaluations.
+
+## User Accessibility
+- **Target**: Develop multilingual support, ensuring the model can be used in at least **5 languages**.
+- **Target**: Ensure the user interface is intuitive, with a **≤ 3-step process** for diagnosis.
+
+## Computational Efficiency
+- **Target**: Ensure **≤ 50MB** model size for mobile deployment without compromising accuracy.
+
