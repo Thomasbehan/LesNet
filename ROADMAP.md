@@ -1,26 +1,49 @@
+# LesNet: Goals to Surpass a Board-Certified Dermatologist
 
-## Roadmap
+The LesNet project aims to develop a highly accurate and reliable AI model for dermatological analysis, focusing on outperforming human dermatologists in specific areas. Below are the goals and key objectives for achieving this milestone:
 
-This development roadmap is designed to iteratively enhance capabilities, focusing on improving its accuracy, scalability, and robustness. Each model iteration (M1 through M5) represents a step forward. Here's an overview of the planned roadmap:
+## 1. **Accuracy and Sensitivity**
+   - Achieve a diagnostic accuracy of **95% or higher** for skin lesion classification across multiple categories (e.g., melanoma, basal cell carcinoma, benign nevi).
+   - Minimize false negatives, ensuring **sensitivity rates exceed 98%**, especially for life-threatening conditions like melanoma.
+   - Validate performance across diverse datasets to ensure robustness in real-world applications.
 
-### M1: Proof of Concept
-- **Objective:** Establish a foundational AI model using the ViT (Vision Transformer) as a base. The primary aim is to set up the necessary tools and framework for AI development within our project.
-- **Dataset:** 10,000~ images
-- **Focus:** Laying down the groundwork for future iterations by validating the initial model architecture and data processing pipelines.
+## 2. **Dataset Diversity and Scale**
+   - Utilize a vast and diverse dataset covering all Fitzpatrick skin types to reduce racial and ethnic biases in diagnosis.
+   - Include high-quality dermoscopic and clinical images for training, ensuring a wide range of lesion types and conditions.
+   - Incorporate edge cases and rare conditions to strengthen the model’s generalization.
 
-### M2: Initial Deployment
-- **Objective:** Build upon the proof of concept by increasing the dataset size and refining the model based on initial learnings.
-- **Dataset:** 40,194 images
-- **Focus:** Enhance model accuracy and establish a benchmark for performance improvements in subsequent versions.
+## 3. **Explainability and Transparency**
+   - Implement **explainable AI (XAI)** techniques to provide clear visualizations of why a specific diagnosis was made.
+   - Ensure the model outputs confidence scores, offering insights into the certainty of predictions.
 
-### M3: Expanded Dataset
-- **Objective:** Further increase the dataset size to improve the model's ability to generalize and accurately identify skin cancer from a wider variety of images.
-- **Dataset:** 837,628 images, 30 Categories
-- **Focus:** Target substantial improvements in model performance, particularly in handling diverse and challenging cases.
+## 4. **Real-Time Diagnostic Capabilities**
+   - Optimize the model for **real-time inference** to support clinical use and remote consultations.
+   - Ensure low latency (<500ms) for processing and diagnosing images on both cloud and edge devices.
 
-### M4: Advanced Features and Security
-- **Objective:** Implement a new Duel model approach one model processing images and the other a natural language model processing a contextual conversational about these images. 
-- **Dataset:** 1M~ Images, TBD Categories
-- **Focus:** Focusing on improving the model with a bigger improved dataset, natural language capabilities and moving to a duel model approach.
+## 5. **Usability and Accessibility**
+   - Develop an intuitive user interface for medical professionals and non-specialists.
+   - Offer multilingual support to improve accessibility globally.
+   - Ensure compatibility with common hardware, such as smartphones and tablets, for telemedicine use.
 
-### M5: TBD
+## 6. **Continuous Learning and Updates**
+   - Create a mechanism for continuous learning by integrating feedback from dermatologists and users.
+   - Regularly update the model with new data to stay current with emerging conditions and treatments.
+
+## 7. **Ethical and Regulatory Compliance**
+   - Ensure compliance with **GDPR**, **HIPAA**, and other regional regulations for data privacy and security.
+   - Adhere to medical device standards such as **ISO 13485** for software as a medical device (SaMD).
+   - Develop a robust framework for ethical AI deployment, focusing on bias reduction and patient safety.
+
+## 8. **Collaboration and Validation**
+   - Partner with board-certified dermatologists and leading institutions to validate model performance in clinical trials.
+   - Publish findings in peer-reviewed journals to demonstrate credibility and transparency.
+
+## 9. **Scalability and Cost-Effectiveness**
+   - Optimize the model for deployment on resource-constrained devices, such as mobile phones in low-resource settings.
+   - Minimize computational and hardware requirements to ensure affordability for healthcare providers.
+
+## 10. **Outreach and Awareness**
+   - Promote the use of LesNet among dermatologists, general practitioners, and telemedicine platforms.
+   - Educate healthcare providers and patients on the advantages and limitations of AI-assisted dermatology.
+
+By achieving these goals, LesNet aims to not only match but also exceed the diagnostic capabilities of board-certified dermatologists, making advanced dermatological care more accessible and effective globally.
