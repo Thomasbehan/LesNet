@@ -2,12 +2,13 @@ import datetime
 import itertools
 import json
 import os
-
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
-from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras import layers, models
+from tensorflow.keras.applications import EfficientNetV2B3
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.layers import Input, Dense, BatchNormalization, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.metrics import Precision, Recall
@@ -16,6 +17,20 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 
 from lesnet.config.model import ModelConfig
+
+
+def _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
+    tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
+                                       update_freq='epoch', profile_batch=0)
+    reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
+                                           min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
+    model_checkpoint_callback = ModelCheckpoint(
+        filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"), save_best_only=True,
+        monitor='val_loss', mode='min', verbose=1)
+    early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
+                                            verbose=1)
+
+    return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
 
 
 class SVModel:
@@ -64,31 +79,30 @@ class SVModel:
         self.dataset_embedding = np.mean(features, axis=0)
 
     def build_model(self):
-        num_classes = ModelConfig.CATEGORIES
+        path = Path(ModelConfig.TRAIN_DIR)
+        categories = [item for item in path.iterdir() if item.is_dir()]
+        num_classes = len(categories)
         input_shape = (self.img_size[0], self.img_size[1], 3)
 
-        base_model = EfficientNetB0(
+        base_model = EfficientNetV2B3(
             include_top=False,
             weights='imagenet',
             input_tensor=Input(shape=input_shape)
         )
 
-        # Freezing all base layers and unfreezing the last few
-        for layer in base_model.layers:
-            layer.trainable = False
-        for layer in base_model.layers[-ModelConfig.BASE_LAYERS_TO_UNFREEZE:]:
-            layer.trainable = True
+        # Freeze the base model layers
+        base_model.trainable = False
 
-        x = base_model.output
-        x = GlobalAveragePooling2D()(x)
-        x = BatchNormalization()(x)
-        x = Dense(ModelConfig.LAYER_1, activation='relu', kernel_regularizer=l2(ModelConfig.L2_LAYER_1))(x)
-        x = Dropout(ModelConfig.DROPOUT_1)(x)
-        x = Dense(ModelConfig.LAYER_2, activation='relu', kernel_regularizer=l2(ModelConfig.L2_LAYER_2))(x)
-        x = Dense(ModelConfig.LAYER_3, activation='relu', kernel_regularizer=l2(ModelConfig.L2_LAYER_3))(x)
-        outputs = Dense(num_classes, activation='softmax')(x)
+        self.model = models.Sequential([
+            base_model,
+            layers.GlobalAveragePooling2D(),
+            layers.Dense(ModelConfig.LAYER_1, activation='relu'),
+            layers.Dense(ModelConfig.LAYER_2, activation='relu'),
+            layers.Dropout(ModelConfig.DROPOUT_1),
+            layers.Dense(ModelConfig.LAYER_3, activation='relu'),
+            layers.Dense(num_classes, activation='softmax')
+        ])
 
-        self.model = Model(inputs=base_model.input, outputs=outputs)
         self.model.compile(
             optimizer=self.optimizer,
             loss='categorical_crossentropy',
@@ -225,19 +239,6 @@ class SVModel:
 
         print(f"Model saved as {filename}, and class labels in {labels_filename}")
 
-    def _create_callbacks(self, log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
-        tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
-                                           update_freq='epoch', profile_batch=0)
-        reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
-                                               min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
-        model_checkpoint_callback = ModelCheckpoint(
-            filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"), save_best_only=True,
-            monitor='val_loss', mode='min', verbose=1)
-        early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
-                                                verbose=1)
-
-        return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
-
     def train_model(self, train_generator, val_generator, epochs=ModelConfig.EPOCHS,
                     patience_lr=ModelConfig.LR_PATIENCE,
                     patience_es=ModelConfig.ES_PATIENCE,
@@ -247,20 +248,28 @@ class SVModel:
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
-        callbacks = self._create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
-                                           cooldown_lr)
+        callbacks = _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
+                                      cooldown_lr)
 
-        all_labels = np.concatenate([labels for _, labels in train_generator], axis=0)
-        all_labels = np.argmax(all_labels, axis=1)
+        # Data Augmentation
+        data_augmentation = models.Sequential([
+            layers.RandomFlip("horizontal_and_vertical"),
+            layers.RandomRotation(0.2),
+        ])
 
-        class_weights = self.compute_class_weights(all_labels)
+        # Normalize pixel values to [0, 1]
+        normalization_layer = layers.Rescaling(1. / 255)
+
+        train_generator = train_generator.map(lambda x, y: (data_augmentation(x), y))
+        train_generator = train_generator.map(lambda x, y: (normalization_layer(x), y))
+
+        val_generator = val_generator.map(lambda x, y: (normalization_layer(x), y))
 
         history = self.model.fit(
             train_generator,
             epochs=epochs,
             validation_data=val_generator,
-            callbacks=callbacks,
-            class_weight=class_weights
+            callbacks=callbacks
         )
         return history
 

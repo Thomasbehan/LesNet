@@ -99,7 +99,10 @@ class DataScraper:
             download_tasks = []
             for image in data['results']:
                 isic_id = image['isic_id']
-                image_url = image['files']['full']['url']
+
+                image_url = image['files']['thumbnail_256']['url']
+                if image_url is None:
+                    image_url = image['files']['full']['url']
                 diagnosis = image['metadata']['clinical'].get('diagnosis_3', 'unknown')
                 if diagnosis == 'unknown':
                     diagnosis = image['metadata']['clinical'].get('diagnosis_2', 'unknown')
@@ -110,7 +113,7 @@ class DataScraper:
                     file_path = os.path.join(temp_folder, diagnosis, f"{isic_id}.jpg")
                     download_tasks.append((image_url, file_path))
 
-            with ThreadPoolExecutor(max_workers=200) as executor:
+            with ThreadPoolExecutor(max_workers=8) as executor:
                 future_to_url = {executor.submit(self._download_image, task): task for task in download_tasks}
                 for future in as_completed(future_to_url):
                     url, success = future.result()

@@ -30,3 +30,4 @@ else
     echo -e "${RED}Data scraping process encountered an error. Please check the logs for details.${NC}" >&2
     exit 1
 fi
+

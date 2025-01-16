@@ -27,7 +27,7 @@ def get_latest_model(model_dir, extension):
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
 def predict_api(request):
-    image_file = request.POST['image'].file
+    image_file = request.POST['image']
 
     return inference_service.predict(image_file)
 

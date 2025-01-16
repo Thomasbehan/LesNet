@@ -1,7 +1,10 @@
 import math
 import os
+import random
+import time
 
 import tensorflow as tf
+from tensorflow.keras.utils import to_categorical
 from PIL import Image
 
 from lesnet.config.model import ModelConfig
@@ -90,6 +93,20 @@ class Data:
                 augmented_image, _ = self.augment_image(image, label)
                 yield augmented_image, tf.cast(label, tf.string)
 
+    def load_image_for_prediction(self, uploaded_file):
+        # Read the contents of the uploaded file
+        file_data = uploaded_file.file.read()
+
+        # Create a temporary path or use an in-memory approach
+        unique_suffix = f"_{int(time.time())}_{random.randint(1, 99999)}"
+        temp_image_path = f'/tmp/uploaded_image{unique_suffix}.jpg'
+        # Write the file data to a temporary image file
+        with open(temp_image_path, 'wb') as temp_file:
+            temp_file.write(file_data)
+
+        return self.load_and_preprocess_image(temp_image_path)
+
+
     def load_and_preprocess_image(self, path):
         image = tf.io.read_file(path)
         return self.preprocess_image(image)
@@ -107,8 +124,6 @@ class Data:
             validation_split=0.2,
             subset="training",
             seed=42,
-            label_mode='categorical',
-            labels='inferred',
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
@@ -118,9 +133,11 @@ class Data:
             validation_split=0.2,
             subset="validation",
             seed=42,
-            label_mode='categorical',
-            labels='inferred',
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
+
+        train_ds = train_ds.map(lambda x, y: (x, to_categorical(y, num_classes=len(train_ds.class_names))))
+        validation_ds = validation_ds.map(lambda x, y: (x, to_categorical(y, num_classes=len(validation_ds.class_names))))
+
         return train_ds, validation_ds

@@ -10,6 +10,7 @@ from tensorflow.lite.python.interpreter import Interpreter
 
 from lesnet.config.model import ModelConfig
 from lesnet.services.model import SVModel
+from lesnet.services.data import Data
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ log = logging.getLogger(__name__)
 class Inference:
     def __init__(self):
         self.model_service = SVModel()
+        self.data_service = Data()
         self.model, self.class_labels = self.model_service.load_model()
         self.dataset_embedding = None
 
@@ -68,12 +70,9 @@ class Inference:
 
     def predict(self, image_file):
         try:
-            image = Image.open(image_file).convert('RGB')
-            image = image.resize(ModelConfig.IMG_SIZE)
-            image_array = img_to_array(image)
-            image_array = image_array / 255.0
-            image_array = np.expand_dims(image_array, axis=0)
-            threshold = 0.40
+            image = self.data_service.load_image_for_prediction(image_file)
+            image_array = np.expand_dims(image, axis=0)
+            threshold = 0.00
 
             # Make a prediction
             if isinstance(self.model, Interpreter):
