@@ -244,10 +244,13 @@ class SVModel:
                     patience_es=ModelConfig.ES_PATIENCE,
                     min_lr=ModelConfig.MIN_LR, min_delta=ModelConfig.MIN_LR_DELTA,
                     cooldown_lr=ModelConfig.LR_COOLDOWN):
+
         self._check_model()
+
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         log_dir = os.path.join(self.log_dir, current_time)
         os.makedirs(log_dir, exist_ok=True)
+
         callbacks = _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                       cooldown_lr)
 
@@ -258,7 +261,7 @@ class SVModel:
             layers.RandomZoom(0.1),
             layers.RandomBrightness(0.1),
             layers.RandomContrast(0.1),
-            layers.GaussianNoise(0.1)  # Adding Gaussian noise
+            layers.GaussianNoise(0.1)
         ])
 
         # Normalize pixel values to [0, 1]
@@ -269,12 +272,22 @@ class SVModel:
 
         val_generator = val_generator.map(lambda x, y: (normalization_layer(x), y))
 
+        # Calculate class weights based on training labels
+        y_train = np.concatenate([y.numpy() for _, y in train_generator])  # Assuming y is in one-hot format
+        class_labels = np.unique(np.argmax(y_train, axis=-1))  # Get unique class indices
+        class_weights = compute_class_weight('balanced', classes=class_labels, y=np.argmax(y_train, axis=-1))
+
+        class_weight_dict = {i: class_weights[i] for i in range(len(class_labels))}
+
+        # Train the model with class weights
         history = self.model.fit(
             train_generator,
             epochs=epochs,
             validation_data=val_generator,
-            callbacks=callbacks
+            callbacks=callbacks,
+            class_weight=class_weight_dict
         )
+
         return history
 
     def load_labels(self):
