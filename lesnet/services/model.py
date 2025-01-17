@@ -11,7 +11,7 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.applications import EfficientNetV2B3
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.layers import Input, Dense, BatchNormalization, GlobalAveragePooling2D, Dropout
-from tensorflow.keras.metrics import Precision, Recall
+from tensorflow.keras.metrics import Precision, Recall, AUC
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
@@ -106,7 +106,7 @@ class SVModel:
         self.model.compile(
             optimizer=self.optimizer,
             loss='categorical_crossentropy',
-            metrics=['accuracy', Precision(), Recall()]
+            metrics=['accuracy', Precision(), Recall(), AUC()]
         )
         self.model.summary()
 
@@ -255,6 +255,10 @@ class SVModel:
         data_augmentation = models.Sequential([
             layers.RandomFlip("horizontal_and_vertical"),
             layers.RandomRotation(0.2),
+            layers.RandomZoom(0.1),
+            layers.RandomBrightness(0.1),
+            layers.RandomContrast(0.1),
+            layers.GaussianNoise(0.1)  # Adding Gaussian noise
         ])
 
         # Normalize pixel values to [0, 1]
