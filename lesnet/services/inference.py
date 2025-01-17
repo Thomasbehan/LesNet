@@ -1,11 +1,7 @@
-import json
 import logging
 
 import numpy as np
-from PIL import Image
 from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.response import Response
-from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.lite.python.interpreter import Interpreter
 
 from lesnet.config.model import ModelConfig
@@ -72,7 +68,6 @@ class Inference:
         try:
             image = self.data_service.load_image_for_prediction(image_file)
             image_array = np.expand_dims(image, axis=0)
-            threshold = 0.00
 
             # Make a prediction
             if isinstance(self.model, Interpreter):
@@ -85,30 +80,22 @@ class Inference:
             else:
                 predictions = self.model.predict(image_array)
 
-            max_confidence = np.max(predictions)
+            # Get the class probabilities and corresponding labels
+            predicted_probabilities = predictions[0]
+            predicted_classes = np.argsort(predicted_probabilities)[::-1]  # Sort classes by probability
+            top_n = 5  # Number of top predictions to return
+            results = []
 
-            # Check if the image is similar based on the highest confidence score
-            if max_confidence < threshold:
-                error_message = """
-                                I'm not too sure about this one?
-                                Please make sure the image is of a skin lesion, is clear, focused, and occupies most of 
-                                the frame while leaving sufficient space around the edges.
-                                """
-                return Response(status=400, body=json.dumps({"error": error_message.strip()}),
-                                content_type='application/json; charset=UTF-8')
-            else:
+            for i in range(top_n):
+                class_index = predicted_classes[i]
+                results.append({
+                    'label': self.class_labels[class_index],
+                    'probability': float(predicted_probabilities[class_index]) * 100
+                })
 
-                print("Predictions: ", predictions)
-                print("Predictions MAXARG: ", np.argmax(predictions))
-                print("Class Labels: ", self.class_labels)
-
-                predicted_class = self.class_labels[(np.argmax(predictions) - 1)]
-
-                # Return the prediction result
-                return {
-                    'prediction': predicted_class,
-                    'confidence': float(predictions[0][np.argmax(predictions)]) * 100
-                }
+            return {
+                'predictions': results
+            }
         except Exception as e:
             log.exception(e)
             return HTTPBadRequest(detail=str(e))

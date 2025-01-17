@@ -70,15 +70,16 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then((data) => {
         loading.style.display = "none";
-        if (data.prediction && data.confidence) {
-          updateAnalysisBox(data.prediction, data.confidence, new Date().toLocaleDateString());
-          updateDiagnosisInfo(data.prediction);
+        if (data.predictions[0] && data.predictions[0].probability && data.predictions[0].label) {
+          updateAnalysisBox(data.predictions[0].label, data.predictions[0].probability, new Date().toLocaleDateString());
+          updateDiagnosisInfo(data.predictions[0].label);
         } else {
           responseData.style.display = "block"
           responseData.innerHTML = `<span>No valid result returned. Please try again.</span>`;
         }
       })
       .catch((error) => {
+        console.error(error);
         loading.style.display = "none";
         responseData.style.display = "block"
         responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
