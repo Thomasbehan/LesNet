@@ -28,6 +28,7 @@ class ModelConfig(object):
     LR_COOLDOWN = 3
     ES_PATIENCE = 6
     MAX_AUG_PER_IMAGE = 10
+    BASE_LAYERS_TO_UNFREEZE = 10
     TRAIN_DIR = 'data/train'
     MODEL_TYPE = "KERAS"
     MODEL_NAME = "LesNet.keras"

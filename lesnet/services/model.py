@@ -90,8 +90,11 @@ class SVModel:
             input_tensor=Input(shape=input_shape)
         )
 
-        # Freeze the base model layers
-        base_model.trainable = False
+        # Freezing all base layers and unfreezing the last few
+        for layer in base_model.layers:
+            layer.trainable = False
+        for layer in base_model.layers[-ModelConfig.BASE_LAYERS_TO_UNFREEZE:]:
+            layer.trainable = True
 
         self.model = models.Sequential([
             base_model,
