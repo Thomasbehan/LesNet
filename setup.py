@@ -28,6 +28,7 @@ requires = [
     'tensorflow_addons==0.20.0',
     'albumentations==2.0.0',
     'keras-tuner==1.4.7',
+    'pandas==2.2.3',
     'sympy==1.13.1',
 ]
 

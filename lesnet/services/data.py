@@ -118,10 +118,10 @@ class Data:
         return image
 
     def load_dataset(self):
-
+        # Load datasets
         train_ds = tf.keras.preprocessing.image_dataset_from_directory(
             ModelConfig.TRAIN_DIR,
-            validation_split=0.2,
+            validation_split=0.15,
             subset="training",
             seed=42,
             image_size=self.img_size,
@@ -130,14 +130,23 @@ class Data:
 
         validation_ds = tf.keras.preprocessing.image_dataset_from_directory(
             ModelConfig.TRAIN_DIR,
-            validation_split=0.2,
+            validation_split=0.15,
             subset="validation",
             seed=42,
             image_size=self.img_size,
             batch_size=ModelConfig.BATCH_SIZE
         )
 
-        train_ds = train_ds.map(lambda x, y: (x, to_categorical(y, num_classes=len(train_ds.class_names))))
-        validation_ds = validation_ds.map(lambda x, y: (x, to_categorical(y, num_classes=len(validation_ds.class_names))))
+        # Map to one-hot encoding and apply optimizations
+        train_ds = train_ds.map(lambda x, y: (x, to_categorical(y, num_classes=len(train_ds.class_names))),
+                                num_parallel_calls=tf.data.AUTOTUNE)
+
+        validation_ds = validation_ds.map(
+            lambda x, y: (x, to_categorical(y, num_classes=len(validation_ds.class_names))),
+            num_parallel_calls=tf.data.AUTOTUNE)
+
+        # Prefetch to improve performance
+        train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
+        validation_ds = validation_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
 
         return train_ds, validation_ds

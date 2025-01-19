@@ -245,6 +245,12 @@ class SVModel:
                     min_lr=ModelConfig.MIN_LR, min_delta=ModelConfig.MIN_LR_DELTA,
                     cooldown_lr=ModelConfig.LR_COOLDOWN):
 
+        # Calculate class weights based on training labels
+        all_labels = np.concatenate([labels for _, labels in train_generator], axis=0)
+        all_labels = np.argmax(all_labels, axis=1)
+
+        class_weights = self.compute_class_weights(all_labels)
+
         self._check_model()
 
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -267,17 +273,12 @@ class SVModel:
         # Normalize pixel values to [0, 1]
         normalization_layer = layers.Rescaling(1. / 255)
 
-        train_generator = train_generator.map(lambda x, y: (data_augmentation(x), y))
-        train_generator = train_generator.map(lambda x, y: (normalization_layer(x), y))
+        train_generator = train_generator.map(lambda x, y: (data_augmentation(x), y),
+                                              num_parallel_calls=tf.data.AUTOTUNE)
+        train_generator = train_generator.map(lambda x, y: (normalization_layer(x), y),
+                                              num_parallel_calls=tf.data.AUTOTUNE)
 
         val_generator = val_generator.map(lambda x, y: (normalization_layer(x), y))
-
-        # Calculate class weights based on training labels
-        y_train = np.concatenate([y.numpy() for _, y in train_generator])  # Assuming y is in one-hot format
-        class_labels = np.unique(np.argmax(y_train, axis=-1))  # Get unique class indices
-        class_weights = compute_class_weight('balanced', classes=class_labels, y=np.argmax(y_train, axis=-1))
-
-        class_weight_dict = {i: class_weights[i] for i in range(len(class_labels))}
 
         # Train the model with class weights
         history = self.model.fit(
@@ -285,7 +286,7 @@ class SVModel:
             epochs=epochs,
             validation_data=val_generator,
             callbacks=callbacks,
-            class_weight=class_weight_dict
+            class_weight=class_weights
         )
 
         return history
