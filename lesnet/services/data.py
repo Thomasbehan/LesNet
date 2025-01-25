@@ -145,8 +145,4 @@ class Data:
             lambda x, y: (x, to_categorical(y, num_classes=len(validation_ds.class_names))),
             num_parallel_calls=tf.data.AUTOTUNE)
 
-        # Prefetch to improve performance
-        train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
-        validation_ds = validation_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
-
         return train_ds, validation_ds
