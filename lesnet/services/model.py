@@ -304,8 +304,7 @@ class SVModel:
             layers.RandomRotation(0.2),
             layers.RandomZoom(0.1),
             layers.RandomBrightness(0.1),
-            layers.RandomContrast(0.1),
-            layers.GaussianNoise(0.1)
+            layers.RandomContrast(0.1)
         ])
 
         # Normalize pixel values to [0, 1]
