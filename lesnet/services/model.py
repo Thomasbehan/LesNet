@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import layers, models
 from tensorflow.keras.applications import EfficientNetV2B3
-from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
+from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, CSVLogger
 from tensorflow.keras.layers import Input, Dense, BatchNormalization, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.metrics import Precision, Recall, AUC
 from tensorflow.keras.models import Model
@@ -20,17 +20,52 @@ from lesnet.config.model import ModelConfig
 
 
 def _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
-    tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True,
-                                       update_freq='epoch', profile_batch=0)
-    reduce_lr_callback = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_lr, min_lr=min_lr,
-                                           min_delta=min_delta, cooldown=cooldown_lr, verbose=1)
-    model_checkpoint_callback = ModelCheckpoint(
-        filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"), save_best_only=True,
-        monitor='val_loss', mode='min', verbose=1)
-    early_stopping_callback = EarlyStopping(monitor='val_loss', patience=patience_es, restore_best_weights=True,
-                                            verbose=1)
+    tensorboard_callback = TensorBoard(
+        log_dir=log_dir,
+        histogram_freq=1,
+        write_graph=True,
+        write_images=True,
+        update_freq='epoch',
+        profile_batch='500,520',
+        embeddings_freq=1,
+        embeddings_metadata=None
+    )
 
-    return [tensorboard_callback, reduce_lr_callback, model_checkpoint_callback, early_stopping_callback]
+    reduce_lr_callback = ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.1,
+        patience=patience_lr,
+        min_lr=min_lr,
+        min_delta=min_delta,
+        cooldown=cooldown_lr,
+        verbose=1
+    )
+
+    model_checkpoint_callback = ModelCheckpoint(
+        filepath=os.path.join(ModelConfig.MODEL_DIRECTORY, f"{current_time}_best_model.keras"),
+        save_best_only=True,
+        monitor='val_loss',
+        mode='min',
+        verbose=1,
+        save_weights_only=False
+    )
+
+    early_stopping_callback = EarlyStopping(
+        monitor='val_loss',
+        patience=patience_es,
+        restore_best_weights=True,
+        verbose=1
+    )
+
+    csv_logger = CSVLogger(os.path.join(log_dir, 'training_log.csv'), append=True, separator=',')
+
+    return [
+        tensorboard_callback,
+        reduce_lr_callback,
+        model_checkpoint_callback,
+        early_stopping_callback,
+        csv_logger
+    ]
 
 
 class SVModel:
