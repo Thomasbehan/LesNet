@@ -29,6 +29,7 @@ def train_gan_model(root_folder, img_size=(160, 160), latent_dim=100, epochs=100
     print(f"Loaded {dataset.shape[0]} images from {root_folder}.")
 
     gan.train(X_train=dataset, epochs=epochs, batch_size=batch_size, sample_interval=sample_interval)
+    gan.save_model()
 
 
 if __name__ == "__main__":
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     latent_dim = 100
     epochs = 10000
     batch_size = 128
-    sample_interval = 200
+    sample_interval = 20
 
     # Start training the GAN model
     train_gan_model(root_folder, img_size=img_size, latent_dim=latent_dim, epochs=epochs, batch_size=batch_size, sample_interval=sample_interval)

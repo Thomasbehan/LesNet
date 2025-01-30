@@ -36,7 +36,6 @@ class GAN:
         model.add(layers.Dense(256))
         model.add(layers.LeakyReLU(alpha=0.2))
         model.add(layers.Dense(1, activation='sigmoid'))
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         return model
 
     def build_gan(self):
@@ -44,6 +43,11 @@ class GAN:
         model = tf.keras.Sequential([self.generator, self.discriminator])
         model.compile(loss='binary_crossentropy', optimizer='adam')
         return model
+
+    def save_model(self):
+        self.generator.save('generator_model.h5')
+        self.discriminator.save('discriminator_model.h5')
+        self.gan.save('gan_model.h5')
 
     def train(self, X_train, epochs, batch_size=128, sample_interval=200):
         valid = np.ones((batch_size, 1))
