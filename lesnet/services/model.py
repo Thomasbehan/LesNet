@@ -119,10 +119,12 @@ class SVModel:
         num_classes = len(categories)
         input_shape = (self.img_size[0], self.img_size[1], 3)
 
+        inputs = Input(shape=input_shape)
+
         base_model = EfficientNetV2B3(
             include_top=False,
             weights='imagenet',
-            input_tensor=Input(shape=input_shape)
+            input_tensor=inputs
         )
 
         # Freezing all base layers and unfreezing the last few
@@ -131,15 +133,15 @@ class SVModel:
         for layer in base_model.layers[-ModelConfig.BASE_LAYERS_TO_UNFREEZE:]:
             layer.trainable = True
 
-        self.model = models.Sequential([
-            base_model,
-            layers.GlobalAveragePooling2D(),
-            layers.Dense(ModelConfig.LAYER_1, activation='relu'),
-            layers.Dense(ModelConfig.LAYER_2, activation='relu'),
-            layers.Dropout(ModelConfig.DROPOUT_1),
-            layers.Dense(ModelConfig.LAYER_3, activation='relu'),
-            layers.Dense(num_classes, activation='softmax')
-        ])
+        x = base_model(inputs)
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(ModelConfig.LAYER_1, activation='relu')(x)
+        x = Dense(ModelConfig.LAYER_2, activation='relu')(x)
+        x = Dropout(ModelConfig.DROPOUT_1)(x)
+        x = Dense(ModelConfig.LAYER_3, activation='relu')(x)
+        outputs = Dense(num_classes, activation='softmax')(x)
+
+        self.model = Model(inputs=inputs, outputs=outputs)
 
         self.model.compile(
             optimizer=self.optimizer,

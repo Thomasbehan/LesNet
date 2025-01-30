@@ -2,9 +2,9 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md')) as f:
+with open(os.path.join(here, 'README.md'), 'r', encoding='utf-8', newline='') as f:
     README = f.read()
-with open(os.path.join(here, 'CHANGES.txt')) as f:
+with open(os.path.join(here, 'CHANGES.txt'), 'r', encoding='utf-8', newline='') as f:
     CHANGES = f.read()
 
 requires = [
@@ -19,6 +19,7 @@ requires = [
     'scipy==1.10.1',
     'scikit-learn==1.6.1',
     'tensorboard==2.16.2',
+    'tensorboard-plugin-profile==2.16.0',
     'termcolor==2.3.0',
     'tensorflow==2.16.1',
     'torch==2.5.1',
@@ -43,7 +44,7 @@ tests_require = [
 
 setup(
     name='lesnet',
-    version='4.0.1',
+    version='4.0.2',
     description='LesNet',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[

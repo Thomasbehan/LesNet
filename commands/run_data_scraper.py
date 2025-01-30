@@ -1,4 +1,5 @@
 import argparse
+
 from lesnet.services.data_scaper import DataScraper
 
 
@@ -11,6 +12,7 @@ def main():
 
     scraper = DataScraper(max_pages=args.pages)
     scraper.download_images()
+
 
 if __name__ == "__main__":
     main()
