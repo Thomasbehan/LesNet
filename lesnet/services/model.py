@@ -118,35 +118,49 @@ class SVModel:
         categories = [item for item in path.iterdir() if item.is_dir()]
         num_classes = len(categories)
         input_shape = (self.img_size[0], self.img_size[1], 3)
-
         inputs = Input(shape=input_shape)
 
         base_model = EfficientNetV2B3(
             include_top=False,
             weights='imagenet',
-            input_tensor=inputs
+            input_tensor=inputs,
+            pooling='avg'
         )
 
-        # Freezing all base layers and unfreezing the last few
-        for layer in base_model.layers:
+        # Gradual unfreezing with batch normalization
+        for layer in base_model.layers[:-15]:  # Freeze deeper layers initially
             layer.trainable = False
-        for layer in base_model.layers[-ModelConfig.BASE_LAYERS_TO_UNFREEZE:]:
+        for layer in base_model.layers[-15:]:  # Unfreeze last 15 layers
             layer.trainable = True
+            if isinstance(layer, layers.Conv2D):
+                layer.add_loss(l2(ModelConfig.L2_LAYER_1)(layer.kernel))
 
         x = base_model(inputs)
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(ModelConfig.LAYER_1, activation='relu')(x)
-        x = Dense(ModelConfig.LAYER_2, activation='relu')(x)
+        x = BatchNormalization()(x)
+        x = Dense(ModelConfig.LAYER_1, activation='swish', kernel_regularizer=l2(ModelConfig.L2_LAYER_2))(x)
         x = Dropout(ModelConfig.DROPOUT_1)(x)
-        x = Dense(ModelConfig.LAYER_3, activation='relu')(x)
-        outputs = Dense(num_classes, activation='softmax')(x)
+        x = BatchNormalization()(x)
+        x = Dense(ModelConfig.LAYER_2, activation='swish', kernel_regularizer=l2(ModelConfig.L2_LAYER_3))(x)
+        x = Dropout(ModelConfig.DROPOUT_1)(x)
+
+        outputs = Dense(num_classes,
+                        activation='softmax',
+                        kernel_initializer='he_normal')(x)
 
         self.model = Model(inputs=inputs, outputs=outputs)
+
+        self.optimizer = Adam(
+            learning_rate=ModelConfig.LEARNING_RATE,
+            weight_decay=ModelConfig.GLOBAL_WEIGHT_DECAY
+        )
 
         self.model.compile(
             optimizer=self.optimizer,
             loss='categorical_crossentropy',
-            metrics=['accuracy', Precision(), Recall(), AUC()]
+            metrics=['accuracy',
+                     Precision(name='prec'),
+                     Recall(name='rec'),
+                     AUC(name='auc')]
         )
         self.model.summary()
 
@@ -302,11 +316,9 @@ class SVModel:
 
         # Data Augmentation
         data_augmentation = models.Sequential([
-            layers.RandomFlip("horizontal_and_vertical"),
-            layers.RandomRotation(0.2),
-            layers.RandomZoom(0.1),
-            layers.RandomBrightness(0.1),
-            layers.RandomContrast(0.1)
+            layers.RandomRotation(0.1),
+            layers.RandomZoom(0.05),
+            layers.RandomBrightness(0.05)
         ])
 
         # Normalize pixel values to [0, 1]
