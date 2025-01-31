@@ -3,6 +3,7 @@ import itertools
 import json
 import os
 from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 from sklearn.utils.class_weight import compute_class_weight
@@ -10,7 +11,7 @@ from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import layers, models
 from tensorflow.keras.applications import EfficientNetV2B3
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, CSVLogger
-from tensorflow.keras.layers import Input, Dense, BatchNormalization, GlobalAveragePooling2D, Dropout
+from tensorflow.keras.layers import Input, Dense, BatchNormalization, Dropout
 from tensorflow.keras.metrics import Precision, Recall, AUC
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
@@ -314,18 +315,19 @@ class SVModel:
         callbacks = _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es,
                                       cooldown_lr)
 
-        # Data Augmentation
-        data_augmentation = models.Sequential([
-            layers.RandomRotation(0.1),
-            layers.RandomZoom(0.05),
-            layers.RandomBrightness(0.05)
-        ])
+        if ModelConfig.AUGMENTATION_ENABLED:
+            # Data Augmentation
+            data_augmentation = models.Sequential([
+                layers.RandomRotation(0.1),
+                layers.RandomZoom(0.05),
+                layers.RandomBrightness(0.05)
+            ])
+            train_generator = train_generator.map(lambda x, y: (data_augmentation(x), y),
+                                                  num_parallel_calls=tf.data.AUTOTUNE)
 
         # Normalize pixel values to [0, 1]
         normalization_layer = layers.Rescaling(1. / 255)
 
-        train_generator = train_generator.map(lambda x, y: (data_augmentation(x), y),
-                                              num_parallel_calls=tf.data.AUTOTUNE)
         train_generator = train_generator.map(lambda x, y: (normalization_layer(x), y),
                                               num_parallel_calls=tf.data.AUTOTUNE)
 
