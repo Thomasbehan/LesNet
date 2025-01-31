@@ -33,3 +33,4 @@ class ModelConfig(object):
     MODEL_TYPE = "KERAS"
     MODEL_NAME = "LesNet.keras"
     LABELS_NAME = "LesNet_labels.json"
+    TPU_Train = False

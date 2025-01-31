@@ -15,7 +15,20 @@ def main(filename='models/' + ModelConfig.MODEL_NAME):
     print('Train Categories:', ModelConfig.CATEGORIES)
 
     model = SVModel()
-    model.build_model()
+    if ModelConfig.TPU_Train:
+        # detect and init the TPU
+        tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
+
+        # instantiate a distribution strategy
+        tf.tpu.experimental.initialize_tpu_system(tpu)
+        tpu_strategy = tf.distribute.TPUStrategy(tpu)
+
+        # instantiating the model in the strategy scope creates the model on the TPU
+        with tpu_strategy.scope():
+            model.build_model()
+    else:
+        model.build_model()
+
     data_service = Data()
     train_ds, validation_ds = data_service.load_dataset()
 
