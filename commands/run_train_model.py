@@ -1,9 +1,11 @@
 import os
 
-from run_data_scraper import main as DownloadData
+import tensorflow as tf
+
 from lesnet.config.model import ModelConfig
 from lesnet.services.data import Data
 from lesnet.services.model import SVModel
+from run_data_scraper import main as DownloadData
 
 
 def main(filename='models/' + ModelConfig.MODEL_NAME):
