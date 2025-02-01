@@ -27,6 +27,7 @@ class ModelConfig(object):
     LR_PATIENCE = 4
     LR_COOLDOWN = 3
     ES_PATIENCE = 6
+    TRAINABLE_START = -30
     MAX_AUG_PER_IMAGE = 10
     BASE_LAYERS_TO_UNFREEZE = 10
     TRAIN_DIR = 'data/train'

@@ -121,30 +121,38 @@ class SVModel:
         input_shape = (self.img_size[0], self.img_size[1], 3)
         inputs = Input(shape=input_shape)
 
+        # Base model configuration
         base_model = EfficientNetV2L(
             include_top=False,
             weights='imagenet',
             input_tensor=inputs,
             include_preprocessing=True,
-            classes=num_classes,
-            pooling='avg'
+            pooling=None
         )
 
-        # Gradual unfreezing with batch normalization
-        for layer in base_model.layers[:-15]:  # Freeze deeper layers initially
+        # Enhanced unfreezing strategy
+        for layer in base_model.layers[:ModelConfig.TRAINABLE_START]:
             layer.trainable = False
-        for layer in base_model.layers[-15:]:  # Unfreeze last 15 layers
+        for layer in base_model.layers[ModelConfig.TRAINABLE_START:]:
             layer.trainable = True
             if isinstance(layer, layers.Conv2D):
                 layer.add_loss(l2(ModelConfig.L2_LAYER_1)(layer.kernel))
 
-        x = base_model(inputs)
+        # Additional Conv2d layers
+        x = layers.Conv2D(ModelConfig.LAYER_1 * 2, (3, 3), activation='swish')(base_model.output)
+        x = layers.GlobalAveragePooling2D()(x)
+
+        # Top layers
+        x = Dense(ModelConfig.LAYER_1, activation='swish',
+                  kernel_regularizer=l2(ModelConfig.L2_LAYER_2))(x)
         x = BatchNormalization()(x)
-        x = Dense(ModelConfig.LAYER_1, activation='swish', kernel_regularizer=l2(ModelConfig.L2_LAYER_2))(x)
         x = Dropout(ModelConfig.DROPOUT_1)(x)
+
+        # Intermediate layer
+        x = Dense(ModelConfig.LAYER_2, activation='swish',
+                  kernel_regularizer=l2(ModelConfig.L2_LAYER_3))(x)
         x = BatchNormalization()(x)
-        x = Dense(ModelConfig.LAYER_2, activation='swish', kernel_regularizer=l2(ModelConfig.L2_LAYER_3))(x)
-        x = Dropout(ModelConfig.DROPOUT_1)(x)
+        x = Dropout(ModelConfig.DROPOUT_2)(x)
 
         outputs = Dense(num_classes,
                         activation='softmax',
@@ -152,9 +160,12 @@ class SVModel:
 
         self.model = Model(inputs=inputs, outputs=outputs)
 
+        # Optimizer configuration
         self.optimizer = Adam(
             learning_rate=ModelConfig.LEARNING_RATE,
-            weight_decay=ModelConfig.GLOBAL_WEIGHT_DECAY
+            weight_decay=ModelConfig.GLOBAL_WEIGHT_DECAY,
+            beta_1=0.9,
+            beta_2=0.999
         )
 
         self.model.compile(
