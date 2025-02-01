@@ -172,9 +172,9 @@ class SVModel:
             optimizer=self.optimizer,
             loss='categorical_crossentropy',
             metrics=['accuracy',
-                     Precision(name='prec'),
-                     Recall(name='rec'),
-                     AUC(name='auc')]
+                     Precision(),
+                     Recall(),
+                     AUC()]
         )
         self.model.summary()
 
