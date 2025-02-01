@@ -9,7 +9,7 @@ import tensorflow as tf
 from sklearn.utils.class_weight import compute_class_weight
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import layers, models
-from tensorflow.keras.applications import EfficientNetV2B3
+from tensorflow.keras.applications import EfficientNetV2L
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, CSVLogger
 from tensorflow.keras.layers import Input, Dense, BatchNormalization, Dropout
 from tensorflow.keras.metrics import Precision, Recall, AUC
@@ -121,10 +121,12 @@ class SVModel:
         input_shape = (self.img_size[0], self.img_size[1], 3)
         inputs = Input(shape=input_shape)
 
-        base_model = EfficientNetV2B3(
+        base_model = EfficientNetV2L(
             include_top=False,
             weights='imagenet',
             input_tensor=inputs,
+            include_preprocessing=True,
+            classes=num_classes,
             pooling='avg'
         )
 
