@@ -15,7 +15,8 @@ class ModelConfig(object):
     GLOBAL_WEIGHT_DECAY = 1e-6
     LAYER_1 = 512
     LAYER_2 = 256
-    DROPOUT_1 = 0.3
+    DROPOUT_1 = 0.2
+    DROPOUT_2 = 0.2
     L2_LAYER_1 = 1e-5
     L2_LAYER_2 = 1e-4
     L2_LAYER_3 = 1e-4
