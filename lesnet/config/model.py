@@ -31,7 +31,7 @@ class ModelConfig(object):
     TRAINABLE_START = -10
     MAX_AUG_PER_IMAGE = 10
     BASE_LAYERS_TO_UNFREEZE = 10
-    TRAIN_DIR = 'data/train'
+    TRAIN_DIR = 'data/training'
     MODEL_TYPE = "KERAS"
     MODEL_NAME = "LesNet.keras"
     LABELS_NAME = "LesNet_labels.json"

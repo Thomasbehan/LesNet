@@ -12,7 +12,7 @@ def main(filename='models/' + ModelConfig.MODEL_NAME):
     if not os.path.exists(ModelConfig.TRAIN_DIR):
         print('Missing Training Data: Downloading Dataset.')
         DownloadData()
-    labels_gen = [name for name in os.listdir(ModelConfig.TRAIN_DIR)]
+    labels_gen = [name for name in os.listdir(ModelConfig.TRAIN_DIR + "/train")]
     ModelConfig.CATEGORIES = len(labels_gen)
     print('Train Categories:', ModelConfig.CATEGORIES)
 
@@ -32,13 +32,13 @@ def main(filename='models/' + ModelConfig.MODEL_NAME):
         model.build_model()
 
     data_service = Data()
-    train_ds, validation_ds = data_service.load_dataset()
+    train_ds, validation_ds, test_ds = data_service.load_preprocessed_dataset()
 
     model.train_model(train_ds, validation_ds)
 
     model.save_model(filename, labels_gen)
 
-    model.evaluate_model(validation_ds)
+    model.evaluate_model(test_ds)
 
 
 if __name__ == '__main__':

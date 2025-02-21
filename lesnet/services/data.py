@@ -117,6 +117,70 @@ class Data:
         image /= 255.0
         return image
 
+    def load_preprocessed_dataset(self):
+        """
+        Loads the dataset from pre-processed folders created by the balancing and splitting process.
+
+        Assumes the following directory structure:
+            ModelConfig.TRAIN_DIR/
+                train/
+                    class1/
+                    class2/
+                    ...
+                val/
+                    class1/
+                    class2/
+                    ...
+                test/
+                    class1/
+                    class2/
+                    ...
+
+        Returns:
+            train_ds: The training dataset.
+            validation_ds: The validation dataset.
+            test_ds: The test dataset.
+        """
+        base_dir = ModelConfig.TRAIN_DIR
+        train_dir = os.path.join(base_dir, "train")
+        val_dir = os.path.join(base_dir, "val")
+        test_dir = os.path.join(base_dir, "test")
+
+        train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+            train_dir,
+            seed=42,
+            image_size=self.img_size,
+            batch_size=ModelConfig.BATCH_SIZE
+        )
+        validation_ds = tf.keras.preprocessing.image_dataset_from_directory(
+            val_dir,
+            seed=42,
+            image_size=self.img_size,
+            batch_size=ModelConfig.BATCH_SIZE
+        )
+        test_ds = tf.keras.preprocessing.image_dataset_from_directory(
+            test_dir,
+            seed=42,
+            image_size=self.img_size,
+            batch_size=ModelConfig.BATCH_SIZE
+        )
+
+        num_classes = len(train_ds.class_names)
+        train_ds = train_ds.map(
+            lambda x, y: (x, to_categorical(y, num_classes=num_classes)),
+            num_parallel_calls=tf.data.AUTOTUNE
+        )
+        validation_ds = validation_ds.map(
+            lambda x, y: (x, to_categorical(y, num_classes=num_classes)),
+            num_parallel_calls=tf.data.AUTOTUNE
+        )
+        test_ds = test_ds.map(
+            lambda x, y: (x, to_categorical(y, num_classes=num_classes)),
+            num_parallel_calls=tf.data.AUTOTUNE
+        )
+
+        return train_ds, validation_ds, test_ds
+
     def load_dataset(self):
         # Load datasets
         train_ds = tf.keras.preprocessing.image_dataset_from_directory(

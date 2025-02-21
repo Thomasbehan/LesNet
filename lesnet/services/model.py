@@ -351,8 +351,7 @@ class SVModel:
             train_generator,
             epochs=epochs,
             validation_data=val_generator,
-            callbacks=callbacks,
-            class_weight=class_weights
+            callbacks=callbacks
         )
 
         return history
