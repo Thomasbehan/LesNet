@@ -115,7 +115,7 @@ class SVModel:
         self.dataset_embedding = np.mean(features, axis=0)
 
     def build_model(self):
-        path = Path(ModelConfig.TRAIN_DIR)
+        path = Path(ModelConfig.TRAIN_DIR + "/train")
         categories = [item for item in path.iterdir() if item.is_dir()]
         num_classes = len(categories)
         input_shape = (self.img_size[0], self.img_size[1], 3)
@@ -126,7 +126,6 @@ class SVModel:
             include_top=False,
             weights='imagenet',
             input_tensor=inputs,
-            include_preprocessing=True,
             pooling=None
         )
 
