@@ -21,7 +21,7 @@ requires = [
     'tensorboard==2.16.2',
     'termcolor==2.3.0',
     'tensorflow==2.16.1',
-    'torch==2.0.0',
+    'torch==2.6.0',
     'torchvision==0.15.1',
     'tqdm==4.66.3',
     'vit-keras==0.1.2',
