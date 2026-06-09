@@ -28,7 +28,9 @@ class TriagePredictor:
         self.ood = MahalanobisOODDetector.from_dict(self.bundle['ood']['mahalanobis'])
         self.min_variance = self.bundle['ood']['min_laplacian_variance']
         self.image_size = tuple(self.bundle['config']['image_size'])
-        self.pipeline = PreprocessingPipeline(image_size=self.image_size, remove_hair=True)
+        # Inference preprocessing must match training exactly (same remove_hair setting).
+        self.pipeline = PreprocessingPipeline(
+            image_size=self.image_size, remove_hair=not self.bundle['config'].get('smoke', False))
         self.use_test_time_augmentation = use_test_time_augmentation
 
     def _logits(self, image):

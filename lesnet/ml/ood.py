@@ -15,9 +15,15 @@ class MahalanobisOODDetector:
 
     def fit(self, embeddings, quantile=0.99, ridge=1e-3):
         embeddings = np.asarray(embeddings, dtype=float)
+        n_samples, n_features = embeddings.shape
         self.mean = embeddings.mean(axis=0)
-        covariance = np.cov(embeddings.T) + ridge * np.eye(embeddings.shape[1])
-        self.inverse_covariance = np.linalg.pinv(covariance)
+        if n_samples <= n_features:
+            # Too few samples for a full covariance — fall back to a diagonal estimate.
+            variances = embeddings.var(axis=0) + ridge
+            self.inverse_covariance = np.diag(1.0 / variances)
+        else:
+            covariance = np.cov(embeddings.T) + ridge * np.eye(n_features)
+            self.inverse_covariance = np.linalg.pinv(covariance)
         self.threshold = float(np.quantile(self._distances(embeddings), quantile))
         return self
 

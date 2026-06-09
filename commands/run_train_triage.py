@@ -28,14 +28,16 @@ def main():
     parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--image-size', type=int, default=384)
     parser.add_argument('--batch-size', type=int, default=16)
+    parser.add_argument('--backbone', default='efficientnetv2s', choices=['efficientnetv2s', 'tiny'])
+    parser.add_argument('--no-pretrained', action='store_true', help="Random init (faster, CPU).")
     parser.add_argument('--smoke', action='store_true', help="Tiny synthetic CPU end-to-end run.")
     args = parser.parse_args()
 
     if args.smoke:
         config = PipelineConfig(
-            image_size=(64, 64), backbone='tiny', pretrained=False, batch_size=8,
-            epochs=2, artifacts_dir=args.artifacts, smoke=True)
-        records = make_synthetic_records(tempfile.mkdtemp(prefix='lesnet_smoke_'))
+            image_size=(64, 64), backbone='tiny', pretrained=False, batch_size=16,
+            epochs=4, shared_units=64, artifacts_dir=args.artifacts, smoke=True)
+        records = make_synthetic_records(tempfile.mkdtemp(prefix='lesnet_smoke_'), per_class=40)
         records = assign_splits(records, DatasetConfig(test_size=0.2, val_size=0.2, seed=config.seed))
         os.makedirs(args.artifacts, exist_ok=True)
         save_manifest(records, os.path.join(args.artifacts, 'smoke_manifest.csv'))
@@ -44,7 +46,9 @@ def main():
             parser.error("--manifest is required unless --smoke is set.")
         config = PipelineConfig(
             image_size=(args.image_size, args.image_size), batch_size=args.batch_size,
-            epochs=args.epochs, artifacts_dir=args.artifacts)
+            epochs=args.epochs, artifacts_dir=args.artifacts,
+            backbone=args.backbone, pretrained=not args.no_pretrained,
+            shared_units=64 if args.backbone == 'tiny' else 256)
         records = load_manifest(args.manifest)
 
     train_records, val_records, test_records = _split_records(records)
