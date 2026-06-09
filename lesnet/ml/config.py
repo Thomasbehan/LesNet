@@ -22,6 +22,14 @@ class PipelineConfig:
     target_sensitivity: float = 0.97         # sensitivity-first operating point
     conformal_alpha: float = 0.1
     seed: int = 42
+    # metric-gated training: keep training until every target is in the ideal range
+    train_until_target: bool = False
+    epochs_per_round: int = 5
+    max_epochs: int = 200                     # hard safety budget for the gated loop
+    target_specificity: float = 0.80
+    max_ece: float = 0.05
+    require_fairness_gate: bool = True
+    tensorboard: bool = True
     # io
     artifacts_dir: str = 'artifacts'
     # smoke mode shrinks everything for a fast CPU end-to-end check

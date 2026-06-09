@@ -30,6 +30,9 @@ def main():
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--backbone', default='efficientnetv2s', choices=['efficientnetv2s', 'tiny'])
     parser.add_argument('--no-pretrained', action='store_true', help="Random init (faster, CPU).")
+    parser.add_argument('--until-target', action='store_true',
+                        help="Train until all metric targets are in range (up to --max-epochs).")
+    parser.add_argument('--max-epochs', type=int, default=200)
     parser.add_argument('--smoke', action='store_true', help="Tiny synthetic CPU end-to-end run.")
     args = parser.parse_args()
 
@@ -48,7 +51,8 @@ def main():
             image_size=(args.image_size, args.image_size), batch_size=args.batch_size,
             epochs=args.epochs, artifacts_dir=args.artifacts,
             backbone=args.backbone, pretrained=not args.no_pretrained,
-            shared_units=64 if args.backbone == 'tiny' else 256)
+            shared_units=64 if args.backbone == 'tiny' else 256,
+            train_until_target=args.until_target, max_epochs=args.max_epochs)
         records = load_manifest(args.manifest)
 
     train_records, val_records, test_records = _split_records(records)
