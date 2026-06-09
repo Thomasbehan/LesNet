@@ -1,7 +1,5 @@
 import math
 import os
-import random
-import time
 
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
@@ -52,11 +50,11 @@ class Data:
         # Random 90-degree rotation
         image = tf.image.rot90(image, k=tf.random.uniform(shape=[], minval=0, maxval=4, dtype=tf.int32))
 
-        # Random cropping and zooming
-        crop_size = tf.random.uniform(shape=[], minval=int(image.shape[0] * 0.7), maxval=int(image.shape[0]),
-                                      dtype=tf.int32)
+        # Random cropping and zooming (use the configured size, not the tensor's static shape)
+        crop_size = tf.random.uniform(shape=[], minval=int(self.img_size[0] * 0.7),
+                                      maxval=int(self.img_size[0]), dtype=tf.int32)
         image = tf.image.random_crop(image, size=[crop_size, crop_size, 3])
-        image = tf.image.resize(image, [image.shape[0], image.shape[1]])  # Resize back to original dimensions
+        image = tf.image.resize(image, self.img_size)  # Resize back to original dimensions
 
         # Clip to ensure pixel values are still in [0, 1]
         image = tf.clip_by_value(image, 0.0, 1.0)
@@ -94,25 +92,18 @@ class Data:
                 yield augmented_image, tf.cast(label, tf.string)
 
     def load_image_for_prediction(self, uploaded_file):
-        # Read the contents of the uploaded file
+        # Decode the upload in memory — no temp file to leak on disk.
         file_data = uploaded_file.file.read()
-
-        # Create a temporary path or use an in-memory approach
-        unique_suffix = f"_{int(time.time())}_{random.randint(1, 99999)}"
-        temp_image_path = f'/tmp/uploaded_image{unique_suffix}.jpg'
-        # Write the file data to a temporary image file
-        with open(temp_image_path, 'wb') as temp_file:
-            temp_file.write(file_data)
-
-        return self.load_and_preprocess_image(temp_image_path)
-
+        if len(file_data) > ModelConfig.MAX_UPLOAD_BYTES:
+            raise ValueError("Uploaded image exceeds the maximum allowed size.")
+        return self.preprocess_image(file_data)
 
     def load_and_preprocess_image(self, path):
         image = tf.io.read_file(path)
         return self.preprocess_image(image)
 
     def preprocess_image(self, image):
-        image = tf.image.decode_jpeg(image, channels=3)
+        image = tf.image.decode_image(image, channels=3, expand_animations=False)
         image = tf.image.resize(image, self.img_size)
         image /= 255.0
         return image

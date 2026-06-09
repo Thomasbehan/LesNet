@@ -5,7 +5,7 @@ import pytest
 
 from lesnet.config.data import DataConfig
 from lesnet.services.data import Data
-from lesnet.services.data_scaper import DataScraper
+from lesnet.services.data_scraper import DataScraper
 
 
 @pytest.fixture

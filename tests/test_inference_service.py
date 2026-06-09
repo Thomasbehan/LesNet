@@ -1,10 +1,7 @@
-from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-from pyramid.response import Response
 import pytest
-from PIL import Image
 
 from lesnet.services.inference import Inference
 from lesnet.services.model import SVModel
@@ -20,39 +17,33 @@ def mock_svmodel():
 
 @pytest.fixture
 def inference(mock_svmodel):
-    with patch('lesnet.services.model.SVModel', return_value=mock_svmodel):
-        return Inference()
+    with patch('lesnet.services.inference.SVModel', return_value=mock_svmodel):
+        service = Inference()
+    # Bypass real image decoding — predict() only needs an array of the right rank.
+    service.data_service.load_image_for_prediction = MagicMock(
+        return_value=np.zeros((224, 224, 3), dtype=np.float32)
+    )
+    return service
 
 
-def create_mock_image():
-    image = Image.new('RGB', (100, 100))
-    img_byte_arr = BytesIO()
-    image.save(img_byte_arr, format='PNG')
-    img_byte_arr = BytesIO(img_byte_arr.getvalue())
-    return img_byte_arr
-
-
-def test_predict_success(inference):
-    mock_image = create_mock_image()
-
+def test_predict_returns_ranked_predictions(inference):
     inference.model.predict = MagicMock(return_value=np.array([[0.1, 0.9]]))
 
-    result = inference.predict(mock_image)
+    result = inference.predict(MagicMock())
 
     assert isinstance(result, dict)
-    assert 'prediction' in result
-    assert 'confidence' in result
+    assert 'predictions' in result
+    assert result['predictions'][0]['label'] == 'class2'
+    assert result['low_confidence'] is False
 
 
-def test_predict_failure(inference):
-    mock_image = create_mock_image()
-
+def test_predict_flags_low_confidence(inference):
     inference.model.predict = MagicMock(return_value=np.array([[0.3, 0.2]]))
 
-    result = inference.predict(mock_image)
+    result = inference.predict(MagicMock())
 
-    assert isinstance(result, Response)
-    assert result.status_code == 400
+    assert isinstance(result, dict)
+    assert result['low_confidence'] is True
 
 
 def test_is_image_similar(inference):

@@ -7,6 +7,7 @@ class ModelConfig(object):
         'M-0015s': 'https://github.com/Thomasbehan/LesNet/releases/download/0.1.5/skinvestigator-sm.tflite',
         'M-0031': 'https://github.com/Thomasbehan/LesNet/releases/download/0.3.1/LesNetM31.keras',
         'M-4s': 'https://github.com/Thomasbehan/LesNet/releases/download/4.0.0/LesNet.M-4.keras',
+        'M-4': 'https://github.com/Thomasbehan/LesNet/releases/download/4.0.0/LesNet.M-4.keras',
     }
     LOG_DIR = "logs"
     IMG_SIZE = (224, 224)
@@ -35,5 +36,7 @@ class ModelConfig(object):
     MODEL_TYPE = "KERAS"
     MODEL_NAME = "LesNet.keras"
     LABELS_NAME = "LesNet_labels.json"
+    CONFIDENCE_THRESHOLD = 0.5
+    MAX_UPLOAD_BYTES = 10 * 1024 * 1024
     TPU_Train = False
     AUGMENTATION_ENABLED = False

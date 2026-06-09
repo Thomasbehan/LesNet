@@ -1,7 +1,8 @@
 import datetime
-import itertools
 import json
+import logging
 import os
+import random
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,8 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 
 from lesnet.config.model import ModelConfig
+
+log = logging.getLogger(__name__)
 
 
 def _create_callbacks(log_dir, current_time, patience_lr, min_lr, min_delta, patience_es, cooldown_lr):
@@ -180,15 +183,17 @@ class SVModel:
     def compute_class_weights(self, class_series):
         class_labels = np.unique(class_series)
         class_weights = compute_class_weight('balanced', classes=class_labels, y=class_series)
-        class_weight_dict = dict(zip(class_labels, class_weights))
-        return class_weight_dict
+        return {int(label): weight for label, weight in zip(class_labels, class_weights)}
 
-    def get_latest_model(self, model_dir=ModelConfig.MODEL_DIRECTORY, extension=ModelConfig.MODEL_TYPE):
-        list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
-                         basename.endswith(extension)]
-        latest_model = max(list_of_files, key=os.path.getctime)
-        print("LATEST MODEL:")
-        print(latest_model)
+    def get_latest_model(self, model_dir=ModelConfig.MODEL_DIRECTORY, extension=None):
+        if extension is None:
+            extension = '.tflite' if ModelConfig.MODEL_TYPE == 'TFLITE' else '.keras'
+        candidates = [os.path.join(model_dir, name) for name in os.listdir(model_dir)
+                      if name.endswith(extension)]
+        if not candidates:
+            raise FileNotFoundError(f"No '{extension}' model files found in {model_dir}.")
+        latest_model = max(candidates, key=os.path.getctime)
+        log.info("Latest model: %s", latest_model)
         return latest_model
 
     def _check_model(self):
@@ -199,11 +204,9 @@ class SVModel:
         self._check_model()
         test_loss, test_acc, test_precision, test_recall = self.model.evaluate(
             test_datagen)
-        print(
-            f'Test Accuracy: {test_acc}, '
-            f'Test Precision: {test_precision}, '
-            f'Test Recall: {test_recall} '
-            f'Test Loss: {test_loss}'
+        log.info(
+            'Test Accuracy: %s, Test Precision: %s, Test Recall: %s, Test Loss: %s',
+            test_acc, test_precision, test_recall, test_loss
         )
         return test_loss, test_acc, test_precision, test_recall
 
@@ -235,19 +238,24 @@ class SVModel:
                 metrics=METRICS
             )
 
-        # Generate all combinations of hyperparameter values
-        keys, values = zip(*HPARAMS.items())
-        experiments = [dict(zip(keys, v)) for v in itertools.product(*(
-            val.domain.values if hasattr(val.domain, 'values') else np.linspace(val.domain.min_value,
-                                                                                val.domain.max_value, num=5)
-            for val in values))]
+        # Random search: the full Cartesian product is millions of trials, so sample a bounded set.
+        max_trials = 25
+        keys, params = zip(*HPARAMS.items())
+        domains = [
+            list(param.domain.values) if hasattr(param.domain, 'values')
+            else list(np.linspace(param.domain.min_value, param.domain.max_value, num=5))
+            for param in params
+        ]
+        experiments = [
+            dict(zip(keys, [random.choice(domain) for domain in domains]))
+            for _ in range(max_trials)
+        ]
 
         session_num = 0
         for hparams in experiments:
             hparams_dict = {hparam.name: value for hparam, value in zip(HPARAMS.values(), hparams.values())}
             run_name = f"run-{session_num}"
-            print('--- Starting trial:', run_name)
-            print(hparams_dict)
+            log.info('--- Starting trial: %s %s', run_name, hparams_dict)
             ModelConfig.BATCH_SIZE = hparams_dict['batch_size']
             ModelConfig.LEARNING_RATE = hparams_dict['learning_rate']
             ModelConfig.BASE_LAYERS_TO_UNFREEZE = hparams_dict['base_layers_to_unfreeze']
@@ -257,7 +265,7 @@ class SVModel:
             ModelConfig.LAYER_3 = hparams_dict['layer_3']
             ModelConfig.L2_LAYER_1 = hparams_dict['l2_layer_1']
             ModelConfig.L2_LAYER_2 = hparams_dict['l2_layer_2']
-            ModelConfig.L3_LAYER_3 = hparams_dict['l2_layer_3']
+            ModelConfig.L2_LAYER_3 = hparams_dict['l2_layer_3']
             self.train_model(train_ds, val_ds, 15)
             loss, accuracy, precision, recall = self.evaluate_model(val_ds)
             metrics = {
@@ -299,12 +307,12 @@ class SVModel:
         self._check_model()
         self.model.save(filename)
 
-        labels_filename = filename.replace('.keras', '_labels.json')
+        labels_filename = os.path.splitext(filename)[0] + '_labels.json'
         if class_labels is not None:
             with open(labels_filename, 'w') as f:
                 json.dump(class_labels, f)
 
-        print(f"Model saved as {filename}, and class labels in {labels_filename}")
+        log.info("Model saved as %s, and class labels in %s", filename, labels_filename)
 
     def train_model(self, train_generator, val_generator, epochs=ModelConfig.EPOCHS,
                     patience_lr=ModelConfig.LR_PATIENCE,
@@ -350,7 +358,8 @@ class SVModel:
             train_generator,
             epochs=epochs,
             validation_data=val_generator,
-            callbacks=callbacks
+            callbacks=callbacks,
+            class_weight=class_weights
         )
 
         return history
@@ -360,10 +369,10 @@ class SVModel:
         try:
             with open(labels_filename, 'r') as f:
                 class_labels = json.load(f)
-        except FileNotFoundError:
-            class_labels = None
-            print("No class labels file found. Please ensure you have downloaded the class_labels.json file.")
-            exit(1)
+        except FileNotFoundError as error:
+            raise FileNotFoundError(
+                f"Labels file {labels_filename} not found. Download or generate it before serving."
+            ) from error
 
         return class_labels
 
@@ -380,5 +389,5 @@ class SVModel:
         else:
             raise ValueError("Unsupported model type. Please use 'KERAS' or 'TFLITE'.")
 
-        print(f"Model loaded from {filename} with class labels.")
+        log.info("Model loaded from %s with class labels.", filename)
         return self.model, self.load_labels()

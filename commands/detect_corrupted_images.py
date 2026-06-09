@@ -1,6 +1,9 @@
 import os
+
 from PIL import Image
+
 from lesnet.config.model import ModelConfig
+
 
 def validate_images(directory):
     corrupted_files = []
@@ -11,16 +14,19 @@ def validate_images(directory):
                 try:
                     with Image.open(image_path) as img:
                         img.verify()
-                except Exception as e:
+                except Exception as error:
                     corrupted_files.append(image_path)
-                    print(f"Error with {image_path}: {e}")
+                    print(f"Error with {image_path}: {error}")
     return corrupted_files
 
 
-# Replace 'path_to_images' with the actual path to your image dataset
-dataset_path = ModelConfig.TRAIN_DIR
-corrupted_files = validate_images(dataset_path)
-for file in corrupted_files:
-    os.remove(file)
-    print(f"Removed corrupted file: {file}")
-print("Corrupted files:", corrupted_files)
+def main():
+    corrupted_files = validate_images(ModelConfig.TRAIN_DIR)
+    for file in corrupted_files:
+        os.remove(file)
+        print(f"Removed corrupted file: {file}")
+    print("Corrupted files:", corrupted_files)
+
+
+if __name__ == '__main__':
+    main()

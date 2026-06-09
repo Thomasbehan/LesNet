@@ -9,7 +9,6 @@ with open(os.path.join(here, 'CHANGES.txt'), 'r', encoding='utf-8', newline='') 
 
 requires = [
     'plaster_pastedeploy==1.0.1',
-    'pyserve==0.2.8',
     'pyramid==2.0.2',
     'pyramid_jinja2==2.10.1',
     'pyramid_debugtoolbar==4.12.1',

@@ -1,35 +1,35 @@
 import logging
-import os
 
+from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.view import view_config
 
 from lesnet.services.inference import Inference
 from lesnet.services.model import SVModel
 
 log = logging.getLogger(__name__)
-model_dir = 'models/'
 
-MODEL_TYPE = 'TFLITE'  # Set this to 'KERAS' or 'TFLite' as needed
-inference_service = Inference()
+_inference_service = None
 
 
-def get_latest_model(model_dir, extension):
+def _get_inference_service():
+    """Lazily build the Inference service once, on first prediction.
+
+    Avoids loading the model at import time (which would block app startup
+    and break test collection when no model file is present).
     """
-    Returns the path of the latest model file in the specified directory with the specified extension.
-    """
-    list_of_files = [os.path.join(model_dir, basename) for basename in os.listdir(model_dir) if
-                     basename.endswith(extension)]
-    latest_model = max(list_of_files, key=os.path.getctime)
-    print("LATEST MODEL:")
-    print(latest_model)
-    return latest_model
+    global _inference_service
+    if _inference_service is None:
+        _inference_service = Inference()
+    return _inference_service
 
 
 @view_config(route_name='predict', request_method='POST', renderer='json')
 def predict_api(request):
-    image_file = request.POST['image']
+    upload = request.POST.get('image')
+    if upload is None or not hasattr(upload, 'file'):
+        return HTTPBadRequest(detail="No image file was uploaded.")
 
-    return inference_service.predict(image_file)
+    return _get_inference_service().predict(upload)
 
 @view_config(route_name='labels', request_method='GET', renderer='json')
 def labels_api(request):

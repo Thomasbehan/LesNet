@@ -1,6 +1,6 @@
 import argparse
 
-from lesnet.services.data_scaper import DataScraper
+from lesnet.services.data_scraper import DataScraper
 
 
 def main():

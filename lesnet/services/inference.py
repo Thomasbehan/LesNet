@@ -80,22 +80,23 @@ class Inference:
             else:
                 predictions = self.model.predict(image_array)
 
-            # Get the class probabilities and corresponding labels
+            # Rank classes by probability and return the top-N (never more than we have labels for)
             predicted_probabilities = predictions[0]
-            predicted_classes = np.argsort(predicted_probabilities)[::-1]  # Sort classes by probability
-            top_n = 5  # Number of top predictions to return
-            results = []
+            ranked = np.argsort(predicted_probabilities)[::-1]
+            top_n = min(5, len(self.class_labels))
+            results = [
+                {
+                    'label': self.class_labels[int(class_index)],
+                    'probability': float(predicted_probabilities[int(class_index)]) * 100
+                }
+                for class_index in ranked[:top_n]
+            ]
 
-            for i in range(top_n):
-                class_index = predicted_classes[i]
-                results.append({
-                    'label': self.class_labels[class_index],
-                    'probability': float(predicted_probabilities[class_index]) * 100
-                })
-
+            top_probability = float(predicted_probabilities[ranked[0]])
             return {
-                'predictions': results
+                'predictions': results,
+                'low_confidence': top_probability < ModelConfig.CONFIDENCE_THRESHOLD
             }
-        except Exception as e:
-            log.exception(e)
-            return HTTPBadRequest(detail=str(e))
+        except Exception as error:
+            log.exception("Prediction failed: %s", error)
+            return HTTPBadRequest(detail="Could not process the uploaded image.")

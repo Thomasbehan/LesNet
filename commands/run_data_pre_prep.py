@@ -145,7 +145,9 @@ def split_dataset(source_dir, dest_dir, train_ratio=0.7, val_ratio=0.15):
     for split in ['train', 'val', 'test']:
         os.makedirs(os.path.join(dest_dir, split), exist_ok=True)
 
-    classes = [entry for entry in os.scandir(source_dir) if entry.is_dir()]
+    split_names = {'train', 'val', 'test'}
+    classes = [entry for entry in os.scandir(source_dir)
+               if entry.is_dir() and entry.name not in split_names]
     copy_tasks = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         for cls in classes:
@@ -179,10 +181,11 @@ def split_dataset(source_dir, dest_dir, train_ratio=0.7, val_ratio=0.15):
 # ------------------ Main Execution ------------------
 
 if __name__ == '__main__':
-    base_train_dir = os.path.join("..", ModelConfig.TRAIN_DIR)
+    base_train_dir = ModelConfig.TRAIN_DIR
 
-    # Step 1: Balance classes by augmenting images (multithreaded)
-    balance_classes(base_train_dir)
-
-    # Step 2: Split dataset into train/val/test sets (multithreaded)
+    # Step 1: Split into train/val/test FIRST, so augmented copies never leak
+    # across splits (which would inflate the reported metrics).
     split_dataset(base_train_dir, base_train_dir)
+
+    # Step 2: Balance classes by augmenting — training split only.
+    balance_classes(os.path.join(base_train_dir, "train"))

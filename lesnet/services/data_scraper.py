@@ -1,10 +1,9 @@
-import argparse
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 from tqdm import tqdm
 
 from lesnet.config.data import DataConfig
@@ -124,15 +123,3 @@ class DataScraper:
                             f.write(f"{url}\n")
 
             print(f"Total images downloaded: {total_images_downloaded}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Download images from ISIC Archive and split into training and testing sets.")
-    parser.add_argument("-p", "--pages", type=int, default=-1,
-                        help="Number of pages to download. Default is -1, which downloads all pages.")
-    args = parser.parse_args()
-
-    scraper = DataScraper(max_pages=args.pages)
-    scraper.download_images()
-    scraper.balance_dataset_and_save()
