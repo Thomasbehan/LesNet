@@ -33,6 +33,7 @@ def main():
     parser.add_argument('--until-target', action='store_true',
                         help="Train until all metric targets are in range (up to --max-epochs).")
     parser.add_argument('--max-epochs', type=int, default=200)
+    parser.add_argument('--cache', action='store_true', help="Disk-cache preprocessed images across epochs.")
     parser.add_argument('--smoke', action='store_true', help="Tiny synthetic CPU end-to-end run.")
     args = parser.parse_args()
 
@@ -52,7 +53,8 @@ def main():
             epochs=args.epochs, artifacts_dir=args.artifacts,
             backbone=args.backbone, pretrained=not args.no_pretrained,
             shared_units=64 if args.backbone == 'tiny' else 256,
-            train_until_target=args.until_target, max_epochs=args.max_epochs)
+            train_until_target=args.until_target, max_epochs=args.max_epochs,
+            cache_dataset=args.cache)
         records = load_manifest(args.manifest)
 
     train_records, val_records, test_records = _split_records(records)

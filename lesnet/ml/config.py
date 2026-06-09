@@ -30,6 +30,7 @@ class PipelineConfig:
     max_ece: float = 0.05
     require_fairness_gate: bool = True
     tensorboard: bool = True
+    cache_dataset: bool = False               # disk-cache preprocessed images across epochs
     # io
     artifacts_dir: str = 'artifacts'
     # smoke mode shrinks everything for a fast CPU end-to-end check

@@ -90,9 +90,18 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
 def train(config, records_train, records_val):
     tf.keras.utils.set_random_seed(config.seed)
 
+    cache_train = cache_val = None
+    if config.cache_dataset:
+        cache_directory = os.path.join(config.artifacts_dir, 'cache')
+        os.makedirs(cache_directory, exist_ok=True)
+        cache_train = os.path.join(cache_directory, 'train')
+        cache_val = os.path.join(cache_directory, 'val')
+
     fine_vocabulary = build_fine_vocabulary(records_train)
-    train_dataset, n_fine, train_triage = make_dataset(records_train, config, fine_vocabulary, training=True)
-    val_dataset, _, val_triage = make_dataset(records_val, config, fine_vocabulary, training=False)
+    train_dataset, n_fine, train_triage = make_dataset(
+        records_train, config, fine_vocabulary, training=True, cache_path=cache_train)
+    val_dataset, _, val_triage = make_dataset(
+        records_val, config, fine_vocabulary, training=False, cache_path=cache_val)
     val_records = filter_valid(records_val)
 
     model = build_triage_model(config, n_fine, METADATA_DIM)

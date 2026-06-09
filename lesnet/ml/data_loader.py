@@ -16,7 +16,7 @@ def filter_valid(records):
     return [record for record in records if triage_index(record.raw_label) is not None]
 
 
-def make_dataset(records, config, fine_vocabulary, training=False):
+def make_dataset(records, config, fine_vocabulary, training=False, cache_path=None):
     records = filter_valid(records)
     if not records:
         raise ValueError("No records with a mappable triage label.")
@@ -49,6 +49,8 @@ def make_dataset(records, config, fine_vocabulary, training=False):
 
     dataset = tf.data.Dataset.from_tensor_slices((paths, metadata, triage, fine))
     dataset = dataset.map(_map, num_parallel_calls=tf.data.AUTOTUNE)
+    if cache_path is not None:
+        dataset = dataset.cache(cache_path)
     if training:
         dataset = dataset.shuffle(min(len(paths), 1000), seed=config.seed, reshuffle_each_iteration=True)
     dataset = dataset.batch(config.batch_size).prefetch(tf.data.AUTOTUNE)
