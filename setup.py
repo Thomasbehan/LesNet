@@ -34,7 +34,7 @@ requires = [
 
 tests_require = [
     'WebTest==3.0.2',
-    'pytest==8.3.4',
+    'pytest==9.0.3',
     'pytest-cov==6.0.0',
     'pytest-mock==3.14.0',
     'flake8==7.1.1',
