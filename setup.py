@@ -21,7 +21,7 @@ requires = [
     'tensorboard-plugin-profile==2.16.0',
     'termcolor==2.3.0',
     'tensorflow==2.16.1',
-    'torch==2.5.1',
+    'torch==2.8.0',
     'torchvision==0.20.1',
     'tqdm==4.66.3',
     'vit-keras==0.1.2',
