@@ -31,6 +31,7 @@ class PipelineConfig:
     require_fairness_gate: bool = True
     tensorboard: bool = True
     cache_dataset: bool = False               # disk-cache preprocessed images across epochs
+    remove_hair: bool = True                  # DullRazor hair removal (costly at large scale)
     # io
     artifacts_dir: str = 'artifacts'
     # smoke mode shrinks everything for a fast CPU end-to-end check

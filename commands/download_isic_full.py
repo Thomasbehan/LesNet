@@ -32,8 +32,12 @@ METADATA_FIELDS = ['isic_id', 'patient_id', 'diagnosis', 'diagnosis_1',
 
 def _session(pool):
     session = requests.Session()
-    retries = Retry(total=5, backoff_factor=1.0, status_forcelist=[429, 500, 502, 503, 504])
-    adapter = HTTPAdapter(max_retries=retries, pool_maxsize=pool)
+    retries = Retry(
+        total=8, connect=5, read=5, backoff_factor=2.0,
+        status_forcelist=[429, 500, 502, 503, 504, 520, 522, 524],
+        respect_retry_after_header=True, raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retries, pool_maxsize=pool, pool_connections=pool)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
@@ -71,7 +75,7 @@ def main():
     parser = argparse.ArgumentParser(description="Resumable full ISIC archive downloader.")
     parser.add_argument('--out', default='data/isic_full')
     parser.add_argument('--resolution', default='thumbnail_256', choices=['thumbnail_256', 'full'])
-    parser.add_argument('--workers', type=int, default=32)
+    parser.add_argument('--workers', type=int, default=64)
     parser.add_argument('--page-size', type=int, default=100)
     parser.add_argument('--max', type=int, default=None, help="Optional cap (omit to fetch all).")
     parser.add_argument('--restart', action='store_true', help="Ignore saved state and start over.")

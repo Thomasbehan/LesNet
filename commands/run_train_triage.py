@@ -34,13 +34,15 @@ def main():
                         help="Train until all metric targets are in range (up to --max-epochs).")
     parser.add_argument('--max-epochs', type=int, default=200)
     parser.add_argument('--cache', action='store_true', help="Disk-cache preprocessed images across epochs.")
+    parser.add_argument('--no-hair-removal', action='store_true',
+                        help="Skip DullRazor hair removal (much faster input pipeline at large scale).")
     parser.add_argument('--smoke', action='store_true', help="Tiny synthetic CPU end-to-end run.")
     args = parser.parse_args()
 
     if args.smoke:
         config = PipelineConfig(
             image_size=(64, 64), backbone='tiny', pretrained=False, batch_size=16,
-            epochs=4, shared_units=64, artifacts_dir=args.artifacts, smoke=True)
+            epochs=4, shared_units=64, artifacts_dir=args.artifacts, smoke=True, remove_hair=False)
         records = make_synthetic_records(tempfile.mkdtemp(prefix='lesnet_smoke_'), per_class=40)
         records = assign_splits(records, DatasetConfig(test_size=0.2, val_size=0.2, seed=config.seed))
         os.makedirs(args.artifacts, exist_ok=True)
@@ -54,7 +56,7 @@ def main():
             backbone=args.backbone, pretrained=not args.no_pretrained,
             shared_units=64 if args.backbone == 'tiny' else 256,
             train_until_target=args.until_target, max_epochs=args.max_epochs,
-            cache_dataset=args.cache)
+            cache_dataset=args.cache, remove_hair=not args.no_hair_removal)
         records = load_manifest(args.manifest)
 
     train_records, val_records, test_records = _split_records(records)

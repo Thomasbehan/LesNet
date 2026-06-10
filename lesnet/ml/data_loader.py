@@ -32,7 +32,7 @@ def make_dataset(records, config, fine_vocabulary, training=False, cache_path=No
 
     fine = np.array([_fine(record) for record in records], dtype='int64')
 
-    pipeline = PreprocessingPipeline(image_size=config.image_size, remove_hair=not config.smoke)
+    pipeline = PreprocessingPipeline(image_size=config.image_size, remove_hair=config.remove_hair)
 
     def _load_image(path_tensor):
         from PIL import Image
