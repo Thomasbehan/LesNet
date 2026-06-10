@@ -1,10 +1,10 @@
 <img src="/lesnet/static/logo.png" align="right" width="100" height="100" />
 
 # LesNet  ![View SkinVestigatorAI on GitHub](https://img.shields.io/github/stars/Thomasbehan/LesNet?color=232323&label=LesNet&logo=github&labelColor=232323)
-![Precision Score](https://img.shields.io/badge/Precision-93.35%25-darkgreen)
-![Recall Score](https://img.shields.io/badge/Recall-80.27%25-darkgreen)
-![Accuracy Score](https://img.shields.io/badge/Accuracy-85.40%25-darkgreen)
-![Loss Score](https://img.shields.io/badge/Loss-0.5113-blue)
+![Sensitivity](https://img.shields.io/badge/Sensitivity-97.0%25-darkgreen)
+![Specificity](https://img.shields.io/badge/Specificity-43.8%25-orange)
+![ROC-AUC](https://img.shields.io/badge/ROC--AUC-0.835-darkgreen)
+![ECE](https://img.shields.io/badge/ECE-0.068-blue)
 ![GitHub license](https://img.shields.io/github/license/Thomasbehan/LesNet) [![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/Automated%20Testing/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 [![Actions Status](https://github.com/Thomasbehan/LesNet/workflows/CodeQL/badge.svg)](https://github.com/Thomasbehan/LesNet/actions)
 
@@ -90,21 +90,21 @@ an auxiliary fine-grained lesion classifier — not a plain top-N classifier. Se
 
 | Model | Tier | Trained on | Input | Notes |
 |-------|------|-----------|-------|-------|
-| **M-4m** | Medium 🥈 | Full ISIC archive (531,667 images) | 224px | Full-data EfficientNetV2-S triage model. Current recommended download. |
-| **M-4s** | Small ⚡ | 40k-image ISIC sample | 224px | Faster, smaller-data variant. |
-| **M-4** | Final 🏆 | (forthcoming) | — | Tuned final model — not yet released. |
+| **M-4s** | Released ✅ | 40k-image ISIC sample | 224px | Current released EfficientNetV2-S triage model (powers the live demo). |
+| **M-4** | Planned 🏆 | Full ISIC archive (531,667 images) | — | Full-data model — training scheduled, not yet released. |
 | M-0003 / M-0015 / M-0015s / M-0031 | Legacy 💾 | — | — | Deprecated single-label classifiers. |
 
 #### Example
 ```bash
-python commands/download_model.py -m M-4m
+python commands/download_model.py -m M-4s
 ```
 
 ## Data
 Images are sourced from the [ISIC Archive](https://www.isic-archive.com) via the resumable
-`commands/download_isic_full.py` downloader. The full M-4m training set is **531,667 labelled
-images across 44 diagnoses** (real prevalence: ~94% benign / ~5% malignant), split
-416k train / 56k val / 59k test with patient/lesion-grouped, leakage-free splits.
+`commands/download_isic_full.py` downloader. The full archive (**531,667 labelled images across
+44 diagnoses**, real prevalence ~94% benign / ~5% malignant) is split 416k train / 56k val /
+59k test with patient/lesion-grouped, leakage-free splits. The released **M-4s** model is
+trained on a 40k sample of it; the full-data **M-4** is planned next.
 
 ### Data Source
 The dataset used for training the model is sourced from the International Skin Imaging Collaboration (ISIC) Archive. The ISIC Archive is a large-scale resource for skin image analysis, providing open access to a wide variety of images for the development and evaluation of automated diagnostic systems.
@@ -129,10 +129,9 @@ check, and wrapped with conformal prediction; the decision threshold is chosen *
 
 Held-out test metrics (malignant-vs-rest, sensitivity-first operating point):
 
-| Model | Sensitivity | Specificity | ROC-AUC | ECE | Conformal cov. |
-|-------|------------|-------------|---------|-----|----------------|
-| M-4s (40k) | 0.970 | 0.438 | 0.835 | 0.068 | 0.895 |
-| M-4m (full) | *published in the release notes* | | | | |
+| Model | Sensitivity | Specificity | ROC-AUC | PR-AUC | ECE | Conformal cov. |
+|-------|------------|-------------|---------|--------|-----|----------------|
+| **M-4s** (40k) | 0.970 | 0.438 | 0.835 | 0.606 | 0.068 | 0.895 |
 
 > Sensitivity-first means high malignant recall is prioritised over specificity; at low real-world
 > prevalence the positive predictive value is modest by design, and the system abstains when unsure.
