@@ -1,0 +1,33 @@
+{% extends "layout.jinja2" %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+  <h1>Supported Diagnoses</h1>
+  <p>A list of all diagnoses which the currently loaded model supports.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Supported Diagnoses -->
+        <div id="diagnosis-cards" class="d-flex flex-wrap justify-content-start gap-4">
+          <!-- Cards will be populated here by JavaScript -->
+        </div>
+    </div>
+
+
+  <div class="col-md-12">
+    <!-- Disclaimer Section -->
+    <div class="card mb-4 shadow border-0 text-dark bg-disclaimer" style="background-image: url('{{request.static_url('lesnet:static/disclaimer-bg.jpeg') }}');">
+      <div class="card-body">
+        <h4>Disclaimer:</h4>
+        <p class="card-text">
+          This tool is intended for informational purposes only and should not be used as a substitute for professional advice. Always consult a qualified professional for guidance.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ request.static_url('lesnet:static/js/supported-diagnoses.js') }}"></script>
+
+{% endblock content %}

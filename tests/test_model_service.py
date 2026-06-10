@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock
 import numpy as np
 import pytest
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.model import SVModel
+from lesnet.config.model import ModelConfig
+from lesnet.services.model import SVModel
 
 
 @pytest.fixture

@@ -5,8 +5,8 @@ import pytest
 import tensorflow as tf
 from PIL import Image, UnidentifiedImageError
 
-from skinvestigatorai.config.model import ModelConfig
-from skinvestigatorai.services.data import Data
+from lesnet.config.model import ModelConfig
+from lesnet.services.data import Data
 
 
 @pytest.fixture
@@ -62,21 +62,17 @@ def test_load_dataset(data_instance):
         assert validation_ds is not None
         mock_dataset.assert_any_call(
             ModelConfig.TRAIN_DIR,
-            validation_split=0.2,
+            validation_split=0.15,
             subset="training",
             seed=42,
-            label_mode='categorical',
-            labels='inferred',
             image_size=ModelConfig.IMG_SIZE,
             batch_size=ModelConfig.BATCH_SIZE
         )
         mock_dataset.assert_any_call(
             ModelConfig.TRAIN_DIR,
-            validation_split=0.2,
+            validation_split=0.15,
             subset="validation",
             seed=42,
-            label_mode='categorical',
-            labels='inferred',
             image_size=ModelConfig.IMG_SIZE,
             batch_size=ModelConfig.BATCH_SIZE
         )

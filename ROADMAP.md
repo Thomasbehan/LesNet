@@ -1,26 +1,44 @@
+# LesNet: Performance Targets to Surpass Board-Certified Dermatologists
 
-## Roadmap
+## Diagnostic Accuracy
+- **Target**: Achieve an overall diagnostic accuracy of **≥ 95%** across all skin lesion categories (e.g., melanoma, basal cell carcinoma, benign nevi).
+- **Target**: Achieve **≥ 98%** sensitivity for melanoma detection.
 
-This development roadmap is designed to iteratively enhance capabilities, focusing on improving its accuracy, scalability, and robustness. Each model iteration (M1 through M5) represents a step forward. Here's an overview of the planned roadmap:
+## Sensitivity and Specificity
+- **Target**: Achieve **≥ 98%** sensitivity (true positive rate) for detecting malignant lesions, particularly melanoma.
+- **Target**: Achieve **≥ 95%** specificity (true negative rate) for non-malignant lesions.
 
-### M1: Proof of Concept
-- **Objective:** Establish a foundational AI model using the ViT (Vision Transformer) as a base. The primary aim is to set up the necessary tools and framework for AI development within our project.
-- **Dataset:** 10,000~ images
-- **Focus:** Laying down the groundwork for future iterations by validating the initial model architecture and data processing pipelines.
+## False Negatives
+- **Target**: Limit false negatives to **< 2%** across all lesion types, especially melanoma.
 
-### M2: Initial Deployment
-- **Objective:** Build upon the proof of concept by increasing the dataset size and refining the model based on initial learnings.
-- **Dataset:** 40,194 images
-- **Focus:** Enhance model accuracy and establish a benchmark for performance improvements in subsequent versions.
+## Precision and Recall
+- **Target**: Achieve **≥ 95%** precision (positive predictive value) for malignancy diagnosis.
+- **Target**: Achieve **≥ 98%** recall (true positive rate) for detecting melanoma and other critical conditions.
 
-### M3: Expanded Dataset
-- **Objective:** Further increase the dataset size to improve the model's ability to generalize and accurately identify skin cancer from a wider variety of images.
-- **Dataset:** 837,628 images, 30 Categories
-- **Focus:** Target substantial improvements in model performance, particularly in handling diverse and challenging cases.
+## Area Under the ROC Curve (AUC)
+- **Target**: Achieve **AUC ≥ 0.98** for the model across various lesion categories.
 
-### M4: Advanced Features and Security
-- **Objective:** Implement a new Duel model approach one model processing images and the other a natural language model processing a contextual conversational about these images. 
-- **Dataset:** 1M~ Images, TBD Categories
-- **Focus:** Focusing on improving the model with a bigger improved dataset, natural language capabilities and moving to a duel model approach.
+## Time to Diagnosis
+- **Target**: Achieve **≤ 500ms** latency for model inference to support real-time clinical decision-making.
 
-### M5: TBD
+## Data Diversity
+- **Target**: Include at least **30,000** high-quality dermoscopic images across all Fitzpatrick skin types (I-VI) for training.
+- **Target**: Ensure the dataset covers **at least 100 distinct skin conditions**, including rare and edge cases.
+
+## Bias Reduction
+- **Target**: Achieve **≤ 5% difference** in diagnostic accuracy across all skin types and ethnicities.
+
+## Model Explainability
+- **Target**: Provide **visual explanations** for at least **95% of predictions** using explainable AI techniques (e.g., saliency maps).
+
+## Continuous Learning
+- **Target**: Incorporate user feedback and new data updates to improve model accuracy by **≥ 2% annually**.
+
+## Scalability and Cost
+- **Target**: Optimize for deployment on **resource-constrained devices**, maintaining performance on smartphones and edge devices with **≤ 500MB** model size.
+
+## Regulatory Compliance
+- **Target**: Achieve compliance with **HIPAA**, **GDPR**, and other regional medical regulations for patient privacy and data security.
+
+## User Accessibility
+- **Target**: Ensure the user interface is intuitive, with a **≤ 3-step process** for diagnosis.

@@ -31,5 +31,5 @@ ENV NAME World
 # Ensure the pserve command is in the PATH
 ENV PATH="/app/.local/bin:${PATH}"
 
-# Run command when the container launches
-CMD ["pserve", "development.ini", "--reload"]
+# Run command when the container launches (production config — no debug toolbar, no autoreload)
+CMD ["pserve", "production.ini"]
