@@ -69,17 +69,18 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
     """
     writer = tf.summary.create_file_writer(os.path.join(log_dir, 'gate'))
     best_weights_path = os.path.join(log_dir, 'best.weights.h5')
-    checkpoint = tf.keras.callbacks.ModelCheckpoint(
-        best_weights_path, monitor='val_loss', save_best_only=True, save_weights_only=True)
-    round_callbacks = callbacks + [checkpoint]
+    best_clinical_score = -1.0  # track best ROC-AUC (clinical discrimination), not val_loss
 
     total_epochs = 0
     targets_met = False
     while True:
         model.fit(train_dataset, validation_data=val_dataset, epochs=config.epochs_per_round,
-                  callbacks=round_callbacks, verbose=2)
+                  callbacks=callbacks, verbose=2)
         total_epochs += config.epochs_per_round
         report = _validation_report(model, val_dataset, val_triage, val_records, config)
+        if report['roc_auc'] > best_clinical_score:
+            best_clinical_score = report['roc_auc']
+            model.save_weights(best_weights_path)
         with writer.as_default():
             tf.summary.scalar('gate/sensitivity', report['sensitivity'], step=total_epochs)
             tf.summary.scalar('gate/specificity', report['specificity'], step=total_epochs)
@@ -98,10 +99,11 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
             print(f"[gate] reached max_epochs={config.max_epochs} without meeting all targets.")
             break
 
-    # Capped without meeting targets -> restore the best-generalising checkpoint.
+    # Capped without meeting targets -> restore the best-ROC-AUC checkpoint
+    # (clinical discrimination), not the possibly-overfit final epoch.
     if not targets_met and os.path.exists(best_weights_path):
         model.load_weights(best_weights_path)
-        print("[gate] restored best-val_loss weights (avoids keeping an overfit final epoch).")
+        print(f"[gate] restored best-ROC-AUC weights (roc_auc={best_clinical_score:.3f}).")
     return targets_met
 
 
