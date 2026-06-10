@@ -15,8 +15,11 @@ RUN python3.10 -m pip install -e .
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# Get the latest available model
-RUN curl -L -o models/LesNet.keras https://github.com/Thomasbehan/LesNet/releases/download/3.1.0/LesNet.keras
+# Fetch the released M-4s triage model + artifact bundle into the dir the app loads
+# (LESNET_TRIAGE_ARTIFACTS, default models/triage) so the live demo serves the new model.
+RUN mkdir -p models/triage && \
+    curl -L -o models/triage/triage_model.keras https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras && \
+    curl -L -o models/triage/artifacts.json https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.artifacts.json
 
 # Add a new user to avoid running the application as root
 RUN useradd -ms /bin/bash appuser

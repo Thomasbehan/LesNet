@@ -63,7 +63,8 @@ def test_save_model(sv_model):
 
 
 def test_load_model(sv_model):
-    with patch('os.path.exists', return_value=True):
-        with patch('tensorflow.keras.models.load_model', return_value=MagicMock()):
-            sv_model.load_model()
-            assert isinstance(sv_model.model, MagicMock)
+    with patch('os.path.exists', return_value=True), \
+            patch('tensorflow.keras.models.load_model', return_value=MagicMock()), \
+            patch.object(SVModel, 'load_labels', return_value=['benign', 'malignant']):
+        sv_model.load_model()
+        assert isinstance(sv_model.model, MagicMock)
