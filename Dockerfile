@@ -21,8 +21,9 @@ RUN mkdir -p models/triage && \
     curl -L -o models/triage/triage_model.keras https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras && \
     curl -L -o models/triage/artifacts.json https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.artifacts.json
 
-# Add a new user to avoid running the application as root
-RUN useradd -ms /bin/bash appuser
+# Add a new user to avoid running the application as root; let it write the model dir
+# (so the app's self-healing model fetch works at runtime).
+RUN useradd -ms /bin/bash appuser && chown -R appuser /app
 USER appuser
 
 # Make port 6543 available to the world outside this container and 6006 for TensorBoard
