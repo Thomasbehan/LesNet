@@ -59,3 +59,8 @@ def feature_model(model):
 def triage_logits_model(model):
     """Sub-model exposing triage logits only (for temperature calibration)."""
     return Model(inputs=model.inputs, outputs=model.get_layer('triage').output)
+
+
+def fine_logits_model(model):
+    """Sub-model exposing the auxiliary fine-grained diagnosis logits."""
+    return Model(inputs=model.inputs, outputs=model.get_layer('fine').output)

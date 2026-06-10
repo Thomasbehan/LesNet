@@ -9,7 +9,7 @@ import tensorflow as tf
 from lesnet.ml import artifacts
 from lesnet.ml.calibration import softmax
 from lesnet.ml.features import metadata_vector
-from lesnet.ml.model import feature_model, triage_logits_model
+from lesnet.ml.model import feature_model, fine_logits_model, triage_logits_model
 from lesnet.ml.ood import MahalanobisOODDetector, is_low_quality
 from lesnet.ml.preprocessing import PreprocessingPipeline
 from lesnet.ml.taxonomy import MALIGNANT, TRIAGE_CLASSES
@@ -21,7 +21,10 @@ class TriagePredictor:
         self.bundle = artifacts.load_bundle(directory)
         self.model = tf.keras.models.load_model(artifacts.model_path(directory), compile=False)
         self.logits_model = triage_logits_model(self.model)
+        self.fine_model = fine_logits_model(self.model)
         self.feature_model = feature_model(self.model)
+        fine_vocabulary = self.bundle['label_maps']['fine_vocabulary']
+        self.fine_labels = {index: label for label, index in fine_vocabulary.items()}
         self.temperature = self.bundle['calibration']['temperature']
         self.q_hat = self.bundle['conformal']['q_hat']
         self.thresholds = self.bundle['thresholds']
@@ -62,10 +65,24 @@ class TriagePredictor:
             abstain_band=tuple(self.thresholds['abstain_band']))
         conformal_set = [TRIAGE_CLASSES[index] for index in range(3)
                          if (1.0 - probabilities[index]) <= self.q_hat]
+
+        # Auxiliary fine-grained diagnosis (explanation, not the decision).
+        fine_predictions = self._fine_predictions(inputs)
+
         return {
             'triage': decision,
             'valid_image': True,
             'p_malignant': p_malignant,
             'probabilities': {TRIAGE_CLASSES[index]: float(probabilities[index]) for index in range(3)},
             'conformal_set': conformal_set,
+            'lesion_type': fine_predictions[0]['label'] if fine_predictions else None,
+            'fine_predictions': fine_predictions,
         }
+
+    def _fine_predictions(self, inputs, top_k=3):
+        if not self.fine_labels:
+            return []
+        fine_probabilities = softmax(self.fine_model.predict(inputs, verbose=0))[0]
+        ranked = np.argsort(fine_probabilities)[::-1][:top_k]
+        return [{'label': self.fine_labels.get(int(index), str(index)),
+                 'probability': float(fine_probabilities[index]) * 100} for index in ranked]

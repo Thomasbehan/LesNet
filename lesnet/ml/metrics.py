@@ -8,6 +8,9 @@ calibrated) probability of malignancy.
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
+# numpy >= 2.0 renamed trapz -> trapezoid
+_trapezoid = getattr(np, 'trapezoid', getattr(np, 'trapz', None))
+
 
 def confusion_at_threshold(y_malignant, p_malignant, threshold):
     y_malignant = np.asarray(y_malignant).astype(int)
@@ -101,7 +104,7 @@ def risk_coverage_curve(correct, confidence):
 
 def area_under_risk_coverage(correct, confidence):
     coverage, risk = risk_coverage_curve(correct, confidence)
-    return float(np.trapz(risk, coverage))
+    return float(_trapezoid(risk, coverage))
 
 
 def clinical_report(y_malignant, p_malignant, target_sensitivity=0.97, prevalences=(0.02, 0.05, 0.10)):

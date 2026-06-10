@@ -98,9 +98,18 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((name) => `${name}: ${(data.probabilities[name] * 100).toFixed(1)}%`)
         .join(" · ");
       const conformal = (data.conformal_set || []).join(", ") || "none";
+      let lesion = "";
+      if (data.lesion_type) {
+        const fine = (data.fine_predictions || [])
+          .map((prediction) => `${prediction.label} (${prediction.probability.toFixed(1)}%)`)
+          .join(", ");
+        lesion = `<p class="mt-2">Most likely lesion type: <strong>${data.lesion_type}</strong></p>
+        <p class="text-muted small mb-1">Other possibilities: ${fine}</p>`;
+      }
       detail = `
+        ${lesion}
         <p class="mt-2">Estimated malignancy probability: <strong>${malignant}%</strong></p>
-        <p class="text-muted small mb-1">Class probabilities: ${rows}</p>
+        <p class="text-muted small mb-1">Triage probabilities: ${rows}</p>
         <p class="text-muted small">Plausible categories (conformal set): ${conformal}</p>`;
     } else if (data.reason) {
       detail = `<p class="text-muted small mt-2">${REASON_TEXT[data.reason] || data.reason}</p>`;
