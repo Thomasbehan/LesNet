@@ -61,12 +61,23 @@ def _targets_met(report, config):
 
 
 def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, config, callbacks, log_dir):
-    """Train in rounds until every target is in the ideal range, or the budget is spent."""
+    """Train in rounds until every target is in the ideal range, or the budget is spent.
+
+    Tracks the best-generalising checkpoint (lowest val_loss) across all rounds; if the
+    budget is spent without meeting the targets, the best weights are restored rather
+    than keeping a possibly-overfit final epoch.
+    """
     writer = tf.summary.create_file_writer(os.path.join(log_dir, 'gate'))
+    best_weights_path = os.path.join(log_dir, 'best.weights.h5')
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(
+        best_weights_path, monitor='val_loss', save_best_only=True, save_weights_only=True)
+    round_callbacks = callbacks + [checkpoint]
+
     total_epochs = 0
+    targets_met = False
     while True:
         model.fit(train_dataset, validation_data=val_dataset, epochs=config.epochs_per_round,
-                  callbacks=callbacks, verbose=2)
+                  callbacks=round_callbacks, verbose=2)
         total_epochs += config.epochs_per_round
         report = _validation_report(model, val_dataset, val_triage, val_records, config)
         with writer.as_default():
@@ -81,10 +92,17 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
               f"roc_auc={report['roc_auc']:.3f} fairness={report['fairness_gate']['passed']}")
         if _targets_met(report, config):
             print(f"[gate] ALL TARGETS MET at {total_epochs} epochs.")
-            return True
+            targets_met = True
+            break
         if total_epochs >= config.max_epochs:
             print(f"[gate] reached max_epochs={config.max_epochs} without meeting all targets.")
-            return False
+            break
+
+    # Capped without meeting targets -> restore the best-generalising checkpoint.
+    if not targets_met and os.path.exists(best_weights_path):
+        model.load_weights(best_weights_path)
+        print("[gate] restored best-val_loss weights (avoids keeping an overfit final epoch).")
+    return targets_met
 
 
 def train(config, records_train, records_val):
