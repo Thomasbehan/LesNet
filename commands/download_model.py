@@ -1,5 +1,5 @@
 import argparse
-from skinvestigatorai.models.downloader import downloader
+from lesnet.models.downloader import downloader
 
 
 def main():

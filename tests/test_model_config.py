@@ -1,4 +1,4 @@
-from skinvestigatorai.config.model import ModelConfig
+from lesnet.config.model import ModelConfig
 
 
 def test_model_directory_type():
@@ -37,10 +37,6 @@ def test_layer_1_type():
 
 def test_layer_2_type():
     assert isinstance(ModelConfig.LAYER_2, int)
-
-
-def test_layer_3_type():
-    assert isinstance(ModelConfig.LAYER_3, int)
 
 
 def test_dropout_1_type():

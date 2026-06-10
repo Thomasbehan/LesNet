@@ -1,0 +1,88 @@
+.drop-area {
+  background: #f8f9fa;
+  border: 2px dashed #007bff;
+  border-radius: 15px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+.drop-area:hover {
+  background-color: #e9f4ff;
+  border-color: #0056b3;
+}
+
+.drop-message {
+  position: relative;
+  z-index: 1;
+}
+
+.preview-container {
+  position: relative;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+#preview-image {
+  max-width: 100%;
+  max-height: 250px;
+  display: block;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.text-muted {
+  font-size: 0.9rem;
+}
+
+
+#analysis-box {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#analysis-result {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+#analysis-result.success {
+  background-color: #28a745;
+  color: #e9f7ef;
+}
+
+#analysis-result.warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+#analysis-result.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+.bg-disclaimer {
+  background-size: cover; /* Ensures the image scales proportionally */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents tiling */
+  border-radius: 8px; /* Optional: Rounds the corners */
+  overflow: hidden; /* Ensures the content stays within the rounded corners */
+  padding: 1.5rem; /* Adds some padding around the text */
+  color: #333; /* Adjust text color for better contrast if needed */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow */
+}
+
+.bg-disclaimer .card-body {
+  background-color: rgba(255, 255, 255, 0.8); /* Adds a semi-transparent background to the text for better readability */
+  border-radius: 6px; /* Rounds the text container slightly */
+  padding: 1rem; /* Adjusts spacing inside the text container */
+}

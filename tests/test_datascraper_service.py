@@ -3,14 +3,14 @@ from unittest.mock import patch, mock_open
 
 import pytest
 
-from skinvestigatorai.config.data import DataConfig
-from skinvestigatorai.services.data import Data
-from skinvestigatorai.services.data_scaper import DataScraper
+from lesnet.config.data import DataConfig
+from lesnet.services.data import Data
+from lesnet.services.data_scraper import DataScraper
 
 
 @pytest.fixture
 def mock_data_scraper():
-    with patch('skinvestigatorai.services.data.Data', spec=Data):
+    with patch('lesnet.services.data.Data', spec=Data):
         scraper = DataScraper(output_dir='test_output', max_pages=1)
         yield scraper
 

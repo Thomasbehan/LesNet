@@ -1,0 +1,123 @@
+
+body {
+    font-family: Roboto, sans-serif;
+    background-color: #d6e4f7;
+}
+.sidebar {
+    background-color: #e9f1fc;
+    padding-top: 20px;
+    min-height: 100vh;
+}
+.sidebar h4 {
+    text-align: center;
+    font-weight: bold;
+}
+.sidebar a {
+    color: #333;
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+}
+.sidebar a:hover {
+    background-color: #d6e4f7;
+    border-radius: 5px;
+}
+.main-content {
+    padding: 20px;
+}
+.right-panel {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+.logo {
+    width: 100%;
+}
+/* Hamburger Menu Styles */
+.navbar-toggler {
+    border: none;
+}
+.card {
+    background-color: #ffffff;
+}
+
+.switch {
+    display: flex;
+    align-items: center;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: relative;
+    cursor: pointer;
+    width: 3rem;
+    height: 1.2rem;
+    background-color: #ccc;
+    border-radius: 1.2rem;
+    margin-right: 0.5rem;
+    transition: background-color 0.4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 1rem; /* Knob height relative to slider */
+    width: 1rem; /* Knob width relative to slider */
+    left: 0.1rem;
+    bottom: 0.1rem;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(1.8rem);
+}
+
+.label-text {
+    font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+    .slider {
+        width: 2.5rem;
+        height: 1rem;
+    }
+    .slider:before {
+        height: 0.9rem;
+        width: 0.9rem;
+        transform: translateX(1.6rem);
+    }
+    .label-text {
+        font-size: 0.9rem;
+    }
+}
+
+
+.card {
+    border-radius: 10px;
+}
+.result {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 5px;
+}
+#loading {
+    font-weight: bold;
+}
+
+@media (min-width: 768px) {
+    .navbar-toggler {
+      display: none; /* Hide on larger screens */
+    }
+}

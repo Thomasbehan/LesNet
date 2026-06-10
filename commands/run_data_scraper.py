@@ -1,5 +1,6 @@
 import argparse
-from skinvestigatorai.services.data_scaper import DataScraper
+
+from lesnet.services.data_scraper import DataScraper
 
 
 def main():
@@ -11,7 +12,6 @@ def main():
 
     scraper = DataScraper(max_pages=args.pages)
     scraper.download_images()
-    scraper.balance_dataset_and_save()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from skinvestigatorai.config.data import DataConfig
+from lesnet.config.data import DataConfig
 
 
 def test_api_url():
