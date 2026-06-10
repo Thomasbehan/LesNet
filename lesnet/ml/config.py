@@ -18,7 +18,7 @@ class PipelineConfig:
     epochs: int = 30
     learning_rate: float = 1e-4
     focal_gamma: float = 2.0
-    malignant_cost: float = 4.0              # extra cost multiplier on the malignant class
+    malignant_cost: float = 2.0              # mild extra weight; sensitivity comes from the threshold
     target_sensitivity: float = 0.97         # sensitivity-first operating point
     conformal_alpha: float = 0.1
     seed: int = 42

@@ -129,7 +129,13 @@ def train(config, records_train, records_val):
     _compile(model, config, class_weights)
 
     log_dir = os.path.join(config.artifacts_dir, 'tensorboard')
-    callbacks = [tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0)] if config.tensorboard else []
+    callbacks = []
+    if config.tensorboard:
+        callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0))
+    # Decay the LR when val_loss plateaus — prevents the late-epoch collapse seen with a
+    # fixed LR on extreme-imbalance data. State persists across the gated rounds.
+    callbacks.append(tf.keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1))
 
     targets_met = None
     if config.train_until_target:
