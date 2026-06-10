@@ -7,6 +7,7 @@ class ModelConfig(object):
         'M-0015s': 'https://github.com/Thomasbehan/LesNet/releases/download/0.1.5/skinvestigator-sm.tflite',
         'M-0031': 'https://github.com/Thomasbehan/LesNet/releases/download/0.3.1/LesNetM31.keras',
         'M-4s': 'https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras',
+        'M-4m': 'https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4m.keras',
         'M-4': 'https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4.keras',
     }
     LOG_DIR = "logs"

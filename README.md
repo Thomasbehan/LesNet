@@ -84,30 +84,27 @@ python .\commands\download_model.py -m <model_id>
 
 ### Available Models
 
-You can download the following models using the script:
+LesNet 4.1 is a **calibrated, abstaining triage system** (benign / suspicious / malignant) with
+an auxiliary fine-grained lesion classifier — not a plain top-N classifier. See
+[`docs/model-redesign.md`](docs/model-redesign.md) for the full design.
 
-- **M-0003**: Simple Testing **💾 Depreciated** - Basic functionality, but not very accurate.
-  
-- **M-0015**: Simple Model **💾 Depreciated** - Reliable for basic tasks, though limited in performance.
+| Model | Tier | Trained on | Input | Notes |
+|-------|------|-----------|-------|-------|
+| **M-4m** | Medium 🥈 | Full ISIC archive (531,667 images) | 224px | Full-data EfficientNetV2-S triage model. Current recommended download. |
+| **M-4s** | Small ⚡ | 40k-image ISIC sample | 224px | Faster, smaller-data variant. |
+| **M-4** | Final 🏆 | (forthcoming) | — | Tuned final model — not yet released. |
+| M-0003 / M-0015 / M-0015s / M-0031 | Legacy 💾 | — | — | Deprecated single-label classifiers. |
 
-- **M-0015s**: Fast Model **💾 Depreciated** - Quicker than M-0015, but still lacks accuracy.
-
-- **M-0310**: Legacy Model **⏳ Legacy** - Inefficient and low accuracy; not recommended for serious use.
-
-- **M-4**: Best Model **🏆 Best Choice!** - Offers superior performance and accuracy for demanding applications.
-
-#### Notes
-- Most legacy models are outdated and may not perform well.
-- **M-4** is the recommended choice for optimal results.
-
-
-#### Example: 
+#### Example
 ```bash
-python .\commands\download_model.py -m M-4
+python commands/download_model.py -m M-4m
 ```
 
 ## Data
-The DataScraper tool within this application is designed to downloads skin lesion images. The M-4 dataset is 42,600 images.
+Images are sourced from the [ISIC Archive](https://www.isic-archive.com) via the resumable
+`commands/download_isic_full.py` downloader. The full M-4m training set is **531,667 labelled
+images across 44 diagnoses** (real prevalence: ~94% benign / ~5% malignant), split
+416k train / 56k val / 59k test with patient/lesion-grouped, leakage-free splits.
 
 ### Data Source
 The dataset used for training the model is sourced from the International Skin Imaging Collaboration (ISIC) Archive. The ISIC Archive is a large-scale resource for skin image analysis, providing open access to a wide variety of images for the development and evaluation of automated diagnostic systems.
@@ -121,15 +118,25 @@ The images are organized into three folders:
 2. Images are placed in folders with their label as its name, for example `data/train/melanoma`
 
 ## Model
-The `SVModel` model employs a sophisticated deep learning architecture tailored for skin lesion classification. 
-To learn more, Visit [the model section of the wiki](https://github.com/Thomasbehan/LesNet/wiki#model)
+An EfficientNetV2-S backbone fuses image features with patient metadata (age/sex/site) into a
+primary 3-way **triage** head (benign / suspicious / malignant) plus an auxiliary fine-grained
+diagnosis head. Outputs are temperature-calibrated, gated by an out-of-distribution / image-quality
+check, and wrapped with conformal prediction; the decision threshold is chosen **sensitivity-first**
+(catch malignancies), and uncertain inputs **abstain** ("inconclusive — see a clinician"). See
+[`docs/model-redesign.md`](docs/model-redesign.md).
 
 ## Performance
 
-- Recall: 80.27%
-- Precision: 93.35%
-- Accuracy: 85.40%
-- Loss: 0.5113
+Held-out test metrics (malignant-vs-rest, sensitivity-first operating point):
+
+| Model | Sensitivity | Specificity | ROC-AUC | ECE | Conformal cov. |
+|-------|------------|-------------|---------|-----|----------------|
+| M-4s (40k) | 0.970 | 0.438 | 0.835 | 0.068 | 0.895 |
+| M-4m (full) | *published in the release notes* | | | | |
+
+> Sensitivity-first means high malignant recall is prioritised over specificity; at low real-world
+> prevalence the positive predictive value is modest by design, and the system abstains when unsure.
+> **Research/triage use only — not a diagnosis.**
 
 
 ### Model 3 Targets

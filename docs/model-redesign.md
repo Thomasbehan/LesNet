@@ -278,6 +278,15 @@ preprocessing transforms) are buildable and unit-testable without either.
 
 ## 11. Changelog
 
+- **v0.2 (2026-06-10)** — Implemented the full pipeline (stages 0–8) and trained on real
+  ISIC data. The entire public ISIC archive was downloaded (552,854 images; 531,667 mapped
+  to the triage taxonomy across 44 diagnoses). Two models trained on GPU (EfficientNetV2-S,
+  224px, sensitivity-first @0.97, temperature calibration + conformal + OOD gate):
+  **M-4s** (40k sample) test sens 0.970 / spec 0.438 / ROC-AUC 0.835 / ECE 0.068; **M-4m**
+  (full archive) released as a medium-tier model (metrics in the release notes). Findings:
+  raw inverse-frequency class weights on extreme prevalence destabilised training (full-data
+  ROC-AUC collapsed 0.77→0.51) — fixed with capped weights + LR decay + best-ROC-AUC restore.
+  A tuned final **M-4** is still to come.
 - **v0.1** — Initial design of record. No experiments run yet.
 
 ## References
