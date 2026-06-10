@@ -8,23 +8,53 @@ import logging
 import os
 
 import numpy as np
+import requests
 from PIL import Image
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.view import view_config
 
+from lesnet.config.model import ModelConfig
+from lesnet.ml.artifacts import BUNDLE_FILE, MODEL_FILE
 from lesnet.ml.datasets import LesionRecord
 from lesnet.ml.inference import TriagePredictor
 from lesnet.ml.taxonomy import TRIAGE_CLASSES
 
 log = logging.getLogger(__name__)
 TRIAGE_ARTIFACTS_DIR = os.environ.get('LESNET_TRIAGE_ARTIFACTS', 'models/triage')
+DEFAULT_MODEL_ID = os.environ.get('LESNET_TRIAGE_MODEL', 'M-4s')
 
 _predictor = None
+
+
+def _ensure_triage_model(directory):
+    """Download the released triage model into `directory` if it isn't already there.
+
+    Makes the deployed app self-healing — it fetches the model on first use even if the
+    container image didn't bake it in.
+    """
+    model_path = os.path.join(directory, MODEL_FILE)
+    bundle_path = os.path.join(directory, BUNDLE_FILE)
+    if os.path.exists(model_path) and os.path.exists(bundle_path):
+        return
+    model_url = ModelConfig.MODEL_URLS.get(DEFAULT_MODEL_ID)
+    if not model_url:
+        return
+    os.makedirs(directory, exist_ok=True)
+    for url, destination in [(model_url, model_path),
+                             (model_url.replace('.keras', '.artifacts.json'), bundle_path)]:
+        if os.path.exists(destination):
+            continue
+        log.info("Fetching triage model asset: %s", url)
+        response = requests.get(url, timeout=600)
+        response.raise_for_status()
+        with open(destination, 'wb') as handle:
+            handle.write(response.content)
 
 
 def _get_predictor():
     global _predictor
     if _predictor is None:
+        _ensure_triage_model(TRIAGE_ARTIFACTS_DIR)
         _predictor = TriagePredictor(TRIAGE_ARTIFACTS_DIR)
     return _predictor
 
@@ -60,7 +90,8 @@ def predict_api(request):
 
     try:
         predictor = _get_predictor()
-    except (FileNotFoundError, OSError):
+    except Exception as error:  # noqa: BLE001 - fetch or model-load failure should degrade gracefully
+        log.exception("Triage model unavailable: %s", error)
         request.response.status = 503
         return {'triage': 'abstain', 'valid_image': False, 'reason': 'model_unavailable',
                 'message': 'Triage model is not available yet.'}
