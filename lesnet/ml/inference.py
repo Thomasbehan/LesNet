@@ -4,7 +4,6 @@ Loads the artifact bundle and runs: quality gate -> OOD gate -> calibrated triag
 abstention/conformal set. Output is referral-biased and never a definitive diagnosis.
 """
 import numpy as np
-import tensorflow as tf
 
 from lesnet.ml import artifacts
 from lesnet.ml.calibration import softmax
