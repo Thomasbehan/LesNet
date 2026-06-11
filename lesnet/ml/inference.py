@@ -4,12 +4,12 @@ Loads the artifact bundle and runs: quality gate -> OOD gate -> calibrated triag
 abstention/conformal set. Output is referral-biased and never a definitive diagnosis.
 """
 import numpy as np
-import tensorflow as tf
 
 from lesnet.ml import artifacts
 from lesnet.ml.calibration import softmax
 from lesnet.ml.features import metadata_vector
 from lesnet.ml.model import feature_model, fine_logits_model, triage_logits_model
+from lesnet.ml.model_compat import load_model_with_compatibility
 from lesnet.ml.ood import MahalanobisOODDetector, is_low_quality
 from lesnet.ml.preprocessing import PreprocessingPipeline
 from lesnet.ml.taxonomy import MALIGNANT, TRIAGE_CLASSES
@@ -19,7 +19,7 @@ from lesnet.ml.triage import ABSTAIN, triage_decision
 class TriagePredictor:
     def __init__(self, directory, use_test_time_augmentation=False):
         self.bundle = artifacts.load_bundle(directory)
-        self.model = tf.keras.models.load_model(artifacts.model_path(directory), compile=False)
+        self.model = load_model_with_compatibility(artifacts.model_path(directory), compile=False)
         self.logits_model = triage_logits_model(self.model)
         self.fine_model = fine_logits_model(self.model)
         self.feature_model = feature_model(self.model)
