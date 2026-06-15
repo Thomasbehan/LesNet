@@ -93,9 +93,35 @@ def test_isic_download_images_success_and_failure(tmp_path):
     assert again == 1
 
 
+def test_isic_collect_metadata_resumes(tmp_path):
+    def page(isic_id, url, nxt):
+        return FakeResponse(json_data={'results': [
+            {'isic_id': isic_id, 'metadata': {'clinical': {'diagnosis_1': 'nevus'}},
+             'files': {'full': {'url': url}}}], 'next': nxt})
+
+    isic.collect_metadata(str(tmp_path), session=FakeSession(pages=[page('I1', 'u1', None)]))
+    assert os.path.exists(tmp_path / 'metadata_state.json')
+    # resume: state + metadata present -> I1 is 'seen' and skipped, only I2 is new.
+    resume_page = FakeResponse(json_data={'results': [
+        {'isic_id': 'I1', 'metadata': {'clinical': {}}, 'files': {'full': {'url': 'u1'}}},
+        {'isic_id': 'I2', 'metadata': {'clinical': {}}, 'files': {'full': {'url': 'u2'}}}], 'next': None})
+    collected = isic.collect_metadata(str(tmp_path), session=FakeSession(pages=[resume_page]))
+    assert [row['isic_id'] for row in collected] == ['I2']
+    assert set(isic.url_map(str(tmp_path))) == {'I1', 'I2'}
+
+
+def test_isic_url_map_skips_blank_rows(tmp_path):
+    _write_csv(tmp_path / 'metadata.csv', isic.METADATA_FIELDS, [
+        {'isic_id': 'I1', 'url': 'u1', 'patient_id': '', 'diagnosis': 'nevus', 'diagnosis_1': '',
+         'age_approx': '', 'sex': '', 'anatom_site_general': ''},
+        {'isic_id': '', 'url': '', 'patient_id': '', 'diagnosis': '', 'diagnosis_1': '',
+         'age_approx': '', 'sex': '', 'anatom_site_general': ''}])
+    assert isic.url_map(str(tmp_path)) == {'I1': 'u1'}
+
+
 def test_isic_download_orchestrates(tmp_path, monkeypatch):
-    monkeypatch.setattr(isic, 'collect_metadata',
-                        lambda root, **kw: [{'isic_id': 'I1', 'url': 'u1'}])
+    monkeypatch.setattr(isic, 'collect_metadata', lambda root, **kw: None)
+    monkeypatch.setattr(isic, 'url_map', lambda root: {'I1': 'u1'})
     captured = {}
     monkeypatch.setattr(isic, 'download_images',
                         lambda root, url_by_id, **kw: captured.update(url_by_id))

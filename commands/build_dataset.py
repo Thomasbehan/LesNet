@@ -20,8 +20,8 @@ from lesnet.data.sources import isic
 def _isic_malignant_maximal_download(root, config):
     """Populate ``root`` with ISIC metadata + a malignant-maximal, ratio-matched image set."""
     resolution = 'full' if config.full_resolution else 'thumbnail_256'
-    rows = isic.collect_metadata(root, resolution=resolution, limit=config.sample_limit)
-    url_by_id = {row['isic_id']: row['url'] for row in rows}
+    isic.collect_metadata(root, resolution=resolution, limit=config.sample_limit)
+    url_by_id = isic.url_map(root)
 
     annotated, _ = sort.annotate(isic.parse(root, config.sample_limit))
     by_bucket = {'benign': [], 'not_sure': [], 'malignant': []}
