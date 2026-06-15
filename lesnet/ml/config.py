@@ -19,6 +19,15 @@ class PipelineConfig:
     learning_rate: float = 1e-4
     focal_gamma: float = 2.0
     malignant_cost: float = 2.0              # mild extra weight; sensitivity comes from the threshold
+    # best-in-class training tricks
+    label_smoothing: float = 0.05           # softens hard targets, calibrates better
+    use_ema: bool = True                    # exponential moving average of weights (optimizer-level)
+    ema_momentum: float = 0.999
+    warmup_epochs: int = 2                  # linear LR warmup before cosine decay
+    cosine_decay: bool = True               # cosine-anneal the LR over training
+    # knowledge distillation (student learns from a trained teacher)
+    distill_alpha: float = 0.5              # weight on the soft-teacher loss vs hard-label loss
+    distill_temperature: float = 4.0
     target_sensitivity: float = 0.97         # sensitivity-first operating point
     conformal_alpha: float = 0.1
     seed: int = 42
