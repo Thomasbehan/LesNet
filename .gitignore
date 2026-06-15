@@ -24,6 +24,8 @@ test
 /logs/
 .idea/
 /venv/
+.venv/
+/artifacts/
 # prevent models being commited to github
 **/*.h5
 *.h5

@@ -1,118 +1,116 @@
-# CLAUDE.md — LesNet (branch: M-4)
+# CLAUDE.md — LesNet
 
 > **Scope note.** LesNet is a **standalone open-source project** (`Thomasbehan/LesNet`). It is **not** part of the IONA platform — no Go, SvelteKit, Zitadel, Kong, `iona-ui`, or IONA workflow conventions apply. This file is the only authority for working in this repo.
 >
-> **Branch note.** This describes the **`M-4`** branch (the active development line, package version `4.0.2`), which differs substantially from `main`/`3.1.0`. On M-4 the Python package was renamed `skinvestigatorai` → **`lesnet`**, the model backbone is **ResNet152V2**, and the data pipeline was reworked into discrete scrape → extract → balance/split → train stages.
+> **Git identity.** Commit as `thomasbehan4@gmail.com` (repo-local), never the IONA email. Ensure `gh auth status` shows `Thomasbehan` active.
 
 ## What this is
 
-LesNet (Python package **`lesnet`**, v4.0.2) is a deep-learning tool for **skin lesion classification** from dermoscopic images. One repo, three concerns:
+LesNet (Python package **`lesnet`**, v4.2.0) is a deep-learning tool for **skin lesion triage** from dermoscopic images. One repo, three concerns:
 
-1. **Data pipeline** — scrape the ISIC archive, sort images into class folders from `metadata.csv`, balance classes by augmentation, and split into `train/val/test`.
-2. **Training** — transfer-learning on a **ResNet152V2** backbone (`imagenet` weights), 42 classes, 224×224 input; exports `.keras`.
-3. **Web app** — a Pyramid + Jinja2 site that classifies an uploaded image and returns the **top-5** labels with probabilities (live demo: `lesnet.onrender.com`).
+1. **Data pipeline** — download the ISIC archive and build a leakage-free, patient/lesion-grouped manifest CSV.
+2. **Training** — a multi-task EfficientNetV2-S model (image + patient metadata) producing a 3-way **triage** head (benign / suspicious / malignant) plus an auxiliary fine-grained diagnosis head; temperature-calibrated, OOD-gated, conformal-wrapped, sensitivity-first operating point.
+3. **Web app** — a Pyramid + Jinja2 site that runs the calibrated, **abstaining** triage predictor on an uploaded image (live demo: `lesnet.onrender.com`).
 
-**Medical disclaimer (keep it intact).** LesNet is a research tool, **not** a diagnostic device. Never reword the README/UI disclaimer to imply clinical fitness.
+**Medical disclaimer (keep it intact).** LesNet is a research/triage tool, **not** a diagnostic device. Never reword the README/UI disclaimer to imply clinical fitness.
 
-## Tech stack (M-4 pins, from `setup.py`)
+## Tech stack (pins in `setup.py`)
 
 | Concern | Choice |
 |---|---|
-| Language | Python **3.9–3.11** (ruff targets `py311`) |
-| Web framework | **Pyramid 2.0.2** + `pyramid_jinja2`, served by **waitress** via `pserve` — not Flask/FastAPI |
-| ML | **TensorFlow 2.16.1 / Keras**, **ResNet152V2** backbone. `torch 2.5.1`/`torchvision 0.20.1` also pinned (no source import found — see audit) |
-| Data wrangling | **pandas 2.2.3**, **scikit-learn 1.6.1** (`train_test_split`, class weights), **albumentations 2.0.0** |
-| Model formats | `KERAS` (`.keras`) / `TFLITE` (`.tflite`), via `ModelConfig.MODEL_TYPE` (default `KERAS`) |
-| Data source | **ISIC Archive API v2** (`api.isic-archive.com/api/v2/images`) |
+| Language | Python **3.11–3.12** |
+| Web framework | **Pyramid 2.1** + `pyramid_jinja2`, served by **waitress** via `pserve` |
+| ML | **TensorFlow 2.21 / Keras 3.14**, **EfficientNetV2-S** backbone |
+| Numerics / data | **numpy 2.4**, **scipy 1.17**, **scikit-learn 1.9**, **Pillow 12**, **opencv-python-headless** (DullRazor hair removal) |
+| Model format | `.keras` + a JSON artifact bundle (calibration / conformal / OOD / thresholds) |
+| Data source | **ISIC Archive API v2** + optional PAD-UFES-20 |
 | Packaging | `setup.py` (setuptools), editable install, entry point `paste.app_factory → lesnet:main` |
-| Lint / tests | **ruff 0.9.1**, **pytest 8.3.4** + `pytest-cov`, `pytest-mock`, `WebTest` |
+| Lint / tests | **ruff**, **pytest** (+ `pytest-cov`, `pytest-mock`, `WebTest`) |
 | License | **MPL 2.0** |
 
-## Layout (M-4)
+## Layout
 
 ```
-lesnet/                        # the package (renamed from skinvestigatorai)
-  __init__.py                  # main(): Pyramid WSGI app factory
-  routes.py                    # routes: home, supported-diagnoses, train(uuid), tensorboard, predict, labels, dashboard
-  config/
-    model.py                   # ModelConfig — hyperparameters, MODEL_URLS, TRAIN_DIR='data/training', CATEGORIES=42
-    data.py                    # DataConfig — ISIC API URL, output dirs
-  services/
-    model.py                   # SVModel — build (ResNet152V2) / train / evaluate / quantize / save / load
-    inference.py               # Inference — predict() returns top-5; + dead similarity/embedding code
-    data.py                    # Data — dataset loaders (load_preprocessed_dataset, load_dataset), prediction preprocessing, augmentation
-    data_scaper.py             # DataScraper — ISIC downloader (NOTE: filename misspelled "scaper")
-    tuner.py                   # SVModelHPTuner (subclass of SVModel)
-  models/downloader.py         # pull a released model by id from MODEL_URLS
-  views/
-    api.py                     # predict (POST /predict) + labels (GET /labels)  ⚠ instantiates Inference() at import
-    default.py                 # home + supported-diagnoses pages
-    notfound.py                # 404
-  templates/*.jinja2           # layout, evaluate (home), supported-diagnoses, 404
-  static/                      # CSS/JS/images + PWA service worker; multiple JS upload handlers
+lesnet/                        # the package
+  __init__.py                  # main(): Pyramid WSGI app factory (pyramid imported lazily)
+  routes.py                    # routes: home, supported-diagnoses, predict, labels
+  config/model.py              # ModelConfig — released-model registry (MODEL_URLS) for the web app + downloader
+  ml/                          # the triage system (framework-light, pure-logic where possible)
+    config.py                  # PipelineConfig — all training/inference hyperparameters
+    datasets.py · splits.py    # manifest build/load, patient-grouped leakage-free splits, LesionRecord
+    data_loader.py             # tf.data pipeline from a manifest
+    preprocessing.py           # DullRazor hair removal + Shades-of-Gray colour constancy + resize/scale
+    features.py · taxonomy.py  # metadata encoding; diagnosis -> triage/fine label maps
+    model.py                   # build_triage_model (EfficientNetV2-S) + triage/fine/feature sub-models
+    losses.py · metrics.py     # focal loss + class weights; clinical metrics (sens/spec/ROC/ECE/AURC)
+    training.py                # orchestrator: fit (optionally metric-gated) -> calibrate -> conformal -> OOD -> save
+    calibration.py · conformal.py · ood.py   # temperature scaling, split-conformal, Mahalanobis OOD + quality gate
+    evaluation.py              # build_report + fairness gate + model card
+    inference.py               # TriagePredictor — quality/OOD gate -> calibrated triage -> abstention/conformal
+    synthetic.py               # synthetic records for the CPU smoke path
+    artifacts.py               # model + bundle save/load
+  models/downloader.py         # pull a released model by id from ModelConfig.MODEL_URLS
+  views/{api,default,notfound}.py   # /predict + /labels (lazy TriagePredictor); home + supported-diagnoses; 404
+  templates/*.jinja2 · static/      # web UI
 commands/                      # CLI scripts (run from repo root)
-  run_data_scraper.py          # download ISIC images
-  run_data_extraction.py       # ⚠ sorts images into class folders from metadata.csv — RUNS AT IMPORT (no __main__ guard)
-  run_data_pre_prep.py         # balance classes + split into train/val/test
-  detect_corrupted_images.py   # ⚠ deletes unreadable images — RUNS AT IMPORT (no __main__ guard)
-  run_data_augmenter.py · run_experiment.py · run_model_quantize.py · run_train_model.py · download_model.py
-tests/                         # pytest suite (⚠ test_inference_service.py is stale vs the new predict() contract)
-models/                        # artifacts (.keras/.tflite gitignored) + label JSON (only LesNet_labels_old.json is tracked)
+  download_isic_full.py · fetch_isic_sample.py   # dataset download
+  run_build_dataset.py                           # build the grouped manifest
+  run_train_triage.py                            # train (--smoke for a CPU synthetic end-to-end run)
+  run_evaluate.py                                # evaluation report + model card
+  run_triage_inference.py · run_validation_check.py   # inference (single image / validation set)
+  download_model.py · package_model.py           # fetch / package release assets
+tests/                         # pytest suite (CPU-only via conftest.py)
+scripts/train_full_m4.sh       # full GPU pipeline (download -> manifest -> train -> package -> evaluate), nix-shell
 development.ini / production.ini / testing.ini   # Pyramid/waitress config (port 6543)
-Dockerfile / docker-compose*.yml                 # ⚠ run `pserve development.ini` (debug toolbar) — see audit
-*.sh                           # train.sh, download_dataset.sh, dataset_compressor.sh, open_tensorboard.sh
+Dockerfile / docker-compose.yml                  # container (production.ini); compose serves development.ini
 ```
 
-`/data/`, `/logs/`, and model weight files (`*.h5`, `*.tflite`, `*.keras`) are **gitignored** — never commit them.
+`/data/`, `/logs/`, `/artifacts/`, and model weight files (`*.keras`, `*.tflite`, `models/triage*/`) are **gitignored** — never commit them.
 
 ## Data → training → inference flow
 
-1. **Scrape:** `commands/run_data_scraper.py` pages the ISIC API and downloads images into `data/train/<diagnosis>/`.
-2. **Extract/sort:** `commands/run_data_extraction.py` reads `data/training/metadata.csv` and moves `<isic_id>.jpg` into per-diagnosis folders (diagnosis-column priority logic).
-3. **Balance + split:** `commands/run_data_pre_prep.py` augments minority classes up to the largest class, then splits into `data/training/{train,val,test}/<class>/`.
-4. **Train:** `commands/run_train_model.py` → `SVModel.build_model()` (ResNet152V2, last `TRAINABLE_START=-10` layers unfrozen + custom Conv/Dense head) → `Data.load_preprocessed_dataset()` (reads the train/val/test dirs) → `train_model()` (TensorBoard, ReduceLROnPlateau, ModelCheckpoint, EarlyStopping, CSVLogger) → `save_model()` writes `<name>.keras` + `<name>_labels.json`.
-5. **Infer:** `views/api.py` holds a module-level `Inference()`; `POST /predict` preprocesses the upload (resize 224×224, /255) and returns the **top-5** `{label, probability}` pairs as JSON. `GET /labels` returns the class list.
+1. **Download:** `commands/download_isic_full.py` (resumable, multithreaded) or `fetch_isic_sample.py`.
+2. **Manifest:** `commands/run_build_dataset.py` builds a patient/lesion-grouped, leakage-free manifest CSV.
+3. **Train:** `commands/run_train_triage.py --manifest …` → `lesnet.ml.training.train` (EfficientNetV2-S, focal loss, optional metric-gated rounds) → calibrate (temperature) → choose sensitivity-first operating point → split-conformal → fit Mahalanobis OOD → save `triage_model.keras` + `artifacts.json`.
+4. **Evaluate:** `commands/run_evaluate.py` writes `evaluation_report.json` + `model_card.md` (incl. fairness gate).
+5. **Infer:** web `POST /predict` (lazy `TriagePredictor`) or `commands/run_triage_inference.py`. Pipeline = quality gate → OOD gate → calibrated triage → abstention/conformal set + auxiliary fine-grained prediction. `GET /labels` returns the class list.
+
+## Conventions & gotchas
+
+- **The web app loads the model lazily**, on first `/predict` or `/labels` (`views/api.py:_get_predictor`). It boots without a model and self-heals by fetching the released **M-4s** model into `LESNET_TRIAGE_ARTIFACTS` (default `models/triage`) if absent; if the model is unavailable, `/predict` returns a graceful `503` abstain, not a crash.
+- **No XLA/JIT.** `lesnet/ml/training.py` disables XLA (`jit_compile=False`, `set_jit(False)`, `TF_XLA_FLAGS`): the pip TensorFlow wheel's Triton-GEMM CPU path and GPU `libdevice` lookup are unavailable on many hosts, and the model trains fine on the standard executor. Don't re-enable it without a libdevice-complete CUDA environment.
+- **Tests run on CPU.** `conftest.py` sets `CUDA_VISIBLE_DEVICES=-1` so the suite is deterministic and GPU-independent (CI has no GPU). Real GPU training runs outside the test suite via `scripts/train_full_m4.sh` inside a CUDA nix-shell.
+- **Match the existing style:** plain framework-light Python, pure-logic modules in `lesnet/ml/`, hyperparameters as dataclass fields in `lesnet/ml/config.py` (`PipelineConfig`). Released-model URLs live in `config/model.py` (`ModelConfig.MODEL_URLS`).
+- **Keep lines ≤120 chars** and pass `ruff check`. CI matrix is Python 3.11 / 3.12.
+- **Never commit datasets, weights, or artifacts** — large and gitignored.
 
 ## Common commands
 
 ```bash
-# dev setup (Python 3.9–3.11)
+# dev setup (Python 3.11–3.12)
 python -m pip install --upgrade pip setuptools
 python -m pip install -e ".[testing]"
 
-# run the web app (needs a model present — see gotcha below), http://localhost:6543
+# run the web app, http://localhost:6543
 pserve development.ini --reload
 
 # tests + lint
 python -m pytest
-python -m ruff check
+ruff check
 
-# fetch a released model into models/
+# CPU smoke (synthetic end-to-end: train -> calibrate -> save -> load -> infer)
+python commands/run_train_triage.py --smoke --artifacts /tmp/lesnet_art
+
+# single-image inference against a released/trained artifacts dir
+python commands/run_triage_inference.py --artifacts models/triage --image sample_malignant.jpg --age 60 --sex male --site torso
+
+# fetch a released model
 python commands/download_model.py -m M-4s
-
-# data pipeline
-python commands/run_data_scraper.py -p 2
-python commands/run_data_extraction.py
-python commands/run_data_pre_prep.py
-python commands/run_train_model.py        # or: ./train.sh
 ```
-
-## Conventions & gotchas (M-4)
-
-- **The web app loads the model at *import time*.** `views/api.py:13` does `inference_service = Inference()` at module scope, which calls `load_model()`. `config.scan()` imports that module, so **the app will not start unless `models/LesNet.keras` and `models/LesNet_labels.json` exist** (only `LesNet_labels_old.json` is tracked). Download a model first.
-- **Model id mismatch:** `MODEL_URLS` has key `M-4s` (→ `LesNet.M-4.keras`), but the README example says `-m M-4`. Use the key that exists. Also `load_model` expects the file named exactly `models/LesNet.keras`, while the downloader saves under the release filename — you may need to rename.
-- **Match the existing style:** plain framework-light Python, classes in `services/`, config as class attributes in `config/model.py`, `print()` for pipeline progress. Hyperparameters live in `config/model.py` — change them there.
-- **`data_scaper.py` is misspelled** ("scaper"); imports depend on the typo.
-- **Two `commands/` scripts run on import** (`run_data_extraction.py`, `detect_corrupted_images.py`) and perform destructive file operations with no `if __name__ == '__main__'` guard. Don't import them casually; run them as scripts deliberately.
-- **`commands/*` use bare `from run_data_scraper import main`** — relies on `commands/` being `sys.path[0]` (run from that dir / repo root).
-- **Keep lines ≤120 chars** and pass `ruff check`. CI matrix is Python 3.9/3.10/3.11.
-- **Tests mock the model** (no GPU/weights/data needed). NOTE: `test_inference_service.py` is currently **stale** against the rewritten `predict()` contract — see `docs/code-audit.md`.
-- **Never commit datasets or weights** — large and gitignored.
 
 ## Git / contributing
 
-- This branch: **`M-4`**. Repo under the **`Thomasbehan`** GitHub account (ensure `gh auth status` shows it active, not `thomasbehaniona`).
-- Commit style: short subjects, often gitmoji + milestone/issue tag (e.g. `M-4 - :zap: Changing to ResNet152V2 base model`). Not strict Conventional Commits — match history.
 - CI (`.github/workflows/test.yaml`) runs `ruff check` + `pytest` on PRs to `main`; CodeQL also runs; Dependabot manages bumps.
-- See `docs/code-audit.md` for the current list of known flaws on this branch.
+- Commit style: short subjects, often gitmoji + milestone/issue tag. Not strict Conventional Commits — match history.
+- `docs/model-redesign.md` is the authoritative design for the triage system. `docs/code-audit.md` is a historical (2026-06-09) audit of the now-removed legacy pipeline.
 ```

@@ -14,15 +14,3 @@ services:
       - "6543:6543"
       - "6006:6006"
     command: ["pserve", "development.ini", "--reload"]
-
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=myuser
-      - POSTGRES_PASSWORD=mypassword
-      - POSTGRES_DB=mydb
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  db-data:
