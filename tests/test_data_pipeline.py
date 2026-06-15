@@ -128,6 +128,16 @@ def test_ingest_manual_source_without_downloader(tmp_path, monkeypatch):
     assert len(pipeline.ingest(config)) == 1      # parse-only, no crash
 
 
+def test_ingest_skips_unavailable_source(tmp_path, monkeypatch):
+    def boom_parse(root, limit):      # noqa: ARG001
+        raise FileNotFoundError('metadata not on disk')
+
+    monkeypatch.setattr(pipeline, 'get_source',
+                        lambda name: SourceSpec('fake', parse=boom_parse, download=None))
+    config = SourcingConfig(sources=('fake',), raw_dir=str(tmp_path / 'raw'))
+    assert pipeline.ingest(config) == []      # unavailable source skipped, not fatal
+
+
 def test_run(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, 'get_source', lambda name: _fake_spec([]))
     config = SourcingConfig(sources=('fake',), raw_dir=str(tmp_path / 'raw'),

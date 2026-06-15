@@ -75,15 +75,24 @@ def process(records, config):
 
 
 def ingest(config):
-    """Ensure each source's raw data is present (auto-download where possible) and parse it."""
+    """Ensure each source's raw data is present (auto-download where possible) and parse it.
+
+    A source whose data is unavailable (licence-gated, not downloaded, or a failed fetch) is
+    skipped with a warning rather than aborting the whole build.
+    """
     records = []
     for name in config.sources:
         spec = get_source(name)
         root = config.roots.get(name) or os.path.join(config.raw_dir, name)
-        metadata_present = os.path.isdir(root) and os.listdir(root)
-        if not metadata_present and spec.download is not None:
-            spec.download(root, config.sample_limit)
-        records.extend(spec.parse(root, config.sample_limit))
+        try:
+            metadata_present = os.path.isdir(root) and os.listdir(root)
+            if not metadata_present and spec.download is not None:
+                spec.download(root, config.sample_limit)
+            source_records = spec.parse(root, config.sample_limit)
+        except Exception as error:  # noqa: BLE001 - one unavailable source must not kill the build
+            print(f"Skipping source '{name}': {error}")
+            continue
+        records.extend(source_records)
     return records
 
 
