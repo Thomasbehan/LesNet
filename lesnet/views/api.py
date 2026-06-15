@@ -15,9 +15,9 @@ from pyramid.view import view_config
 
 from lesnet.config.model import ModelConfig
 from lesnet.ml.artifacts import BUNDLE_FILE, MODEL_FILE
-from lesnet.ml.datasets import LesionRecord
+from lesnet.data.records import LesionRecord
+from lesnet.data.taxonomy import TRIAGE_CLASSES
 from lesnet.ml.inference import TriagePredictor
-from lesnet.ml.taxonomy import TRIAGE_CLASSES
 
 log = logging.getLogger(__name__)
 TRIAGE_ARTIFACTS_DIR = os.environ.get('LESNET_TRIAGE_ARTIFACTS', 'models/triage')

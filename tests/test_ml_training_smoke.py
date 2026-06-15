@@ -5,8 +5,8 @@ Proves the full pipeline is wired; real training scales the same code on GPU + r
 """
 import numpy as np
 
+from lesnet.data.manifest import assign_splits
 from lesnet.ml.config import PipelineConfig
-from lesnet.ml.datasets import DatasetConfig, assign_splits
 from lesnet.ml.inference import TriagePredictor
 from lesnet.ml.synthetic import make_synthetic_records
 from lesnet.ml.training import train
@@ -21,7 +21,7 @@ def _split(records):
 
 def test_train_and_infer_end_to_end(tmp_path):
     records = make_synthetic_records(str(tmp_path / 'images'), per_class=10, seed=1)
-    records = assign_splits(records, DatasetConfig(test_size=0.2, val_size=0.2, seed=1))
+    records = assign_splits(records, test_size=0.2, val_size=0.2, seed=1)
     buckets = _split(records)
 
     config = PipelineConfig(

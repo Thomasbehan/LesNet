@@ -5,7 +5,7 @@ import csv
 import numpy as np
 from PIL import Image
 
-from lesnet.ml.datasets import LesionRecord
+from lesnet.data.records import LesionRecord
 from lesnet.ml.inference import TriagePredictor
 
 

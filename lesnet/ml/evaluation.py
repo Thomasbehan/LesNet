@@ -7,7 +7,7 @@ calibration, risk-coverage, conformal coverage, and a release-blocking fairness 
 import numpy as np
 
 from lesnet.ml import metrics
-from lesnet.ml.taxonomy import MALIGNANT
+from lesnet.data.taxonomy import MALIGNANT
 
 MIN_SUBGROUP_MALIGNANT_SUPPORT = 5
 

@@ -35,12 +35,17 @@ lesnet/                        # the package
   __init__.py                  # main(): Pyramid WSGI app factory (pyramid imported lazily)
   routes.py                    # routes: home, supported-diagnoses, predict, labels
   config/model.py              # ModelConfig — released-model registry (MODEL_URLS) for the web app + downloader
-  ml/                          # the triage system (framework-light, pure-logic where possible)
+  data/                        # data subsystem (stage 1: source -> sort -> balance -> manifest; no TF)
+    config.py                  # SourcingConfig
+    sources/                   # isic, pad_ufes, fitzpatrick17k, ddi (+ registry) -> LesionRecords
+    taxonomy.py · canonical.py # diagnosis -> triage bucket; curated diagnosis-name canonicalisation
+    quality.py · sort.py · balance.py    # quality + pHash dedup; bucket/diagnosis folders; fair 1:1 balance
+    records.py · splits.py · manifest.py # LesionRecord + manifest IO; grouped leakage-free splits
+  ml/                          # the triage MODEL system (training-coupled, imports TF)
     config.py                  # PipelineConfig — all training/inference hyperparameters
-    datasets.py · splits.py    # manifest build/load, patient-grouped leakage-free splits, LesionRecord
     data_loader.py             # tf.data pipeline from a manifest
     preprocessing.py           # DullRazor hair removal + Shades-of-Gray colour constancy + resize/scale
-    features.py · taxonomy.py  # metadata encoding; diagnosis -> triage/fine label maps
+    features.py                # metadata encoding (age/sex/site/Fitzpatrick)
     model.py                   # build_triage_model (EfficientNetV2-S) + triage/fine/feature sub-models
     losses.py · metrics.py     # focal loss + class weights; clinical metrics (sens/spec/ROC/ECE/AURC)
     training.py                # orchestrator: fit (optionally metric-gated) -> calibrate -> conformal -> OOD -> save
@@ -53,8 +58,7 @@ lesnet/                        # the package
   views/{api,default,notfound}.py   # /predict + /labels (lazy TriagePredictor); home + supported-diagnoses; 404
   templates/*.jinja2 · static/      # web UI
 commands/                      # CLI scripts (run from repo root)
-  download_isic_full.py · fetch_isic_sample.py   # dataset download
-  run_build_dataset.py                           # build the grouped manifest
+  build_dataset.py                               # stage 1: source -> canonicalise -> quality -> balance -> sort -> manifest
   run_train_triage.py                            # train (--smoke for a CPU synthetic end-to-end run)
   run_evaluate.py                                # evaluation report + model card
   run_triage_inference.py · run_validation_check.py   # inference (single image / validation set)
@@ -69,8 +73,7 @@ Dockerfile / docker-compose.yml                  # container (production.ini); c
 
 ## Data → training → inference flow
 
-1. **Download:** `commands/download_isic_full.py` (resumable, multithreaded) or `fetch_isic_sample.py`.
-2. **Manifest:** `commands/run_build_dataset.py` builds a patient/lesion-grouped, leakage-free manifest CSV.
+1. **Source + curate (stage 1):** `commands/build_dataset.py` (→ `lesnet.data.pipeline`) downloads (ISIC malignant-maximal; PAD-UFES auto; Fitzpatrick17k/DDI on disk), canonicalises diagnosis names, quality-gates + pHash-dedupes, sorts into `benign/not_sure/malignant/<diagnosis>/`, balances ~1:1 benign:malignant (group-safe, fairness-aware), and writes a leakage-free `manifest.csv` + `report.json`.
 3. **Train:** `commands/run_train_triage.py --manifest …` → `lesnet.ml.training.train` (EfficientNetV2-S, focal loss, optional metric-gated rounds) → calibrate (temperature) → choose sensitivity-first operating point → split-conformal → fit Mahalanobis OOD → save `triage_model.keras` + `artifacts.json`.
 4. **Evaluate:** `commands/run_evaluate.py` writes `evaluation_report.json` + `model_card.md` (incl. fairness gate).
 5. **Infer:** web `POST /predict` (lazy `TriagePredictor`) or `commands/run_triage_inference.py`. Pipeline = quality gate → OOD gate → calibrated triage → abstention/conformal set + auxiliary fine-grained prediction. `GET /labels` returns the class list.
@@ -94,9 +97,13 @@ python -m pip install -e ".[testing]"
 # run the web app, http://localhost:6543
 pserve development.ini --reload
 
-# tests + lint
+# tests + lint (lesnet/data is gated at 100% coverage)
 python -m pytest
+python -m pytest --cov=lesnet.data --cov-fail-under=100
 ruff check
+
+# stage 1: source + build a balanced, sorted, leakage-safe dataset
+python commands/build_dataset.py --sources isic pad_ufes_20 fitzpatrick17k ddi --dest data/dataset
 
 # CPU smoke (synthetic end-to-end: train -> calibrate -> save -> load -> infer)
 python commands/run_train_triage.py --smoke --artifacts /tmp/lesnet_art
@@ -110,6 +117,7 @@ python commands/download_model.py -m M-4s
 
 ## Git / contributing
 
+- **Always branch off the latest `origin/main`** (`git fetch origin main && git checkout -B <branch> origin/main`) — never off a stale release/feature branch. `main` is the source of truth and may carry squash-merged PRs that raw branches lack.
 - CI (`.github/workflows/test.yaml`) runs `ruff check` + `pytest` on PRs to `main`; CodeQL also runs; Dependabot manages bumps.
 - Commit style: short subjects, often gitmoji + milestone/issue tag. Not strict Conventional Commits — match history.
 - `docs/model-redesign.md` is the authoritative design for the triage system. `docs/code-audit.md` is a historical (2026-06-09) audit of the now-removed legacy pipeline.

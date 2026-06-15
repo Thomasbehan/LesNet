@@ -14,7 +14,7 @@ from lesnet.ml.features import METADATA_DIM, normalize_site
 from lesnet.ml.losses import make_focal_loss, triage_class_weights
 from lesnet.ml.model import build_triage_model, feature_model, triage_logits_model
 from lesnet.ml.ood import MahalanobisOODDetector
-from lesnet.ml.taxonomy import MALIGNANT, TRIAGE_CLASSES, build_fine_vocabulary
+from lesnet.data.taxonomy import MALIGNANT, TRIAGE_CLASSES, build_fine_vocabulary
 
 MAX_OOD_FIT_BATCHES = 64
 

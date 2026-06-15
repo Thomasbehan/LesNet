@@ -4,7 +4,7 @@ import os
 import numpy as np
 from PIL import Image
 
-from lesnet.ml.datasets import LesionRecord
+from lesnet.data.records import LesionRecord
 
 _LABELS = ['nevus', 'melanoma', 'actinic keratosis', 'basal cell carcinoma']
 

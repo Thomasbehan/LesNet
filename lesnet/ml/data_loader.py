@@ -9,7 +9,7 @@ import tensorflow as tf
 
 from lesnet.ml.features import metadata_vector
 from lesnet.ml.preprocessing import PreprocessingPipeline
-from lesnet.ml.taxonomy import fine_index, triage_index
+from lesnet.data.taxonomy import fine_index, triage_index
 
 
 def filter_valid(records):
