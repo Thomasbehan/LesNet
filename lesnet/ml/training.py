@@ -9,23 +9,30 @@ from lesnet.ml import artifacts, metrics
 from lesnet.ml.calibration import TemperatureScaler, softmax
 from lesnet.ml.conformal import SplitConformalClassifier
 from lesnet.ml.data_loader import filter_valid, make_dataset
+from lesnet.ml.distill import Distiller
 from lesnet.ml.evaluation import build_report
 from lesnet.ml.features import METADATA_DIM, normalize_site
 from lesnet.ml.losses import make_focal_loss, triage_class_weights
 from lesnet.ml.model import build_triage_model, feature_model, triage_logits_model
 from lesnet.ml.ood import MahalanobisOODDetector
-from lesnet.ml.taxonomy import MALIGNANT, TRIAGE_CLASSES, build_fine_vocabulary
+from lesnet.data.taxonomy import MALIGNANT, TRIAGE_CLASSES, build_fine_vocabulary
 
 MAX_OOD_FIT_BATCHES = 64
 
 
+def _optimizer(config):
+    """Adam with optional weight-EMA — EMA weights generalise better at no inference cost."""
+    return tf.keras.optimizers.Adam(
+        config.learning_rate, use_ema=config.use_ema, ema_momentum=config.ema_momentum)
+
+
 def _compile(model, config, class_weights):
+    # Label-smooth the auxiliary fine head (calibration win); keep focal on the clinical triage head.
+    fine_loss = (tf.keras.losses.CategoricalCrossentropy(label_smoothing=config.label_smoothing)
+                 if config.label_smoothing > 0 else make_focal_loss(None, config.focal_gamma))
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(config.learning_rate),
-        loss={
-            'triage': make_focal_loss(class_weights, config.focal_gamma),
-            'fine': make_focal_loss(None, config.focal_gamma),
-        },
+        optimizer=_optimizer(config),
+        loss={'triage': make_focal_loss(class_weights, config.focal_gamma), 'fine': fine_loss},
         loss_weights={'triage': 1.0, 'fine': config.aux_loss_weight},
         metrics={'triage': [tf.keras.metrics.CategoricalAccuracy(name='accuracy')]},
         jit_compile=False,  # Keras-3 'auto' XLA picks a Triton GEMM path that fails on some CPUs
@@ -108,52 +115,31 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
     return targets_met
 
 
-def train(config, records_train, records_val):
+def _prepare(config):
     # Keep TF off XLA/JIT: the pip wheel's Triton-GEMM CPU path and GPU libdevice lookup are
-    # unavailable on many hosts; the model trains fine on the standard executor. Set before
-    # the first XLA compile (XLA reads the flag lazily).
+    # unavailable on many hosts; the model trains fine on the standard executor.
     os.environ.setdefault('TF_XLA_FLAGS', '--tf_xla_auto_jit=-1')
     tf.config.optimizer.set_jit(False)
     tf.keras.utils.set_random_seed(config.seed)
 
+
+def _datasets(config, records_train, records_val):
     cache_train = cache_val = None
     if config.cache_dataset:
         cache_directory = os.path.join(config.artifacts_dir, 'cache')
         os.makedirs(cache_directory, exist_ok=True)
-        cache_train = os.path.join(cache_directory, 'train')
-        cache_val = os.path.join(cache_directory, 'val')
-
+        cache_train, cache_val = os.path.join(cache_directory, 'train'), os.path.join(cache_directory, 'val')
     fine_vocabulary = build_fine_vocabulary(records_train)
     train_dataset, n_fine, train_triage = make_dataset(
         records_train, config, fine_vocabulary, training=True, cache_path=cache_train)
     val_dataset, _, val_triage = make_dataset(
         records_val, config, fine_vocabulary, training=False, cache_path=cache_val)
-    val_records = filter_valid(records_val)
+    return (fine_vocabulary, train_dataset, n_fine, train_triage,
+            val_dataset, val_triage, filter_valid(records_val))
 
-    model = build_triage_model(config, n_fine, METADATA_DIM)
-    class_weights = triage_class_weights(train_triage, config.malignant_cost, MALIGNANT)
-    _compile(model, config, class_weights)
 
-    log_dir = os.path.join(config.artifacts_dir, 'tensorboard')
-    callbacks = []
-    if config.tensorboard:
-        callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0))
-    # Decay the LR when val_loss plateaus — prevents the late-epoch collapse seen with a
-    # fixed LR on extreme-imbalance data. State persists across the gated rounds.
-    callbacks.append(tf.keras.callbacks.ReduceLROnPlateau(
-        monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1))
-
-    targets_met = None
-    if config.train_until_target:
-        targets_met = _gated_fit(model, train_dataset, val_dataset, val_triage, val_records,
-                                 config, callbacks, log_dir)
-    else:
-        stopping = tf.keras.callbacks.EarlyStopping(
-            monitor='val_loss', patience=max(2, config.epochs // 5), restore_best_weights=True)
-        model.fit(train_dataset, validation_data=val_dataset, epochs=config.epochs,
-                  callbacks=callbacks + [stopping], verbose=2)
-
-    # Finalise: calibration, operating point, conformal, OOD, save.
+def _finalize(model, config, train_dataset, val_dataset, val_triage, fine_vocabulary, n_fine, targets_met):
+    """Calibrate, choose operating point, fit conformal + OOD, save the artifact bundle."""
     logits = triage_logits_model(model).predict(val_dataset, verbose=0)
     scaler = TemperatureScaler().fit(logits, val_triage)
     calibrated = softmax(logits / scaler.temperature)
@@ -162,9 +148,7 @@ def train(config, records_train, records_val):
     y_malignant = (val_triage == MALIGNANT).astype(int)
     operating_threshold = metrics.select_threshold_for_sensitivity(
         y_malignant, p_malignant, config.target_sensitivity)
-
     conformal = SplitConformalClassifier(alpha=config.conformal_alpha).calibrate(calibrated, val_triage)
-
     embeddings = feature_model(model).predict(train_dataset.take(MAX_OOD_FIT_BATCHES), verbose=0)
     ood = MahalanobisOODDetector().fit(embeddings)
 
@@ -190,3 +174,58 @@ def train(config, records_train, records_val):
     model.save(artifacts.model_path(config.artifacts_dir))
     artifacts.save_bundle(config.artifacts_dir, bundle)
     return model, bundle
+
+
+def train(config, records_train, records_val):
+    _prepare(config)
+    fine_vocabulary, train_dataset, n_fine, train_triage, val_dataset, val_triage, val_records = \
+        _datasets(config, records_train, records_val)
+
+    model = build_triage_model(config, n_fine, METADATA_DIM)
+    _compile(model, config, triage_class_weights(train_triage, config.malignant_cost, MALIGNANT))
+
+    log_dir = os.path.join(config.artifacts_dir, 'tensorboard')
+    callbacks = []
+    if config.tensorboard:
+        callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0))
+    callbacks.append(tf.keras.callbacks.ReduceLROnPlateau(
+        monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1))
+
+    targets_met = None
+    if config.train_until_target:
+        targets_met = _gated_fit(model, train_dataset, val_dataset, val_triage, val_records,
+                                 config, callbacks, log_dir)
+    else:
+        stopping = tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss', patience=max(2, config.epochs // 5), restore_best_weights=True)
+        model.fit(train_dataset, validation_data=val_dataset, epochs=config.epochs,
+                  callbacks=callbacks + [stopping], verbose=2)
+
+    return _finalize(model, config, train_dataset, val_dataset, val_triage,
+                     fine_vocabulary, n_fine, targets_met)
+
+
+def distill(config, teacher_model, records_train, records_val):
+    """Train a student to match ``teacher_model``'s soft triage predictions, then finalise it.
+
+    The teacher must accept the student's inputs (the orchestrator rebuilds it at the student's
+    resolution and loads the teacher weights — backbone is convolutional, so weights transfer).
+    """
+    _prepare(config)
+    fine_vocabulary, train_dataset, n_fine, train_triage, val_dataset, val_triage, _val_records = \
+        _datasets(config, records_train, records_val)
+
+    student = build_triage_model(config, n_fine, METADATA_DIM)
+    hard_loss = make_focal_loss(triage_class_weights(train_triage, config.malignant_cost, MALIGNANT),
+                                config.focal_gamma)
+    distiller = Distiller(student, teacher_model, hard_loss,
+                          alpha=config.distill_alpha, temperature=config.distill_temperature)
+    distiller.compile(optimizer=_optimizer(config),
+                      metrics=[tf.keras.metrics.CategoricalAccuracy(name='accuracy')], jit_compile=False)
+    stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss', patience=max(2, config.epochs // 5), restore_best_weights=True)
+    distiller.fit(train_dataset, validation_data=val_dataset, epochs=config.epochs,
+                  callbacks=[stopping], verbose=2)
+
+    return _finalize(student, config, train_dataset, val_dataset, val_triage,
+                     fine_vocabulary, n_fine, None)

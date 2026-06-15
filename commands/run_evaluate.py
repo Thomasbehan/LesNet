@@ -13,7 +13,7 @@ from lesnet.ml.data_loader import filter_valid, make_dataset
 from lesnet.ml.evaluation import build_report, write_model_card
 from lesnet.ml.features import normalize_site
 from lesnet.ml.model import triage_logits_model
-from lesnet.ml.datasets import load_manifest
+from lesnet.data.records import load_manifest
 
 import tensorflow as tf
 

@@ -8,8 +8,9 @@ import argparse
 import os
 import tempfile
 
+from lesnet.data.manifest import assign_splits
+from lesnet.data.records import load_manifest, save_manifest
 from lesnet.ml.config import PipelineConfig
-from lesnet.ml.datasets import DatasetConfig, assign_splits, load_manifest, save_manifest
 from lesnet.ml.synthetic import make_synthetic_records
 from lesnet.ml.training import train
 
@@ -44,7 +45,7 @@ def main():
             image_size=(64, 64), backbone='tiny', pretrained=False, batch_size=16,
             epochs=4, shared_units=64, artifacts_dir=args.artifacts, smoke=True, remove_hair=False)
         records = make_synthetic_records(tempfile.mkdtemp(prefix='lesnet_smoke_'), per_class=40)
-        records = assign_splits(records, DatasetConfig(test_size=0.2, val_size=0.2, seed=config.seed))
+        records = assign_splits(records, test_size=0.2, val_size=0.2, seed=config.seed)
         os.makedirs(args.artifacts, exist_ok=True)
         save_manifest(records, os.path.join(args.artifacts, 'smoke_manifest.csv'))
     else:

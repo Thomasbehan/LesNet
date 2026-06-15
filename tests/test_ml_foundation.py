@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from lesnet.ml import calibration, conformal, metrics, preprocessing, splits, triage
+from lesnet.data import splits
+from lesnet.ml import calibration, conformal, metrics, preprocessing, triage
 
 
 def test_sensitivity_first_threshold_meets_target():

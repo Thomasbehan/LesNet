@@ -12,7 +12,7 @@ from lesnet.ml.model import feature_model, fine_logits_model, triage_logits_mode
 from lesnet.ml.model_compat import load_model_with_compatibility
 from lesnet.ml.ood import MahalanobisOODDetector, is_low_quality
 from lesnet.ml.preprocessing import PreprocessingPipeline
-from lesnet.ml.taxonomy import MALIGNANT, TRIAGE_CLASSES
+from lesnet.data.taxonomy import MALIGNANT, TRIAGE_CLASSES
 from lesnet.ml.triage import ABSTAIN, triage_decision
 
 

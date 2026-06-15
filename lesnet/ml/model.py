@@ -7,6 +7,12 @@ fine-grained head. A 'tiny' backbone is available for fast CPU smoke runs.
 import tensorflow as tf
 from tensorflow.keras import Input, Model, layers
 
+_BACKBONES = {
+    'efficientnetv2s': tf.keras.applications.EfficientNetV2S,
+    'efficientnetv2m': tf.keras.applications.EfficientNetV2M,
+    'efficientnetv2l': tf.keras.applications.EfficientNetV2L,
+}
+
 
 def _build_backbone(config, image_input):
     if config.backbone == 'tiny':
@@ -16,7 +22,9 @@ def _build_backbone(config, image_input):
             features = layers.MaxPooling2D()(features)
         return layers.GlobalAveragePooling2D()(features)
 
-    backbone = tf.keras.applications.EfficientNetV2S(
+    if config.backbone not in _BACKBONES:
+        raise ValueError(f"Unknown backbone '{config.backbone}'. Known: {sorted(_BACKBONES)} + 'tiny'.")
+    backbone = _BACKBONES[config.backbone](
         include_top=False,
         weights='imagenet' if config.pretrained else None,
         input_tensor=image_input,

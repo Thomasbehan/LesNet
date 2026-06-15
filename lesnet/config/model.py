@@ -11,4 +11,9 @@ class ModelConfig(object):
         'M-0015s': 'https://github.com/Thomasbehan/LesNet/releases/download/0.1.5/skinvestigator-sm.tflite',
         'M-0031': 'https://github.com/Thomasbehan/LesNet/releases/download/0.3.1/LesNetM31.keras',
         'M-4s': 'https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras',
+        # 4.5.0 family (uploaded to the v4.5.0 release by the model-build automation).
+        'M4.5s': 'https://github.com/Thomasbehan/LesNet/releases/download/v4.5.0/LesNet.M4.5s.keras',
+        'M4.5m': 'https://github.com/Thomasbehan/LesNet/releases/download/v4.5.0/LesNet.M4.5m.keras',
+        'M4.5L': 'https://github.com/Thomasbehan/LesNet/releases/download/v4.5.0/LesNet.M4.5L.keras',
+        'M4.5XL': 'https://github.com/Thomasbehan/LesNet/releases/download/v4.5.0/LesNet.M4.5XL.keras',
     }
