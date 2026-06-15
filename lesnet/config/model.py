@@ -1,4 +1,8 @@
 class ModelConfig(object):
+    """Released-model registry used by the web app and the model downloader.
+
+    The triage training/inference hyperparameters live in lesnet.ml.config.PipelineConfig.
+    """
     MODEL_DIRECTORY = 'models/'
     MODEL_URLS = {
         'M-0003':
@@ -8,34 +12,3 @@ class ModelConfig(object):
         'M-0031': 'https://github.com/Thomasbehan/LesNet/releases/download/0.3.1/LesNetM31.keras',
         'M-4s': 'https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras',
     }
-    LOG_DIR = "logs"
-    IMG_SIZE = (224, 224)
-    BATCH_SIZE = 16
-    LEARNING_RATE = 1e-4
-    GLOBAL_WEIGHT_DECAY = 1e-6
-    LAYER_1 = 512
-    LAYER_2 = 256
-    DROPOUT_1 = 0.2
-    DROPOUT_2 = 0.2
-    L2_LAYER_1 = 1e-5
-    L2_LAYER_2 = 1e-4
-    L2_LAYER_3 = 1e-4
-    AUG_TOTAL = 10000
-    CATEGORIES = 42
-    EPOCHS = 300
-    MIN_LR = 1e-7
-    MIN_LR_DELTA = 1e-4
-    LR_PATIENCE = 4
-    LR_COOLDOWN = 3
-    ES_PATIENCE = 6
-    TRAINABLE_START = -10
-    MAX_AUG_PER_IMAGE = 10
-    BASE_LAYERS_TO_UNFREEZE = 10
-    TRAIN_DIR = 'data/training'
-    MODEL_TYPE = "KERAS"
-    MODEL_NAME = "LesNet.keras"
-    LABELS_NAME = "LesNet_labels.json"
-    CONFIDENCE_THRESHOLD = 0.5
-    MAX_UPLOAD_BYTES = 10 * 1024 * 1024
-    TPU_Train = False
-    AUGMENTATION_ENABLED = False

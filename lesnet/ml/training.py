@@ -28,6 +28,7 @@ def _compile(model, config, class_weights):
         },
         loss_weights={'triage': 1.0, 'fine': config.aux_loss_weight},
         metrics={'triage': [tf.keras.metrics.CategoricalAccuracy(name='accuracy')]},
+        jit_compile=False,  # Keras-3 'auto' XLA picks a Triton GEMM path that fails on some CPUs
     )
 
 
@@ -108,6 +109,11 @@ def _gated_fit(model, train_dataset, val_dataset, val_triage, val_records, confi
 
 
 def train(config, records_train, records_val):
+    # Keep TF off XLA/JIT: the pip wheel's Triton-GEMM CPU path and GPU libdevice lookup are
+    # unavailable on many hosts; the model trains fine on the standard executor. Set before
+    # the first XLA compile (XLA reads the flag lazily).
+    os.environ.setdefault('TF_XLA_FLAGS', '--tf_xla_auto_jit=-1')
+    tf.config.optimizer.set_jit(False)
     tf.keras.utils.set_random_seed(config.seed)
 
     cache_train = cache_val = None

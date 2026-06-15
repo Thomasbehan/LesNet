@@ -34,7 +34,7 @@ These instructions will help you set up the project on your local machine for de
 ## Quick Setup for Development
 
 To quickly set up LesNet for development, follow these steps
-(Requires Python >=3.9<=3.11):
+(Requires Python >=3.11,<3.13):
 
 1. **Upgrade Your Packaging Tools:**
    Ensure your `pip` and `setuptools` are up-to-date by running:

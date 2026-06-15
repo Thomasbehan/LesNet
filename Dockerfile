@@ -1,5 +1,5 @@
-# Official Ubuntu base image with Python 3.10
-FROM ubuntu:22.04
+# Official Ubuntu base image with Python 3.12
+FROM ubuntu:24.04
 
 # Set the working directory to /app
 WORKDIR /app
@@ -9,9 +9,9 @@ COPY . /app/
 
 # Install any needed packages and run setup.py
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends python3.10 python3-pip python3.10-dev curl
-RUN python3.10 -m pip install --upgrade pip
-RUN python3.10 -m pip install -e .
+RUN apt-get install -y --no-install-recommends python3.12 python3-pip python3.12-dev curl
+RUN python3.12 -m pip install --break-system-packages --upgrade pip
+RUN python3.12 -m pip install --break-system-packages -e .
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
