@@ -15,7 +15,7 @@ requires = [
     'tensorflow==2.21.0',
     'tensorboard==2.20.0',
     'numpy==2.4.6',
-    'Pillow==12.2.0',
+    'Pillow==12.3.0',
     'requests==2.34.2',
     'scipy==1.17.1',
     'scikit-learn==1.9.0',
