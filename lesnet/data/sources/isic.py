@@ -5,9 +5,13 @@ metadata (no images), then download images only for a chosen subset (e.g. all ma
 suspicious + a balanced benign sample). ``parse`` reads the written metadata.csv into records.
 """
 import csv
+import io
 import json
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from queue import Queue
+from threading import Lock, Thread
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -76,6 +80,16 @@ def collect_metadata(root, resolution='full', page_size=100, limit=None, session
     crawl survives interruption (re-run resumes) and is observable while running. Returns the
     rows collected *this call*; use ``url_map(root)`` for the full id->url map after completion.
     """
+    return list(iter_metadata(root, resolution, page_size, limit, session))
+
+
+def iter_metadata(root, resolution='full', page_size=100, limit=None, session=None):
+    """Streaming form of collect_metadata: yields each new row as its page arrives.
+
+    The archive caps `limit` at 100 rows per page, so a full crawl is ~5.5k strictly-serial
+    requests. Yielding lets a caller start downloading images off page 1 instead of waiting
+    ~40 minutes for the crawl to finish with the network otherwise idle.
+    """
     os.makedirs(root, exist_ok=True)
     session = session or make_session()
     metadata_path = os.path.join(root, 'metadata.csv')
@@ -93,7 +107,6 @@ def collect_metadata(root, resolution='full', page_size=100, limit=None, session
     if not seen:
         writer.writeheader()
 
-    collected = []
     try:
         while next_url and (limit is None or len(seen) < limit):
             response = session.get(next_url, params=params, timeout=120)
@@ -106,15 +119,13 @@ def collect_metadata(root, resolution='full', page_size=100, limit=None, session
                     continue
                 writer.writerow({field: row.get(field, '') for field in METADATA_FIELDS})
                 seen.add(row['isic_id'])
-                collected.append(row)
+                yield row
             handle.flush()
             next_url = payload.get('next')
             json.dump({'next_url': next_url, 'collected': len(seen)},
                       open(state_path, 'w', encoding='utf-8'))
-            print(f"isic metadata: {len(seen)} rows", flush=True)
     finally:
         handle.close()
-    return collected
 
 
 def download_images(root, url_by_id, workers=32, session=None):
@@ -143,6 +154,122 @@ def download_images(root, url_by_id, workers=32, session=None):
             else:
                 failed += 1
     return downloaded, failed
+
+
+def resize_jpeg(raw, size, square=False, quality=90):
+    """Full-resolution JPEG bytes -> `size`-px JPEG bytes (shorter side, or square if asked).
+
+    The archive publishes only `full` (multi-megapixel) and `thumbnail_256`; there is no 512
+    rendition, so a 512 dataset means downsampling here. PIL's `draft()` does the bulk of the
+    shrink inside the JPEG DCT decode, which is several times faster than decoding at full size
+    and resizing afterwards — the difference between a few hours and most of a day over 550k images.
+    """
+    from PIL import Image
+    with Image.open(io.BytesIO(raw)) as image:
+        image.draft('RGB', (size, size))            # DCT-domain prescale to >= the target
+        image = image.convert('RGB')
+        width, height = image.size
+        scale = size / min(width, height)
+        if scale < 1.0:
+            image = image.resize((max(round(width * scale), size), max(round(height * scale), size)),
+                                 Image.BICUBIC)
+        if square:
+            width, height = image.size
+            left, top = (width - size) // 2, (height - size) // 2
+            image = image.crop((left, top, left + size, top + size))
+        buffer = io.BytesIO()
+        image.save(buffer, format='JPEG', quality=quality, optimize=True)
+        return buffer.getvalue()
+
+
+def _download_one(session, isic_id, url, images_dir, size, square, quality):
+    """Fetch + downsample one image. Returns (ok, bytes_downloaded); skips work already done."""
+    path = os.path.join(images_dir, f'{isic_id}.jpg')
+    if os.path.exists(path):
+        return True, 0
+    response = session.get(url, timeout=120)
+    if response.status_code != 200:
+        return False, 0
+    raw = response.content
+    data = resize_jpeg(raw, size, square=square, quality=quality) if size else raw
+    tmp = f'{path}.partial'                          # write-then-rename: a killed run leaves no
+    with open(tmp, 'wb') as handle:                  # half-written jpeg for the resume to skip
+        handle.write(data)
+    os.replace(tmp, path)
+    return True, len(raw)
+
+
+def _log(message):
+    print(message, flush=True)      # unbuffered: a multi-hour run is usually watched via a log file
+
+
+def download_archive(root, size=512, square=False, quality=90, workers=32, limit=None,
+                     page_size=100, session=None, progress_every=1000, log=_log):
+    """Stream the whole ISIC archive to <root>/images/<isic_id>.jpg at `size` px, resumably.
+
+    Metadata paging is cursor-based and therefore strictly serial (~5.5k requests for the full
+    archive), so it runs as a producer feeding a download pool rather than as a phase of its own —
+    otherwise ~40 minutes of paging happens with the network otherwise idle. Rows are appended to
+    <root>/metadata.csv as they arrive, so build_dataset.py can consume the result, and re-running
+    resumes: the pager restarts from the saved cursor and existing images are skipped.
+
+    `size=None` keeps the original full-resolution bytes.
+    """
+    images_dir = os.path.join(root, 'images')
+    os.makedirs(images_dir, exist_ok=True)
+    session = session or make_session(workers)
+    queue = Queue(maxsize=workers * 8)               # bounded: don't page ahead of the downloads
+    counters = {'ok': 0, 'failed': 0, 'bytes': 0, 'queued': 0}
+    lock = Lock()
+    start = time.time()
+
+    def produce():
+        try:
+            # Resume: rows already crawled but never fetched (or fetched and lost) must be retried.
+            # Without this, a run whose metadata crawl finished would enqueue nothing at all and
+            # silently "succeed" with a partial image set.
+            if os.path.exists(os.path.join(root, 'metadata.csv')):
+                for isic_id, url in url_map(root).items():
+                    if not os.path.exists(os.path.join(images_dir, f'{isic_id}.jpg')):
+                        queue.put((isic_id, url))
+                        counters['queued'] += 1
+            for row in iter_metadata(root, resolution='full', page_size=page_size, limit=limit,
+                                     session=session):
+                queue.put((row['isic_id'], row['url']))
+                counters['queued'] += 1
+        finally:
+            for _ in range(workers):
+                queue.put(None)                      # one sentinel per consumer
+
+    def consume():
+        while True:
+            item = queue.get()
+            if item is None:
+                return
+            try:
+                ok, nbytes = _download_one(session, item[0], item[1], images_dir, size, square,
+                                           quality)
+            except Exception:                        # one bad image must not sink a 550k-image run
+                ok, nbytes = False, 0
+            with lock:
+                counters['ok' if ok else 'failed'] += 1
+                counters['bytes'] += nbytes
+                done = counters['ok'] + counters['failed']
+                if progress_every and done % progress_every == 0:
+                    elapsed = max(time.time() - start, 1e-9)
+                    log(f'isic: {done} done ({counters["failed"]} failed) '
+                        f'{done / elapsed:.1f} img/s {counters["bytes"] / 1e9:.1f} GB fetched')
+
+    producer = Thread(target=produce, daemon=True)
+    producer.start()
+    consumers = [Thread(target=consume, daemon=True) for _ in range(workers)]
+    for thread in consumers:
+        thread.start()
+    producer.join()
+    for thread in consumers:
+        thread.join()
+    counters['seconds'] = round(time.time() - start, 1)
+    return counters
 
 
 def download(root, limit=None, resolution='full', workers=32):

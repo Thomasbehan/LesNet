@@ -20,6 +20,7 @@
 - [Data](#data)
 - [Model](#model)
 - [Performance](#performance)
+- [JEPA World Model](#jepa-world-model)
 - [Contributing](#contributing)
 - [License](#license)
 - [References](#references)
@@ -146,6 +147,48 @@ Held-out test metrics (malignant-vs-rest, sensitivity-first operating point):
 | **Accuracy**      | 85% - 95%     | ![Progress](https://progress-bar.dev/90/?scale=85..95&title=progress&suffix=)  |
 | **Precision**     | 80% - 90%     | ![Progress](https://progress-bar.dev/100/?scale=80..90&title=progress&suffix=) |
 | **Recall**        | 85% - 95%     | ![Progress](https://progress-bar.dev/92/?scale=85..95&title=progress&suffix=)  |
+
+## JEPA World Model
+
+A **deployable skin-lesion triage family** built on [DINOv2](https://github.com/facebookresearch/dinov2)
+(Apache-2.0, commercial use permitted) with calibrated abstaining heads, an out-of-distribution
+gate, and a measured 512 MB inference budget. Standalone PyTorch subsystem in
+[`lesnet/jepa/`](lesnet/jepa/) (`pip install -e ".[jepa]"`).
+
+Held-out test split, measured **through the served ONNX artifact** — not an in-memory probe:
+
+| Variant | Backbone | Params | Sens | Spec | ROC-AUC | pAUC@80%TPR | dx top-3 | OOD rej. | RSS | Fits 512 MB |
+|---------|----------|--------|------|------|---------|-------------|----------|----------|-----|-------------|
+| **Small** | DINOv2 ViT-S/14 | 21.5M | **0.954** | 0.905 | **0.974** | **0.182** | 0.852 | 1.00 | **165 MB** | ✅ |
+| **Medium** ⭐ | DINOv2 ViT-B/14 | 85.5M | 0.929 | **0.910** | 0.963 | 0.173 | **0.853** | 1.00 | 435 MB | ✅ |
+| Large | DINOv2 ViT-L/14 | 303M | 0.908 | 0.864 | 0.951 | 0.166 | 0.826 | 1.00 | 1.3 GB | ❌ research only |
+
+**Medium powers the live demo**; **Small** is the edge default and scores highest overall — it beats
+Large on every clinical metric at 1/14 the size. Quality scales *inversely* with capacity here
+because the heads are linear probes on frozen features; see
+[`docs/jepa-evaluation.md`](docs/jepa-evaluation.md).
+
+Against the previous release, Small improves specificity **0.746 → 0.905**, diagnosis top-3
+**0.543 → 0.852**, and OOD rejection **0.93 → 1.00**, while being 14x smaller — because the encoder
+is *inherited* rather than trained from scratch on 553k images.
+[`docs/architecture-research-2026.md`](docs/architecture-research-2026.md) explains the reasoning,
+including which stronger dermatology models had to be refused on licence grounds.
+
+> ⚠️ These figures are on a **class-balanced** split (~50% malignant). The real archive is ~0.4–5%
+> malignant, so they are **not** comparable to prospective clinical studies and PPV at true
+> prevalence will be far lower. Research/triage only — **not a diagnosis**.
+
+```bash
+# fetch a release asset, then serve it
+tar xzf lesnet-jepa-small.tar.gz
+LESNET_JEPA_ARTIFACTS=$PWD/small pserve development.ini
+
+# rebuild the family from scratch (downloads DINOv2, fits heads, evaluates)
+python commands/build_jepa_family.py --out artifacts/family --manifest data/isic_dx/manifest.csv
+
+# live training dashboard (no TensorBoard needed)
+python commands/train_dashboard.py --artifacts artifacts/family/small
+```
 
 ## Contributing
 contributions to LesNet are welcome! For guidelines on contributing, and learning how to contribute, please read [CONTRIBUTING.md](CONTRIBUTING.md). By participating in this project, you agree to abide by its terms.

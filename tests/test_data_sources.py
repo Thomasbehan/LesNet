@@ -129,6 +129,131 @@ def test_isic_download_orchestrates(tmp_path, monkeypatch):
     assert captured == {'I1': 'u1'}
 
 
+def _jpeg_bytes(width, height, quality=95):
+    from PIL import Image
+    buffer = io.BytesIO()
+    Image.new('RGB', (width, height), (10, 120, 200)).save(buffer, format='JPEG', quality=quality)
+    return buffer.getvalue()
+
+
+def test_isic_resize_jpeg_shorter_side_and_square():
+    from PIL import Image
+    raw = _jpeg_bytes(1200, 900)
+    out = isic.resize_jpeg(raw, 512)
+    with Image.open(io.BytesIO(out)) as image:
+        assert min(image.size) == 512 and image.size[0] > image.size[1]   # aspect preserved
+    with Image.open(io.BytesIO(isic.resize_jpeg(raw, 512, square=True))) as image:
+        assert image.size == (512, 512)
+
+
+def test_isic_resize_jpeg_does_not_upscale_small_images():
+    from PIL import Image
+    with Image.open(io.BytesIO(isic.resize_jpeg(_jpeg_bytes(300, 200), 512))) as image:
+        assert image.size == (300, 200)          # already under target: left alone, not blown up
+
+
+def test_isic_download_one_skips_existing_and_handles_errors(tmp_path):
+    images = tmp_path / 'images'
+    images.mkdir()
+    (images / 'I1.jpg').write_bytes(b'already here')
+    session = FakeSession(by_url={'u2': FakeResponse(200, content=_jpeg_bytes(800, 800))})
+
+    assert isic._download_one(session, 'I1', 'u1', str(images), 512, False, 90) == (True, 0)
+    assert (images / 'I1.jpg').read_bytes() == b'already here'            # untouched
+
+    ok, nbytes = isic._download_one(session, 'I2', 'u2', str(images), 512, False, 90)
+    assert ok and nbytes > 0 and (images / 'I2.jpg').exists()
+    assert not list(images.glob('*.partial'))                             # renamed, not left behind
+
+    assert isic._download_one(session, 'I3', 'missing', str(images), 512, False, 90) == (False, 0)
+
+
+def test_isic_download_one_can_keep_full_resolution(tmp_path):
+    from PIL import Image
+    images = tmp_path / 'images'
+    images.mkdir()
+    raw = _jpeg_bytes(900, 700)
+    session = FakeSession(by_url={'u': FakeResponse(200, content=raw)})
+    isic._download_one(session, 'I1', 'u', str(images), None, False, 90)
+    with Image.open(images / 'I1.jpg') as image:
+        assert image.size == (900, 700)          # size=None -> original bytes, no re-encode
+
+
+def test_isic_iter_metadata_streams_rows_as_pages_arrive(tmp_path):
+    page1 = FakeResponse(json_data={'results': [
+        {'isic_id': 'I1', 'files': {'full': {'url': 'u1'}}, 'metadata': {}}],
+        'next': 'page2'})
+    page2 = FakeResponse(json_data={'results': [
+        {'isic_id': 'I2', 'files': {'full': {'url': 'u2'}}, 'metadata': {}}], 'next': None})
+    stream = isic.iter_metadata(str(tmp_path), session=FakeSession(pages=[page1, page2]))
+    assert next(stream)['isic_id'] == 'I1'       # yielded before page 2 is fetched
+    assert [row['isic_id'] for row in stream] == ['I2']
+
+
+def test_isic_download_archive_streams_pages_into_downloads(tmp_path):
+    raw = _jpeg_bytes(1000, 1000)
+    page = FakeResponse(json_data={'results': [
+        {'isic_id': 'I1', 'files': {'full': {'url': 'u1'}}, 'metadata': {}},
+        {'isic_id': 'I2', 'files': {'full': {'url': 'u2'}}, 'metadata': {}}], 'next': None})
+
+    class Session(FakeSession):
+        def get(self, url, params=None, timeout=None):  # noqa: ARG002
+            if url in ('u1', 'u2'):
+                return FakeResponse(200, content=raw)
+            return self.pages.pop(0)
+
+    lines = []
+    counters = isic.download_archive(str(tmp_path), size=256, workers=2,
+                                     session=Session(pages=[page]), progress_every=1,
+                                     log=lines.append)
+    assert counters['ok'] == 2 and counters['failed'] == 0 and counters['bytes'] > 0
+    assert sorted(p.name for p in (tmp_path / 'images').glob('*.jpg')) == ['I1.jpg', 'I2.jpg']
+    assert (tmp_path / 'metadata.csv').exists()
+    assert lines and 'img/s' in lines[-1]
+
+
+def test_isic_download_archive_retries_missing_images_after_crawl_completed(tmp_path):
+    """A finished metadata crawl yields no new rows; the images it never fetched must still be
+    queued, or a resumed run reports success with a partial image set."""
+    _write_csv(tmp_path / 'metadata.csv', isic.METADATA_FIELDS,
+               [{'isic_id': 'I1', 'url': 'u1'}, {'isic_id': 'I2', 'url': 'u2'}])
+    (tmp_path / 'images').mkdir()
+    (tmp_path / 'images' / 'I1.jpg').write_bytes(b'done')
+    (tmp_path / 'metadata_state.json').write_text('{"next_url": null}', encoding='utf-8')
+
+    class Session(FakeSession):
+        def get(self, url, params=None, timeout=None):  # noqa: ARG002
+            if url.startswith('http'):                       # the (exhausted) metadata crawl
+                return FakeResponse(json_data={'results': [], 'next': None})
+            return FakeResponse(200, content=_jpeg_bytes(600, 600))
+
+    counters = isic.download_archive(str(tmp_path), size=256, workers=2, session=Session(),
+                                     progress_every=0)
+    assert counters['queued'] == 1               # only the missing one
+    assert (tmp_path / 'images' / 'I2.jpg').exists()
+
+
+def test_isic_log_flushes(capsys):
+    isic._log('hello')                          # default logger; must not buffer a long run's output
+    assert capsys.readouterr().out == 'hello\n'
+
+
+def test_isic_download_archive_survives_a_broken_image(tmp_path):
+    page = FakeResponse(json_data={'results': [
+        {'isic_id': 'I1', 'files': {'full': {'url': 'u1'}}, 'metadata': {}}], 'next': None})
+
+    class Session(FakeSession):
+        def get(self, url, params=None, timeout=None):  # noqa: ARG002
+            if url == 'u1':
+                return FakeResponse(200, content=b'not a jpeg at all')
+            return self.pages.pop(0)
+
+    counters = isic.download_archive(str(tmp_path), size=256, workers=1,
+                                     session=Session(pages=[page]), progress_every=0)
+    assert counters == {'ok': 0, 'failed': 1, 'bytes': 0, 'queued': 1,
+                        'seconds': counters['seconds']}
+
+
 def test_isic_make_session_returns_session():
     assert isinstance(isic.make_session(), requests.Session)
 

@@ -120,5 +120,5 @@ python commands/download_model.py -m M-4s
 - **Always branch off the latest `origin/main`** (`git fetch origin main && git checkout -B <branch> origin/main`) — never off a stale release/feature branch. `main` is the source of truth and may carry squash-merged PRs that raw branches lack.
 - CI (`.github/workflows/test.yaml`) runs `ruff check` + `pytest` on PRs to `main`; CodeQL also runs; Dependabot manages bumps.
 - Commit style: short subjects, often gitmoji + milestone/issue tag. Not strict Conventional Commits — match history.
-- `docs/model-redesign.md` is the authoritative design for the triage system. `docs/code-audit.md` is a historical (2026-06-09) audit of the now-removed legacy pipeline.
+- `docs/model-redesign.md` is the authoritative design for the triage system.
 ```
