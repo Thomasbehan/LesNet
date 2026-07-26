@@ -31,6 +31,20 @@ tests_require = [
     'ruff==0.15.17',
 ]
 
+# JEPA world-model pretraining (lesnet/jepa/) — isolated PyTorch subsystem.
+# Optional so TF-only users don't pull torch: pip install -e ".[jepa]"
+jepa_require = [
+    'torch>=2.4',
+    'torchvision>=0.19',
+    'tensorboard>=2.16',
+    'h5py>=3.11',            # full-archive HDF5 image bundle (~500k ISIC images in one file)
+    'onnx>=1.16',            # ONNX export of the context encoder
+    'onnxscript>=0.1',       # required by torch.onnx.export (dynamo exporter)
+    'onnxconverter-common>=1.14',  # fp16 quantisation tier (optional; export skips it if absent)
+    'onnxruntime>=1.18',     # the 512 MB deployment runtime (not torch)
+    'psutil>=5.9',           # measured inference-RSS budget gate
+]
+
 setup(
     name='lesnet',
     version='4.2.0',
@@ -54,6 +68,7 @@ setup(
     zip_safe=False,
     extras_require={
         'testing': tests_require,
+        'jepa': jepa_require,
     },
     install_requires=requires,
     entry_points={

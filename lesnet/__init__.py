@@ -9,5 +9,5 @@ def main(global_config, **settings):
     with Configurator(settings=settings) as config:
         config.include('pyramid_jinja2')
         config.include('.routes')
-        config.scan()
+        config.scan('lesnet.views')  # only the view modules; avoids importing the ML/TF stack at boot
     return config.make_wsgi_app()

@@ -1,135 +1,124 @@
+// LesNet — fullscreen, boxless, elegant. Cursor spotlight, drop-anywhere, choreographed result reveal.
 document.addEventListener("DOMContentLoaded", () => {
-  const dropArea = document.getElementById("drop-area");
   const input = document.getElementById("image");
-  const previewContainer = document.getElementById("preview-container");
+  const camera = document.getElementById("camera");
   const previewImage = document.getElementById("preview-image");
+  const previewContainer = document.getElementById("preview-container");
   const loading = document.getElementById("loading");
-  const responseData = document.getElementById("response-data");
+  const analysisResult = document.getElementById("analysis-result");
+  const viewUpload = document.getElementById("view-upload");
+  const viewResult = document.getElementById("view-result");
+  const dropveil = document.getElementById("dropveil");
+  const root = document.documentElement;
 
-  // Referral-biased presentation of each triage action. Never a definitive diagnosis.
   const TRIAGE_VIEW = {
-    reassure: {
-      title: "Low concern",
-      badge: "bg-success",
-      advice: "No high-risk features were detected. Keep monitoring this lesion and see a clinician if it changes in size, colour, or shape.",
-    },
-    refer: {
-      title: "See a clinician",
-      badge: "bg-warning text-dark",
-      advice: "Some features warrant assessment. Please book a dermatology review.",
-    },
-    urgent: {
-      title: "Seek prompt review",
-      badge: "bg-danger",
-      advice: "Concerning features were detected. Please seek prompt clinical review.",
-    },
-    abstain: {
-      title: "Inconclusive — see a dermatologist",
-      badge: "bg-secondary",
-      advice: "This image could not be confidently assessed. Retake a clear, close, well-lit photo of the lesion, or consult a dermatologist.",
-    },
+    reassure: { title: "Low concern", cls: "t-reassure",
+      advice: "No high-risk features were detected. Keep monitoring and see a clinician if it changes in size, colour, or shape." },
+    refer: { title: "See a clinician", cls: "t-refer",
+      advice: "Some features warrant assessment. Please book a dermatology review." },
+    urgent: { title: "Seek prompt review", cls: "t-urgent",
+      advice: "Concerning features were detected. Please seek prompt clinical review." },
+    abstain: { title: "Inconclusive", cls: "t-abstain",
+      advice: "This image could not be confidently assessed. Retake a clear, close, well-lit photo, or consult a dermatologist." },
   };
-
   const REASON_TEXT = {
     low_quality: "The image looked blurry or low quality.",
     out_of_distribution: "The image didn't look like a typical skin-lesion photo.",
     model_unavailable: "The triage model is not loaded yet.",
   };
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* no-op */ } };
+  const prettyLabel = (s) => { const t = String(s).replace(/_/g, " ").trim(); return t.charAt(0).toUpperCase() + t.slice(1); };
 
-  dropArea.addEventListener("click", () => input.click());
-  dropArea.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    dropArea.classList.add("hover");
+  // cursor-follow spotlight
+  window.addEventListener("pointermove", (e) => {
+    root.style.setProperty("--mx", e.clientX + "px");
+    root.style.setProperty("--my", e.clientY + "px");
   });
-  dropArea.addEventListener("dragleave", () => dropArea.classList.remove("hover"));
-  dropArea.addEventListener("drop", (event) => {
-    event.preventDefault();
-    dropArea.classList.remove("hover");
-    if (event.dataTransfer.files.length > 0) {
-      handleFile(event.dataTransfer.files[0]);
-    }
+  // magnetic glow on the primary CTA
+  const cta = document.getElementById("browse-btn");
+  if (cta) cta.addEventListener("pointermove", (e) => {
+    const r = cta.getBoundingClientRect();
+    cta.style.setProperty("--bx", (e.clientX - r.left) + "px");
+    cta.style.setProperty("--by", (e.clientY - r.top) + "px");
   });
-  input.addEventListener("change", (event) => handleFile(event.target.files[0]));
+
+  cta && cta.addEventListener("click", () => input.click());
+  const cam = document.getElementById("camera-btn");
+  if (cam) cam.addEventListener("click", () => (camera || input).click());
+  input.addEventListener("change", (e) => e.target.files[0] && handleFile(e.target.files[0]));
+  if (camera) camera.addEventListener("change", (e) => e.target.files[0] && handleFile(e.target.files[0]));
+  document.getElementById("back-btn").addEventListener("click", () => { buzz(8); analysisResult.innerHTML = ""; showView(viewUpload); });
+
+  // drop anywhere on the window
+  let dragDepth = 0;
+  window.addEventListener("dragenter", (e) => { e.preventDefault(); if (dragDepth++ === 0) dropveil.classList.add("show"); });
+  window.addEventListener("dragover", (e) => e.preventDefault());
+  window.addEventListener("dragleave", (e) => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; dropveil.classList.remove("show"); } });
+  window.addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; dropveil.classList.remove("show");
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+  function showView(el) {
+    [viewUpload, viewResult].forEach((v) => v.classList.remove("active"));
+    void el.offsetWidth; el.classList.add("active");
+    window.scrollTo(0, 0);
+  }
 
   function handleFile(file) {
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        previewImage.src = event.target.result;
-        previewContainer.style.display = "block";
-        startAnalysis(file);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file || !file.type.startsWith("image/")) return;
+    buzz(8);
+    const reader = new FileReader();
+    reader.onload = (e) => { previewImage.src = e.target.result; showView(viewResult); startAnalysis(file); };
+    reader.readAsDataURL(file);
   }
 
   function startAnalysis(file) {
     const formData = new FormData();
     formData.append("image", file);
-    loading.style.display = "block";
-
-    fetch("predict", {
-      method: "POST",
-      body: formData,
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        loading.style.display = "none";
-        renderTriage(data);
-      })
-      .catch((error) => {
-        console.error(error);
-        loading.style.display = "none";
-        responseData.style.display = "block";
-        responseData.innerHTML = `<span style="color:red;">An error occurred: ${error.message}</span>`;
-      });
+    loading.style.display = "flex";
+    analysisResult.innerHTML = "";
+    previewContainer.classList.add("scanning");
+    fetch("predict", { method: "POST", body: formData, headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then((r) => r.json())
+      .then((data) => { loading.style.display = "none"; previewContainer.classList.remove("scanning"); render(data); })
+      .catch((err) => { loading.style.display = "none"; previewContainer.classList.remove("scanning");
+        analysisResult.innerHTML = `<p class="vadvice">Something went wrong: ${err.message}</p>`; });
   }
 
-  function renderTriage(data) {
-    const analysisResult = document.getElementById("analysis-result");
+  function render(data) {
     const view = TRIAGE_VIEW[data.triage] || TRIAGE_VIEW.abstain;
-    const date = new Date().toLocaleString();
+    buzz(data.triage === "urgent" ? [35, 55, 35] : 14);
+    const fine = data.fine_predictions || [];
 
-    let detail = "";
+    // top-3 diagnoses are the main content
+    let dx = "";
+    if (data.valid_image && fine.length) {
+      dx = `<div class="dx"><span class="vlabel">Most likely diagnoses</span>` + fine.map((p, i) => `
+        <div class="dxrow ${i === 0 ? "top" : ""}" style="animation-delay:${0.35 + i * 0.1}s">
+          <span class="dxname"><span class="rank">${i + 1}</span>${prettyLabel(p.label)}</span>
+          <span class="dxpct">${p.probability.toFixed(1)}%</span>
+          <i class="dxbar" data-w="${Math.max(3, p.probability).toFixed(1)}"></i>
+        </div>`).join("") + `</div>`;
+    }
+
+    // benign / suspicious / malignant as small secondary metrics
+    let metrics = "";
     if (data.valid_image && data.probabilities) {
-      const malignant = (data.p_malignant * 100).toFixed(1);
-      const rows = ["benign", "suspicious", "malignant"]
-        .map((name) => `${name}: ${(data.probabilities[name] * 100).toFixed(1)}%`)
-        .join(" · ");
-      const conformal = (data.conformal_set || []).join(", ") || "none";
-      let lesion = "";
-      if (data.lesion_type) {
-        const fine = (data.fine_predictions || [])
-          .map((prediction) => `${prediction.label} (${prediction.probability.toFixed(1)}%)`)
-          .join(", ");
-        lesion = `<p class="mt-2">Most likely lesion type: <strong>${data.lesion_type}</strong></p>
-        <p class="text-muted small mb-1">Other possibilities: ${fine}</p>`;
-      }
-      detail = `
-        ${lesion}
-        <p class="mt-2">Estimated malignancy probability: <strong>${malignant}%</strong></p>
-        <p class="text-muted small mb-1">Triage probabilities: ${rows}</p>
-        <p class="text-muted small">Plausible categories (conformal set): ${conformal}</p>`;
+      const seg = (k) => `<div class="seg"><div class="k">${k}</div><div class="v">${(data.probabilities[k] * 100).toFixed(0)}%</div></div>`;
+      metrics = `<div class="metrics">${seg("benign")}${seg("suspicious")}${seg("malignant")}</div>`;
     } else if (data.reason) {
-      detail = `<p class="text-muted small mt-2">${REASON_TEXT[data.reason] || data.reason}</p>`;
+      metrics = `<p class="vadvice">${REASON_TEXT[data.reason] || data.reason}</p>`;
     }
 
-    analysisResult.className = "text-center py-4";
     analysisResult.innerHTML = `
-      <div><span class="badge ${view.badge}">${view.title}</span></div>
-      <p class="mt-3">${view.advice}</p>
-      ${detail}
-      <p class="text-muted small mt-3"><em>This is triage guidance, not a diagnosis.</em></p>
-      <small class="text-muted">Analysed: ${date}</small>`;
+      <div class="verdict ${view.cls}">
+        <span class="vlabel">Assessment</span>
+        <div class="vword"><span class="vdot"></span>${view.title}</div>
+        <p class="vadvice">${view.advice}</p>
+      </div>
+      ${dx}
+      ${metrics}
+      <p class="foot">Triage guidance, not a diagnosis.${data.model ? " · " + data.model : ""}</p>`;
 
-    const diagnosisDescription = document.getElementById("diagnosis-description");
-    const diagnosisLastUpdated = document.getElementById("diagnosis-last-updated");
-    if (diagnosisDescription) {
-      diagnosisDescription.textContent = view.advice + " Always confirm with a qualified clinician.";
-    }
-    if (diagnosisLastUpdated) {
-      diagnosisLastUpdated.textContent = `Last updated: ${date}`;
-    }
+    requestAnimationFrame(() => analysisResult.querySelectorAll(".dxbar").forEach((el) => { el.style.width = el.dataset.w + "%"; }));
   }
 });

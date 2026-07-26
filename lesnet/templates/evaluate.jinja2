@@ -1,101 +1,44 @@
 {% extends "layout.jinja2" %}
 
 {% block content %}
-<div class="dashboard-header mb-4">
-  <h1>Welcome to LesNet</h1>
-  <p>Your AI-powered assistant for skin lesion image analysis.</p>
+<!-- Upload view -->
+<section class="view active" id="view-upload">
+  <div class="lede">
+    <img class="hero-logo" src="{{ request.static_url('lesnet:static/min/logo.png') }}" alt="LesNet">
+    <h1>Understand your skin.</h1>
+    <p class="tagline">Upload a dermoscopic photo for instant, cautious triage guidance and its most likely diagnoses.</p>
+    <div class="cta-row">
+      <button type="button" class="cta" id="browse-btn">Upload a photo</button>
+      <button type="button" class="cta ghost" id="camera-btn">Use camera</button>
+    </div>
+    <p class="hint">or drop an image anywhere</p>
+  </div>
+  <form id="upload-form" enctype="multipart/form-data" hidden>
+    <input type="file" id="image" name="image" accept="image/*">
+    <input type="file" id="camera" accept="image/*" capture="environment">
+  </form>
+</section>
+
+<!-- Result view -->
+<section class="view resultview" id="view-result">
+  <button class="back-btn" id="back-btn"><i class="fas fa-arrow-left"></i> New photo</button>
+  <div class="result-wrap">
+    <div class="shot" id="preview-container">
+      <img id="preview-image" alt="Selected lesion">
+      <div class="scan"></div>
+    </div>
+    <div>
+      <div id="loading" class="analyzing" style="display:none;"><div class="ring"></div><span>Analysing…</span></div>
+      <div id="analysis-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Drop-anywhere veil -->
+<div class="dropveil" id="dropveil" aria-hidden="true">
+  <div class="ring2"><i class="fas fa-arrow-down"></i></div>
+  <p>Drop to analyse</p>
 </div>
-
-<div class="row">
-
-  <div class="col-md-4">
-    <!-- Upload Section -->
-    <div class="card mb-4 p-3 shadow border-0">
-      <div class="card-body p-4">
-        <h5 class="card-title text-center text-primary mb-4">Upload an Image for Analysis</h5>
-        <form id="upload-form" method="post" enctype="multipart/form-data" class="text-center">
-          <!-- Drag and Drop Area -->
-          <div id="drop-area" class="drop-area position-relative mb-3">
-            <div class="drop-message">
-              <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-2"></i>
-              <p class="mb-0 text-muted">Drag & Drop your image here</p>
-              <small class="text-secondary">or click to browse</small>
-            </div>
-            <input type="file" id="image" name="image" accept="image/*" hidden required>
-          </div>
-
-          <!-- Preview Area -->
-          <div id="preview-container" class="preview-container mb-3" style="display: none;">
-            <img id="preview-image" class="img-fluid rounded shadow-sm" alt="Image preview">
-            <p class="mt-2 text-secondary small">Preview of your selected image</p>
-          </div>
-        </form>
-
-        <!-- Loading Indicator -->
-        <div id="loading" class="text-center mt-4" style="display: none;">
-          <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-          <p  class="mt-3 text-muted">Analyzing image... Please wait.</p>
-        </div>
-        <!-- Results Container -->
-        <div style="display: none;" id="response-data" class="result mt-4 text-center"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-8">
-
-    <!-- Analysis Results -->
-    <div id="analysis-box" class="mb-4 card shadow border-0">
-        <div class="card-body">
-            <h5 class="card-title">Analysis Results:</h5>
-            <hr>
-            <div id="analysis-result" class="text-center py-4">
-                <p>No analysis available yet.</p>
-            </div>
-            <div id="analysis-actions" class="text-center d-none" style="display:none;">
-                <button class="btn btn-primary btn-sm mt-3">Download Report</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Diagnosis Information -->
-    <div id="diagnosis-info" class="card mb-4 p-3 shadow border-0">
-        <div class="row g-0">
-            <div class="col-md-4">
-                <img src="{{request.static_url('lesnet:static/doc2.webp') }}" id="diagnosis-image" class="diagnosis-image img-fluid rounded-start" alt="Diagnosis Image" style="display:none;">
-                <img src="{{request.static_url('lesnet:static/doc.webp') }}" class="default-diagnosis-image img-fluid rounded-start" alt="Default Diagnosis Image of a flat material style doctor">
-            </div>
-            <div class="col-md-8">
-                <div class="card-body">
-                    <h5 class="card-title">Diagnosis Information</h5>
-                    <p id="diagnosis-description" class="card-text">Upload an image to get started.</p>
-                    <p class="card-text">
-                        <small id="diagnosis-last-updated" class="text-muted">Last updated: N/A</small>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-  </div>
-
-  <div class="col-md-12">
-    <!-- Disclaimer Section -->
-    <div class="card mb-4 shadow border-0 text-dark bg-disclaimer" style="background-image: url('{{request.static_url('lesnet:static/disclaimer-bg.jpeg') }}');">
-      <div class="card-body">
-        <h4>Disclaimer:</h4>
-        <p class="card-text">
-          LesNet provides <strong>educational triage guidance only — it is not a diagnosis</strong> and is not a medical device. It is designed to err toward recommending a clinician and will return "inconclusive" when it cannot assess an image confidently. It can be less accurate for under-represented skin tones and image types. Always consult a qualified medical professional; do not rely on this tool to rule out skin cancer.
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-
-
 
 <script src="{{ request.static_url('lesnet:static/js/file-upload.js') }}"></script>
-
 {% endblock content %}

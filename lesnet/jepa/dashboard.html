@@ -1,0 +1,194 @@
+<title>LesNet training</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-0: #f4f3f0; --surface-1: #fcfcfb; --border: #e2e0da;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #85837c;
+    --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-7: #4a3aa7;
+    --good: #008300; --grid: #eceae5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-0: #111110; --surface-1: #1a1a19; --border: #35342f;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e85;
+      --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-7: #9085e9;
+      --good: #008300; --grid: #2a2a27;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-0: #111110; --surface-1: #1a1a19; --border: #35342f;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e85;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-7: #9085e9;
+    --good: #008300; --grid: #2a2a27;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root {
+    background: var(--surface-0); color: var(--text-primary); min-height: 100vh; padding: 24px;
+    font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); font-size: 13px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; color: var(--good); font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+  .dot.on { animation: pulse 1.6s ease-in-out infinite; }
+  .dot.off { background: var(--text-muted); }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .tile, .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  }
+  .tile .label { color: var(--text-secondary); font-size: 12px; text-transform: uppercase;
+                 letter-spacing: .04em; }
+  .tile .value { font-size: 26px; font-weight: 650; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .value small { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+  .bar { height: 6px; background: var(--grid); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--series-1); border-radius: 3px;
+             transition: width .4s ease; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px;
+          margin-top: 12px; }
+  .card h2 { font-size: 13px; margin: 0 0 2px; font-weight: 600; }
+  .card .cur { color: var(--text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; }
+  svg { display: block; width: 100%; height: 170px; overflow: visible; }
+  .tip { position: fixed; pointer-events: none; background: var(--surface-1); color: var(--text-primary);
+         border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; font-size: 12px;
+         box-shadow: 0 6px 20px rgba(0,0,0,.16); opacity: 0; transition: opacity .1s;
+         font-variant-numeric: tabular-nums; z-index: 9; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px;
+          font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+  .empty { color: var(--text-muted); padding: 28px 0; text-align: center; }
+</style>
+
+<div class="viz-root">
+  <header>
+    <h1>LesNet — I-JEPA training</h1>
+    <span class="sub" id="runmeta">connecting…</span>
+    <span class="live" id="live"><span class="dot off" id="dot"></span><span id="livetext">idle</span></span>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+  <div class="grid" id="charts"></div>
+
+  <details>
+    <summary>Data table (last 40 epochs)</summary>
+    <div class="card" style="margin-top:8px"><table id="table"></table></div>
+  </details>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const CHARTS = [
+  {key:'loss',      title:'Training loss',       color:'var(--series-1)', fmt:v=>v.toFixed(4), src:'step'},
+  {key:'lr',        title:'Learning rate',       color:'var(--series-2)', fmt:v=>v.toExponential(2), src:'step'},
+  {key:'target_std',title:'Target std (collapse monitor)', color:'var(--series-7)', fmt:v=>v.toFixed(3), src:'step'},
+  {key:'imgs_per_sec', title:'Throughput (img/s)', color:'var(--series-3)', fmt:v=>v.toFixed(0), src:'step'},
+];
+const tip = document.getElementById('tip');
+let steps = [], epochs = [], meta = {}, finished = null;
+
+function fmtDur(s){ if(!isFinite(s)||s<0) return '—';
+  const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h? `${h}h ${m}m` : `${m}m`; }
+
+function line(el, pts, color, fmt, xlabel){
+  const W=520, H=170, P={t:10,r:12,b:22,l:46};
+  if(pts.length<2){ el.innerHTML = '<div class="empty">waiting for data…</div>'; return; }
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const x0=Math.min(...xs), x1=Math.max(...xs);
+  let y0=Math.min(...ys), y1=Math.max(...ys);
+  if(y0===y1){ y0-=Math.abs(y0)*0.1+1e-9; y1+=Math.abs(y1)*0.1+1e-9; }
+  const pad=(y1-y0)*0.08; y0-=pad; y1+=pad;
+  const sx=v=>P.l+(v-x0)/((x1-x0)||1)*(W-P.l-P.r);
+  const sy=v=>P.t+(1-(v-y0)/((y1-y0)||1))*(H-P.t-P.b);
+  const d=pts.map((p,i)=>`${i?'L':'M'}${sx(p[0]).toFixed(1)} ${sy(p[1]).toFixed(1)}`).join(' ');
+  const ticks=[y0,(y0+y1)/2,y1].map(v=>
+    `<line x1="${P.l}" x2="${W-P.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--grid)" stroke-width="1"/>
+     <text x="${P.l-8}" y="${sy(v)+4}" text-anchor="end" fill="var(--text-muted)" font-size="10">${fmt(v)}</text>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img">
+    ${ticks}
+    <text x="${W-P.r}" y="${H-4}" text-anchor="end" fill="var(--text-muted)" font-size="10">${xlabel}</text>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle r="4" fill="${color}" stroke="var(--surface-1)" stroke-width="2" cx="${sx(pts.at(-1)[0])}" cy="${sy(pts.at(-1)[1])}"/>
+    <line class="cross" y1="${P.t}" y2="${H-P.b}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>
+    <rect x="${P.l}" y="0" width="${W-P.l-P.r}" height="${H}" fill="transparent"/></svg>`;
+  const svg=el.querySelector('svg'), cross=svg.querySelector('.cross');
+  svg.onmousemove=e=>{ const b=svg.getBoundingClientRect();
+    const vx=(e.clientX-b.left)/b.width*W;
+    let best=0,bd=1e9; pts.forEach((p,i)=>{const dd=Math.abs(sx(p[0])-vx); if(dd<bd){bd=dd;best=i;}});
+    cross.setAttribute('x1',sx(pts[best][0])); cross.setAttribute('x2',sx(pts[best][0]));
+    cross.setAttribute('opacity','1');
+    tip.style.opacity=1; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+    tip.innerHTML=`<b>${fmt(pts[best][1])}</b><br><span style="color:var(--text-secondary)">${xlabel} ${pts[best][0]}</span>`; };
+  svg.onmouseleave=()=>{ cross.setAttribute('opacity','0'); tip.style.opacity=0; };
+}
+
+function render(){
+  const last = steps.at(-1) || {};
+  const lastEpoch = epochs.at(-1) || {};
+  const done = last.update || 0, total = last.total_updates || 0;
+  const pct = total ? done/total : 0;
+  const rate = last.imgs_per_sec || 0;
+  const eta = (rate && total && last.images_seen) ? (total-done)/(done||1)*(last.wall||0) : NaN;
+  const bestProbe = epochs.map(e=>e.probe&&e.probe.roc_auc).filter(v=>typeof v==='number');
+
+  document.getElementById('runmeta').textContent =
+    `${meta.encoder||'?'} · ${meta.image_size||'?'}px${meta.pretrained?` · init ${meta.pretrained}`:''}`;
+  const on = !finished && steps.length;
+  document.getElementById('dot').className = 'dot ' + (on?'on':'off');
+  document.getElementById('livetext').textContent = finished ? `finished — ${finished}` : (on?'live':'waiting');
+  document.getElementById('live').style.color = on ? 'var(--good)' : 'var(--text-muted)';
+
+  const tiles=[
+    ['Epoch', `${(last.epoch??0)}<small> / ${meta.epochs??'?'}</small>`],
+    ['Progress', `${(pct*100).toFixed(1)}<small>%</small>`, pct],
+    ['Loss', last.loss!=null? last.loss.toFixed(4):'—'],
+    ['Throughput', `${rate.toFixed(0)}<small> img/s</small>`],
+    ['Elapsed', fmtDur(last.wall||0)],
+    ['ETA', fmtDur(eta)],
+    ['Best probe AUC', bestProbe.length? Math.max(...bestProbe).toFixed(4):'—'],
+  ];
+  document.getElementById('tiles').innerHTML = tiles.map(([l,v,bar])=>
+    `<div class="tile"><div class="label">${l}</div><div class="value">${v}</div>
+     ${bar!=null?`<div class="bar"><i style="width:${(bar*100).toFixed(1)}%"></i></div>`:''}</div>`).join('');
+
+  const host=document.getElementById('charts');
+  if(!host.dataset.built){
+    host.innerHTML = CHARTS.map(c=>`<div class="card"><h2>${c.title}</h2>
+      <div class="cur" id="cur-${c.key}"></div><div id="ch-${c.key}"></div></div>`).join('') +
+      `<div class="card"><h2>Probe ROC-AUC (held-out)</h2><div class="cur" id="cur-probe"></div>
+       <div id="ch-probe"></div></div>`;
+    host.dataset.built='1';
+  }
+  for(const c of CHARTS){
+    const pts=steps.filter(s=>s[c.key]!=null).map(s=>[s.update??s.step, s[c.key]]);
+    document.getElementById('cur-'+c.key).textContent = pts.length? c.fmt(pts.at(-1)[1]) : '';
+    line(document.getElementById('ch-'+c.key), pts, c.color, c.fmt, 'update');
+  }
+  const ppts=epochs.filter(e=>e.probe&&typeof e.probe.roc_auc==='number').map(e=>[e.epoch,e.probe.roc_auc]);
+  document.getElementById('cur-probe').textContent = ppts.length? ppts.at(-1)[1].toFixed(4):'no probe yet';
+  line(document.getElementById('ch-probe'), ppts, 'var(--series-3)', v=>v.toFixed(3), 'epoch');
+
+  document.getElementById('table').innerHTML =
+    '<tr><th>Epoch</th><th>Loss</th><th>Best</th><th>No-improve</th><th>Probe AUC</th></tr>' +
+    epochs.slice(-40).reverse().map(e=>`<tr><td>${e.epoch}</td><td>${e.epoch_loss?.toFixed(5)??'—'}</td>
+      <td>${e.best?.toFixed(5)??'—'}</td><td>${e.no_improve??'—'}</td>
+      <td>${e.probe?.roc_auc?.toFixed(4)??'—'}</td></tr>`).join('');
+}
+
+async function poll(){
+  try{
+    const r = await fetch('data.json', {cache:'no-store'});
+    const j = await r.json();
+    meta = j.run || {}; steps = j.steps || []; epochs = j.epochs || []; finished = j.finished;
+    render();
+  }catch(e){ document.getElementById('livetext').textContent = 'no data'; }
+  setTimeout(poll, 2000);
+}
+poll();
+</script>

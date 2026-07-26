@@ -17,11 +17,18 @@ from lesnet.config.model import ModelConfig
 from lesnet.ml.artifacts import BUNDLE_FILE, MODEL_FILE
 from lesnet.data.records import LesionRecord
 from lesnet.data.taxonomy import TRIAGE_CLASSES
-from lesnet.ml.inference import TriagePredictor
 
 log = logging.getLogger(__name__)
 TRIAGE_ARTIFACTS_DIR = os.environ.get('LESNET_TRIAGE_ARTIFACTS', 'models/triage')
 DEFAULT_MODEL_ID = os.environ.get('LESNET_TRIAGE_MODEL', 'M-4s')
+# When set, serve the self-supervised JEPA encoder + probe head instead of the TF triage model
+# (research demo). Avoids importing TensorFlow at all in a torch-only environment.
+JEPA_ARTIFACTS_DIR = os.environ.get('LESNET_JEPA_ARTIFACTS')
+# The live demo serves the JEPA family by default (medium). Set LESNET_JEPA_VARIANT=small for the
+# smaller edge build, or LESNET_USE_TF=1 to fall back to the TensorFlow triage stack.
+JEPA_VARIANT = os.environ.get('LESNET_JEPA_VARIANT', 'medium')
+JEPA_HOME = os.environ.get('LESNET_JEPA_HOME', 'models/jepa')
+USE_TF = os.environ.get('LESNET_USE_TF', '') == '1'
 
 _predictor = None
 
@@ -51,11 +58,44 @@ def _ensure_triage_model(directory):
             handle.write(response.content)
 
 
+def _ensure_jepa_model(variant, home):
+    """Download + extract the released JEPA variant if absent, so the demo self-heals."""
+    import tarfile
+    import tempfile
+
+    target = os.path.join(home, variant)
+    if os.path.exists(os.path.join(target, 'jepa_config.json')):
+        return target
+    url = ModelConfig.JEPA_URLS.get(variant)
+    if not url:
+        raise FileNotFoundError(f'no released JEPA variant {variant!r}')
+    os.makedirs(home, exist_ok=True)
+    log.info("Fetching JEPA %s from %s", variant, url)
+    with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as handle:
+        response = requests.get(url, stream=True, timeout=600)
+        response.raise_for_status()
+        for chunk in response.iter_content(1 << 20):
+            handle.write(chunk)
+        archive = handle.name
+    with tarfile.open(archive) as tar:
+        tar.extractall(home)
+    os.unlink(archive)
+    return target
+
+
 def _get_predictor():
     global _predictor
     if _predictor is None:
-        _ensure_triage_model(TRIAGE_ARTIFACTS_DIR)
-        _predictor = TriagePredictor(TRIAGE_ARTIFACTS_DIR)
+        if JEPA_ARTIFACTS_DIR:  # explicit override: point at any artifacts directory
+            from lesnet.jepa.serve import JEPADemoPredictor
+            _predictor = JEPADemoPredictor(JEPA_ARTIFACTS_DIR)
+        elif not USE_TF:        # default: the released JEPA family, fetched on first use
+            from lesnet.jepa.serve import JEPADemoPredictor
+            _predictor = JEPADemoPredictor(_ensure_jepa_model(JEPA_VARIANT, JEPA_HOME))
+        else:
+            from lesnet.ml.inference import TriagePredictor  # lazy: imports TensorFlow
+            _ensure_triage_model(TRIAGE_ARTIFACTS_DIR)
+            _predictor = TriagePredictor(TRIAGE_ARTIFACTS_DIR)
     return _predictor
 
 
