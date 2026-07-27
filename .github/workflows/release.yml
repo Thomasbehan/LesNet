@@ -1,8 +1,8 @@
 name: Release
 
-# On a version tag, ensure a GitHub Release exists with generated notes. The trained model
-# artifacts (LesNet.M4.5*.keras / .artifacts.json / .tflite) are uploaded to this release by
-# the model-build automation (gh release upload) — they are too large to live in the repo/CI.
+# On a version tag, ensure a GitHub Release exists. Trained model artifacts (the JEPA family
+# tarballs, LesNet.M4.5*.keras / .artifacts.json / .tflite) are uploaded to the release separately
+# by the model-build automation (gh release upload) — far too large to live in the repo/CI.
 on:
   push:
     tags:
@@ -16,12 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create or update the release
+      - name: Create the release if it does not already exist
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # An existing release is left alone: it normally already carries curated notes and
+          # uploaded model assets, and regenerating notes would silently overwrite them.
+          # The previous version called `gh release edit --generate-notes`, which is not a valid
+          # flag for `edit`, so this step failed every time the release already existed.
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release edit "${GITHUB_REF_NAME}" --generate-notes
+            echo "Release ${GITHUB_REF_NAME} already exists - leaving notes and assets untouched."
           else
-            gh release create "${GITHUB_REF_NAME}" --generate-notes --title "LesNet ${GITHUB_REF_NAME}"
+            gh release create "${GITHUB_REF_NAME}" \
+              --generate-notes --title "LesNet ${GITHUB_REF_NAME}"
           fi
