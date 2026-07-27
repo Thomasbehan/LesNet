@@ -10,6 +10,11 @@ dist/
 .tox/
 nosetests.xml
 env*/
+# `env*/` above only matches DIRECTORIES; without these, a secrets file at the repo root
+# (e.g. a RENDER_API_KEY in .env) would be committable.
+.env
+.env.*
+!.env.example
 tmp/
 Data*.fs*
 *.sublime-project
