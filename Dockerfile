@@ -15,11 +15,13 @@ RUN python3.12 -m pip install --break-system-packages -e .
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 
-# Fetch the released M-4s triage model + artifact bundle into the dir the app loads
-# (LESNET_TRIAGE_ARTIFACTS, default models/triage) so the live demo serves the new model.
-RUN mkdir -p models/triage && \
-    curl -L -o models/triage/triage_model.keras https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.keras && \
-    curl -L -o models/triage/artifacts.json https://github.com/Thomasbehan/LesNet/releases/download/4.1.0/LesNet.M-4s.artifacts.json
+# Bake in the JEPA medium model the demo serves by default (LESNET_JEPA_HOME, default
+# models/jepa). The app can self-heal by fetching it at runtime, but that would make the first
+# request after a cold start pull 318 MB and very likely time out — so fetch it at build time.
+RUN mkdir -p models/jepa && \
+    curl -fsSL https://github.com/Thomasbehan/LesNet/releases/download/v5.0.0/lesnet-jepa-medium.tar.gz \
+    | tar xz -C models/jepa && \
+    test -f models/jepa/medium/jepa_config.json
 
 # Add a new user to avoid running the application as root; let it write the model dir
 # (so the app's self-healing model fetch works at runtime).
