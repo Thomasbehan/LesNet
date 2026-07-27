@@ -21,6 +21,11 @@ requires = [
     'scikit-learn==1.9.0',
     'tqdm==4.68.2',
     'opencv-python-headless==4.13.0.92',
+    # The web demo serves the JEPA family by default (views/api.py), which loads its encoder
+    # through onnxruntime. That made it a RUNTIME dependency of the app, not just of the optional
+    # [jepa] training extra — without it here, a deployment installing only base requires imports
+    # fine and then raises ModuleNotFoundError on the first /predict.
+    'onnxruntime==1.27.0',
 ]
 
 tests_require = [
