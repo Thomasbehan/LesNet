@@ -47,7 +47,7 @@ jepa_require = [
 
 setup(
     name='lesnet',
-    version='4.2.0',
+    version='5.0.0',
     description='LesNet',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
