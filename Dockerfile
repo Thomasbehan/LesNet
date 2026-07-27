@@ -1,19 +1,28 @@
 # Official Ubuntu base image with Python 3.12
 FROM ubuntu:24.04
 
-# Set the working directory to /app
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app/
+# System packages in ONE layer.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3.12 python3.12-venv python3.12-dev curl ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages and run setup.py
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends python3.12 python3-pip python3.12-dev curl
-RUN python3.12 -m pip install --break-system-packages --upgrade pip
-RUN python3.12 -m pip install --break-system-packages -e .
-RUN apt-get clean
-RUN rm -rf /var/lib/apt/lists/*
+# Ubuntu 24.04 ships an externally-managed Python (PEP 668) whose pip comes from a .deb and has
+# no RECORD file, so `pip install --upgrade pip` cannot uninstall it and dies with
+#   "Cannot uninstall pip 24.0, RECORD file not found"
+# — which failed every build here from 2026-06-15 onward. --break-system-packages does not help:
+# it waives the PEP 668 guard, not the missing-RECORD uninstall. A venv owns its own pip, so the
+# upgrade becomes an ordinary install and the whole class of problem disappears.
+RUN python3.12 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    VIRTUAL_ENV=/opt/venv \
+    PYTHONUNBUFFERED=1
+RUN pip install --upgrade pip setuptools wheel
+
+COPY . /app/
+RUN pip install -e .
 
 # Bake in the JEPA medium model the demo serves by default (LESNET_JEPA_HOME, default
 # models/jepa). The app can self-heal by fetching it at runtime, but that would make the first
@@ -23,19 +32,15 @@ RUN mkdir -p models/jepa && \
     | tar xz -C models/jepa && \
     test -f models/jepa/medium/jepa_config.json
 
-# Add a new user to avoid running the application as root; let it write the model dir
-# (so the app's self-healing model fetch works at runtime).
-RUN useradd -ms /bin/bash appuser && chown -R appuser /app
+# Construct the served predictor at BUILD time. A missing dependency or a bad artifact then fails
+# the build loudly instead of surfacing as a 500 on the first user request in production.
+RUN python -c "import lesnet.views.api as api; p = api._get_predictor(); \
+print('predictor OK:', type(p).__name__, p.encoder.precision)"
+
+# Run as a non-root user; it still owns /app so the runtime self-heal path can write there.
+RUN useradd -ms /bin/bash appuser && chown -R appuser /app /opt/venv
 USER appuser
 
-# Make port 6543 available to the world outside this container and 6006 for TensorBoard
-EXPOSE 6543 6006
+EXPOSE 6543
 
-# Define environment variable
-ENV NAME World
-
-# Ensure the pserve command is in the PATH
-ENV PATH="/app/.local/bin:${PATH}"
-
-# Run command when the container launches (production config — no debug toolbar, no autoreload)
 CMD ["pserve", "production.ini"]
