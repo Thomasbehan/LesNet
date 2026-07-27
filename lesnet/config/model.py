@@ -20,7 +20,7 @@ class ModelConfig(object):
 
     # JEPA family (DINOv2 backbones, Apache-2.0) — self-contained tarballs holding the served ONNX
     # encoder plus the fitted heads. Medium powers the live demo; Small is the edge default.
-    JEPA_RELEASE = 'v4.6.0'
+    JEPA_RELEASE = 'v5.0.0'
     JEPA_URLS = {
         'small': f'https://github.com/Thomasbehan/LesNet/releases/download/{JEPA_RELEASE}/lesnet-jepa-small.tar.gz',
         'medium': f'https://github.com/Thomasbehan/LesNet/releases/download/{JEPA_RELEASE}/lesnet-jepa-medium.tar.gz',

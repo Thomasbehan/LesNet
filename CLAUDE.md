@@ -6,7 +6,7 @@
 
 ## What this is
 
-LesNet (Python package **`lesnet`**, v4.2.0) is a deep-learning tool for **skin lesion triage** from dermoscopic images. One repo, three concerns:
+LesNet (Python package **`lesnet`**, v5.0.0) is a deep-learning tool for **skin lesion triage** from dermoscopic images. One repo, three concerns:
 
 1. **Data pipeline** — download the ISIC archive and build a leakage-free, patient/lesion-grouped manifest CSV.
 2. **Training** — a multi-task EfficientNetV2-S model (image + patient metadata) producing a 3-way **triage** head (benign / suspicious / malignant) plus an auxiliary fine-grained diagnosis head; temperature-calibrated, OOD-gated, conformal-wrapped, sensitivity-first operating point.
