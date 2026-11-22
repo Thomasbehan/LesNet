@@ -159,14 +159,16 @@ Held-out test split, measured **through the served ONNX artifact** — not an in
 
 | Variant | Backbone | Params | Sens | Spec | ROC-AUC | pAUC@80%TPR | dx top-3 | OOD rej. | RSS | Fits 512 MB |
 |---------|----------|--------|------|------|---------|-------------|----------|----------|-----|-------------|
-| **Small** | DINOv2 ViT-S/14 | 21.5M | **0.954** | 0.905 | **0.974** | **0.182** | 0.852 | 1.00 | **165 MB** | ✅ |
-| **Medium** ⭐ | DINOv2 ViT-B/14 | 85.5M | 0.929 | **0.910** | 0.963 | 0.173 | **0.853** | 1.00 | 435 MB | ✅ |
+| **Small v5.1** ⭐ | DINOv2 ViT-S/14 | 21.5M | 0.925 | **0.943** | **0.974** | **0.181** | **0.855** | 1.00 | **165 MB** | ✅ |
+| Medium | DINOv2 ViT-B/14 | 85.5M | 0.929 | 0.910 | 0.963 | 0.173 | 0.853 | 1.00 | 435 MB | ✅ |
 | Large | DINOv2 ViT-L/14 | 303M | 0.908 | 0.864 | 0.951 | 0.166 | 0.826 | 1.00 | 1.3 GB | ❌ research only |
 
-**Medium powers the live demo**; **Small** is the edge default and scores highest overall — it beats
-Large on every clinical metric at 1/14 the size. Quality scales *inversely* with capacity here
-because the heads are linear probes on frozen features; see
-[`docs/jepa-evaluation.md`](docs/jepa-evaluation.md).
+**Small powers the live demo** (v5.1: measured on the full 5,913-image test split; Medium/Large rows are
+the v5.0.0 n=400 figures). It beats Large on every clinical metric at 1/14 the size — quality scales
+*inversely* with capacity here because the heads are linear probes on frozen features — and peaks at
+~200 MB on a 12 MP phone photo, where Medium sat too close to the demo's 512 MB limit. See
+[`docs/jepa-evaluation.md`](docs/jepa-evaluation.md) and the ten-encoder comparison in
+[`docs/backbone-bakeoff.md`](docs/backbone-bakeoff.md).
 
 Against the previous release, Small improves specificity **0.746 → 0.905**, diagnosis top-3
 **0.543 → 0.852**, and OOD rejection **0.93 → 1.00**, while being 14x smaller — because the encoder

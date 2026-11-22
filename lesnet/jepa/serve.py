@@ -175,8 +175,11 @@ def _fit_encoder(artifacts_dir):
     return OnnxEncoder(artifacts_dir, threads=max(1, (os.cpu_count() or 4) - 1))
 
 
-def build_demo_head(artifacts_dir, manifest, max_fit=3000, **_ignore):
-    """Fit + persist the multi-class diagnosis head on the served ONNX embeddings."""
+def build_demo_head(artifacts_dir, manifest, max_fit=3000, min_per_class=0, **_ignore):
+    """Fit + persist the multi-class diagnosis head on the served ONNX embeddings.
+
+    `max_fit=0` uses every train/val row. `min_per_class` drops diagnoses too rare to learn (and too
+    rare to show users as something the model "recognises")."""
     import joblib
     from lesnet.data.records import load_manifest
     from sklearn.linear_model import LogisticRegression
@@ -185,6 +188,9 @@ def build_demo_head(artifacts_dir, manifest, max_fit=3000, **_ignore):
     enc = _fit_encoder(artifacts_dir)
     records = [r for r in load_manifest(manifest)
                if r.split in ('train', 'val') and r.diagnosis and r.diagnosis not in EXCLUDE_DIAGNOSES]
+    if min_per_class:
+        counts = Counter(r.diagnosis for r in records)
+        records = [r for r in records if counts[r.diagnosis] >= min_per_class]
     if not records:
         raise ValueError('manifest has no train/val rows with a usable diagnosis label.')
     if max_fit and len(records) > max_fit:

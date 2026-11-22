@@ -1,0 +1,1012 @@
+[
+  {
+    "backbone": "siglip2_b",
+    "timm_id": "vit_base_patch16_siglip_224.v2_webli",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 92.9,
+    "fp32_mb": 372,
+    "fp16_mb": 186,
+    "est_rss_fp32_mb": 452,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 450,
+    "features": {
+      "pooled": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.515,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9865,
+            "roc_auc_ci": [
+              0.9841,
+              0.9888
+            ],
+            "pauc_80tpr": 0.1889,
+            "pauc_ci": [
+              0.1869,
+              0.1909
+            ],
+            "sensitivity": 0.9476,
+            "specificity": 0.9476,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9785,
+            "pauc_80tpr": 0.1833,
+            "sensitivity": 0.9476,
+            "specificity": 0.9195,
+            "pool_specificity": 0.9129,
+            "ppv_at_5pct": 0.3825,
+            "ppv_at_1pct": 0.1062
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6669,
+          "top3": 0.9634
+        }
+      },
+      "patch_mean": {
+        "dim": 768,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.5618,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9866,
+            "roc_auc_ci": [
+              0.9842,
+              0.9888
+            ],
+            "pauc_80tpr": 0.1891,
+            "pauc_ci": [
+              0.1872,
+              0.191
+            ],
+            "sensitivity": 0.9346,
+            "specificity": 0.9555,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9794,
+            "pauc_80tpr": 0.1835,
+            "sensitivity": 0.9346,
+            "specificity": 0.9282,
+            "pool_specificity": 0.9218,
+            "ppv_at_5pct": 0.4066,
+            "ppv_at_1pct": 0.1162
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6835,
+          "top3": 0.9649
+        }
+      }
+    },
+    "best_feature": "patch_mean"
+  },
+  {
+    "backbone": "siglip2_b_384",
+    "timm_id": "vit_base_patch16_siglip_384.v2_webli",
+    "licence": "Apache-2.0",
+    "input_size": 384,
+    "normalisation": "model",
+    "params_m": 93.2,
+    "fp32_mb": 373,
+    "fp16_mb": 186,
+    "est_rss_fp32_mb": 453,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 151,
+    "features": {
+      "pooled": {
+        "dim": 768,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.5613,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9861,
+            "roc_auc_ci": [
+              0.9836,
+              0.9887
+            ],
+            "pauc_80tpr": 0.1883,
+            "pauc_ci": [
+              0.186,
+              0.1904
+            ],
+            "sensitivity": 0.9413,
+            "specificity": 0.9532,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9808,
+            "pauc_80tpr": 0.1843,
+            "sensitivity": 0.9413,
+            "specificity": 0.94,
+            "pool_specificity": 0.9369,
+            "ppv_at_5pct": 0.4524,
+            "ppv_at_1pct": 0.1369
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6605,
+          "top3": 0.9585
+        }
+      },
+      "patch_mean": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.5603,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9868,
+            "roc_auc_ci": [
+              0.9845,
+              0.9892
+            ],
+            "pauc_80tpr": 0.1888,
+            "pauc_ci": [
+              0.1868,
+              0.191
+            ],
+            "sensitivity": 0.9396,
+            "specificity": 0.9575,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9813,
+            "pauc_80tpr": 0.1843,
+            "sensitivity": 0.9396,
+            "specificity": 0.9378,
+            "pool_specificity": 0.9331,
+            "ppv_at_5pct": 0.4428,
+            "ppv_at_1pct": 0.1323
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6763,
+          "top3": 0.9611
+        }
+      }
+    },
+    "best_feature": "patch_mean"
+  },
+  {
+    "backbone": "pe_core_s",
+    "timm_id": "vit_pe_core_small_patch16_384.fb",
+    "licence": "Apache-2.0",
+    "input_size": 384,
+    "normalisation": "model",
+    "params_m": 23.6,
+    "fp32_mb": 94,
+    "fp16_mb": 47,
+    "est_rss_fp32_mb": 174,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 297,
+    "features": {
+      "pooled": {
+        "dim": 384,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.4929,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9854,
+            "roc_auc_ci": [
+              0.9827,
+              0.988
+            ],
+            "pauc_80tpr": 0.1881,
+            "pauc_ci": [
+              0.186,
+              0.1902
+            ],
+            "sensitivity": 0.9484,
+            "specificity": 0.9498,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9698,
+            "pauc_80tpr": 0.1786,
+            "sensitivity": 0.9484,
+            "specificity": 0.8971,
+            "pool_specificity": 0.8847,
+            "ppv_at_5pct": 0.3267,
+            "ppv_at_1pct": 0.0852
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6247,
+          "top3": 0.9479
+        }
+      },
+      "patch_mean": {
+        "dim": 384,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.4849,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9832,
+            "roc_auc_ci": [
+              0.9802,
+              0.986
+            ],
+            "pauc_80tpr": 0.1869,
+            "pauc_ci": [
+              0.1844,
+              0.1892
+            ],
+            "sensitivity": 0.9526,
+            "specificity": 0.9473,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9673,
+            "pauc_80tpr": 0.1765,
+            "sensitivity": 0.9526,
+            "specificity": 0.8851,
+            "pool_specificity": 0.8705,
+            "ppv_at_5pct": 0.3038,
+            "ppv_at_1pct": 0.0773
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.616,
+          "top3": 0.9378
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "dinov2_b_reg",
+    "timm_id": "vit_base_patch14_reg4_dinov2.lvd142m",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 85.7,
+    "fp32_mb": 343,
+    "fp16_mb": 171,
+    "est_rss_fp32_mb": 423,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 348,
+    "features": {
+      "pooled": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.5007,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9846,
+            "roc_auc_ci": [
+              0.9819,
+              0.9875
+            ],
+            "pauc_80tpr": 0.1879,
+            "pauc_ci": [
+              0.1858,
+              0.1903
+            ],
+            "sensitivity": 0.9539,
+            "specificity": 0.951,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9738,
+            "pauc_80tpr": 0.1804,
+            "sensitivity": 0.9539,
+            "specificity": 0.9029,
+            "pool_specificity": 0.8916,
+            "ppv_at_5pct": 0.3408,
+            "ppv_at_1pct": 0.0903
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6809,
+          "top3": 0.9664
+        }
+      },
+      "patch_mean": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.4861,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9849,
+            "roc_auc_ci": [
+              0.9821,
+              0.9875
+            ],
+            "pauc_80tpr": 0.1875,
+            "pauc_ci": [
+              0.185,
+              0.1897
+            ],
+            "sensitivity": 0.9505,
+            "specificity": 0.9433,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9786,
+            "pauc_80tpr": 0.1828,
+            "sensitivity": 0.9505,
+            "specificity": 0.917,
+            "pool_specificity": 0.9108,
+            "ppv_at_5pct": 0.376,
+            "ppv_at_1pct": 0.1037
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6824,
+          "top3": 0.9661
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "pe_core_b",
+    "timm_id": "vit_pe_core_base_patch16_224.fb",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 92.9,
+    "fp32_mb": 372,
+    "fp16_mb": 186,
+    "est_rss_fp32_mb": 452,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 371,
+    "features": {
+      "pooled": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.5357,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9853,
+            "roc_auc_ci": [
+              0.9828,
+              0.9878
+            ],
+            "pauc_80tpr": 0.1878,
+            "pauc_ci": [
+              0.1855,
+              0.19
+            ],
+            "sensitivity": 0.9434,
+            "specificity": 0.9498,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9823,
+            "pauc_80tpr": 0.1854,
+            "sensitivity": 0.9434,
+            "specificity": 0.9433,
+            "pool_specificity": 0.9418,
+            "ppv_at_5pct": 0.467,
+            "ppv_at_1pct": 0.1439
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6782,
+          "top3": 0.9596
+        }
+      },
+      "patch_mean": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.5244,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9843,
+            "roc_auc_ci": [
+              0.9818,
+              0.9871
+            ],
+            "pauc_80tpr": 0.1873,
+            "pauc_ci": [
+              0.1851,
+              0.1896
+            ],
+            "sensitivity": 0.9409,
+            "specificity": 0.9532,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9791,
+            "pauc_80tpr": 0.1834,
+            "sensitivity": 0.9409,
+            "specificity": 0.9343,
+            "pool_specificity": 0.9299,
+            "ppv_at_5pct": 0.4298,
+            "ppv_at_1pct": 0.1264
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6688,
+          "top3": 0.963
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "dinov2_b",
+    "timm_id": "vit_base_patch14_dinov2.lvd142m",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 85.7,
+    "fp32_mb": 343,
+    "fp16_mb": 171,
+    "est_rss_fp32_mb": 423,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 354,
+    "features": {
+      "pooled": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.4899,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9846,
+            "roc_auc_ci": [
+              0.9818,
+              0.9872
+            ],
+            "pauc_80tpr": 0.1877,
+            "pauc_ci": [
+              0.1854,
+              0.1899
+            ],
+            "sensitivity": 0.9484,
+            "specificity": 0.9467,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9742,
+            "pauc_80tpr": 0.1806,
+            "sensitivity": 0.9484,
+            "specificity": 0.8997,
+            "pool_specificity": 0.8887,
+            "ppv_at_5pct": 0.3323,
+            "ppv_at_1pct": 0.0872
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6575,
+          "top3": 0.9611
+        }
+      },
+      "patch_mean": {
+        "dim": 768,
+        "triage": {
+          "C": 0.01,
+          "threshold": 0.5085,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9834,
+            "roc_auc_ci": [
+              0.9806,
+              0.9863
+            ],
+            "pauc_80tpr": 0.1867,
+            "pauc_ci": [
+              0.1844,
+              0.1891
+            ],
+            "sensitivity": 0.9484,
+            "specificity": 0.943,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.979,
+            "pauc_80tpr": 0.1832,
+            "sensitivity": 0.9484,
+            "specificity": 0.923,
+            "pool_specificity": 0.9183,
+            "ppv_at_5pct": 0.3934,
+            "ppv_at_1pct": 0.1107
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6511,
+          "top3": 0.9578
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "dinov2_s_reg",
+    "timm_id": "vit_small_patch14_reg4_dinov2.lvd142m",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 21.6,
+    "fp32_mb": 87,
+    "fp16_mb": 43,
+    "est_rss_fp32_mb": 167,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 787,
+    "features": {
+      "pooled": {
+        "dim": 384,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.5014,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9841,
+            "roc_auc_ci": [
+              0.9812,
+              0.9867
+            ],
+            "pauc_80tpr": 0.1872,
+            "pauc_ci": [
+              0.1851,
+              0.1895
+            ],
+            "sensitivity": 0.9421,
+            "specificity": 0.9478,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9755,
+            "pauc_80tpr": 0.1811,
+            "sensitivity": 0.9421,
+            "specificity": 0.9147,
+            "pool_specificity": 0.9069,
+            "ppv_at_5pct": 0.3677,
+            "ppv_at_1pct": 0.1004
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6092,
+          "top3": 0.9468
+        }
+      },
+      "patch_mean": {
+        "dim": 384,
+        "triage": {
+          "C": 0.3,
+          "threshold": 0.4949,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9823,
+            "roc_auc_ci": [
+              0.9795,
+              0.9853
+            ],
+            "pauc_80tpr": 0.1865,
+            "pauc_ci": [
+              0.1843,
+              0.1887
+            ],
+            "sensitivity": 0.9405,
+            "specificity": 0.9422,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9676,
+            "pauc_80tpr": 0.1765,
+            "sensitivity": 0.9405,
+            "specificity": 0.8842,
+            "pool_specificity": 0.8706,
+            "ppv_at_5pct": 0.2995,
+            "ppv_at_1pct": 0.0758
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6047,
+          "top3": 0.9483
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "pe_core_t",
+    "timm_id": "vit_pe_core_tiny_patch16_384.fb",
+    "licence": "Apache-2.0",
+    "input_size": 384,
+    "normalisation": "model",
+    "params_m": 6.0,
+    "fp32_mb": 24,
+    "fp16_mb": 12,
+    "est_rss_fp32_mb": 104,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 533,
+    "features": {
+      "pooled": {
+        "dim": 192,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.5243,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9838,
+            "roc_auc_ci": [
+              0.9806,
+              0.9866
+            ],
+            "pauc_80tpr": 0.1872,
+            "pauc_ci": [
+              0.1848,
+              0.1896
+            ],
+            "sensitivity": 0.9413,
+            "specificity": 0.9541,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9813,
+            "pauc_80tpr": 0.1844,
+            "sensitivity": 0.9413,
+            "specificity": 0.9424,
+            "pool_specificity": 0.9396,
+            "ppv_at_5pct": 0.4622,
+            "ppv_at_1pct": 0.1416
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.5534,
+          "top3": 0.9193
+        }
+      },
+      "patch_mean": {
+        "dim": 192,
+        "triage": {
+          "C": 1.0,
+          "threshold": 0.49,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9824,
+            "roc_auc_ci": [
+              0.9791,
+              0.9854
+            ],
+            "pauc_80tpr": 0.1854,
+            "pauc_ci": [
+              0.1825,
+              0.188
+            ],
+            "sensitivity": 0.9384,
+            "specificity": 0.9464,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9538,
+            "pauc_80tpr": 0.1723,
+            "sensitivity": 0.9384,
+            "specificity": 0.874,
+            "pool_specificity": 0.857,
+            "ppv_at_5pct": 0.2816,
+            "ppv_at_1pct": 0.07
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.55,
+          "top3": 0.9212
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "dinov2_s_unit",
+    "timm_id": "vit_small_patch14_dinov2.lvd142m",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "unit",
+    "params_m": 21.6,
+    "fp32_mb": 87,
+    "fp16_mb": 43,
+    "est_rss_fp32_mb": 167,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 670,
+    "features": {
+      "pooled": {
+        "dim": 384,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.4898,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9832,
+            "roc_auc_ci": [
+              0.98,
+              0.9861
+            ],
+            "pauc_80tpr": 0.1871,
+            "pauc_ci": [
+              0.1845,
+              0.1895
+            ],
+            "sensitivity": 0.948,
+            "specificity": 0.943,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.976,
+            "pauc_80tpr": 0.1816,
+            "sensitivity": 0.948,
+            "specificity": 0.9134,
+            "pool_specificity": 0.9065,
+            "ppv_at_5pct": 0.3656,
+            "ppv_at_1pct": 0.0996
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6073,
+          "top3": 0.9427
+        }
+      },
+      "patch_mean": {
+        "dim": 384,
+        "triage": {
+          "C": 0.1,
+          "threshold": 0.4846,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.982,
+            "roc_auc_ci": [
+              0.9789,
+              0.9848
+            ],
+            "pauc_80tpr": 0.1856,
+            "pauc_ci": [
+              0.1831,
+              0.1879
+            ],
+            "sensitivity": 0.9455,
+            "specificity": 0.9334,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9746,
+            "pauc_80tpr": 0.1801,
+            "sensitivity": 0.9455,
+            "specificity": 0.9044,
+            "pool_specificity": 0.8976,
+            "ppv_at_5pct": 0.3424,
+            "ppv_at_1pct": 0.0908
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.602,
+          "top3": 0.9483
+        }
+      }
+    },
+    "best_feature": "pooled"
+  },
+  {
+    "backbone": "dinov2_s",
+    "timm_id": "vit_small_patch14_dinov2.lvd142m",
+    "licence": "Apache-2.0",
+    "input_size": 224,
+    "normalisation": "model",
+    "params_m": 21.6,
+    "fp32_mb": 87,
+    "fp16_mb": 43,
+    "est_rss_fp32_mb": 167,
+    "fits_512_fp32": true,
+    "fits_512_fp16": true,
+    "gpu_extract_img_s": 784,
+    "features": {
+      "pooled": {
+        "dim": 384,
+        "triage": {
+          "C": 0.1,
+          "threshold": 0.497,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.983,
+            "roc_auc_ci": [
+              0.9804,
+              0.9858
+            ],
+            "pauc_80tpr": 0.1866,
+            "pauc_ci": [
+              0.1844,
+              0.1887
+            ],
+            "sensitivity": 0.9421,
+            "specificity": 0.947,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9765,
+            "pauc_80tpr": 0.1814,
+            "sensitivity": 0.9421,
+            "specificity": 0.9208,
+            "pool_specificity": 0.9147,
+            "ppv_at_5pct": 0.3851,
+            "ppv_at_1pct": 0.1073
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6247,
+          "top3": 0.9483
+        }
+      },
+      "patch_mean": {
+        "dim": 384,
+        "triage": {
+          "C": 0.03,
+          "threshold": 0.4845,
+          "balanced": {
+            "n": 5913,
+            "malignant": 2385,
+            "roc_auc": 0.9811,
+            "roc_auc_ci": [
+              0.9781,
+              0.9837
+            ],
+            "pauc_80tpr": 0.1854,
+            "pauc_ci": [
+              0.1831,
+              0.1878
+            ],
+            "sensitivity": 0.9455,
+            "specificity": 0.9306,
+            "fitzpatrick_sensitivity": {},
+            "worst_fitz_gap": null
+          },
+          "natural": {
+            "n": 20913,
+            "prevalence": 0.114,
+            "roc_auc": 0.9741,
+            "pauc_80tpr": 0.1795,
+            "sensitivity": 0.9455,
+            "specificity": 0.899,
+            "pool_specificity": 0.8915,
+            "ppv_at_5pct": 0.33,
+            "ppv_at_1pct": 0.0864
+          }
+        },
+        "diagnosis": {
+          "classes": 7,
+          "n_test": 2651,
+          "top1": 0.6118,
+          "top3": 0.9412
+        }
+      }
+    },
+    "best_feature": "pooled"
+  }
+]

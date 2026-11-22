@@ -1,120 +1,44 @@
 <!DOCTYPE html>
-<html lang="{{ request.locale_name }}">
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2f6bff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0a0f1a" media="(prefers-color-scheme: dark)">
-    <meta name="description" content="LesNet — self-supervised skin-lesion triage">
-    <meta name="author" content="LesNet">
-    <link rel="shortcut icon" href="{{ request.static_url('lesnet:static/min/logo-16x16.png') }}">
-    <title>LesNet</title>
-
-    <!-- Fonts and Bootstrap (Bootstrap retained for secondary pages; modern.css overrides) -->
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" />
-
-    <!-- Single minimal stylesheet -->
-    <link rel="stylesheet" href="{{ request.static_url('lesnet:static/css/modern.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="LesNet checks a photo of a skin spot and suggests whether it is worth showing to a clinician. A research tool, not a diagnosis.">
+    <meta name="theme-color" content="#F5F8F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0F1A17" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ request.static_url('lesnet:static/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ request.static_url('lesnet:static/apple-touch-icon.png') }}">
+    <title>{% block title %}LesNet — skin spot check{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ request.static_url('lesnet:static/css/lesnet.css') }}">
   </head>
-
-  <body>
-    <!-- Aurora background + cursor spotlight + vignette -->
-    <div class="bg-strips" aria-hidden="true">
-      <div class="strips">
-        <span></span><span></span><span></span><span></span><span></span>
-      </div>
-    </div>
-    <div class="spotlight" aria-hidden="true"></div>
-    <div class="vignette" aria-hidden="true"></div>
-
-    <!-- Minimal top bar -->
-    <header class="topbar">
-      <a class="brand" href="/">
-        <img src="{{ request.static_url('lesnet:static/min/logo.png') }}" alt="LesNet">
+  <body class="{% block body_class %}{% endblock %}">
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="bar">
+      <a class="brand" href="/" aria-label="LesNet home">
+        <img src="{{ request.static_url('lesnet:static/logo-96.png') }}" alt="" width="32" height="32">
+        <span>LesNet</span>
       </a>
-      <nav class="topnav">
-        <a href="/supported-diagnoses">Diagnoses</a>
-        <a target="_blank" href="https://github.com/Thomasbehan/LesNet"><i class="fab fa-github"></i></a>
+      <nav class="nav" aria-label="Main">
+        <a href="/" {% if request.matched_route and request.matched_route.name == 'home' %}aria-current="page"{% endif %}>Check a spot</a>
+        <a href="/supported-diagnoses" {% if request.matched_route and request.matched_route.name == 'supported-diagnoses' %}aria-current="page"{% endif %}>Spot types</a>
+        <a href="https://github.com/Thomasbehan/LesNet" rel="noopener">Source</a>
       </nav>
     </header>
 
-    <!-- Navbar for Hamburger Menu -->
-    <nav class="navbar navbar-light bg-light d-md-none">
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-    </nav>
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
 
-    <div class="container-fluid">
-      <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-2 sidebar d-none d-md-block">
-          <a href="/"><img class="logo img-responsive" src="{{request.static_url('lesnet:static/logo-with-text.png') }}" alt="LesNet"></a>
-          <hr/>
-          <a href="/"><i class="fas fa-image"></i> Image Analyser</a>
-          <a href="/supported-diagnoses"><i class="fas fa-stethoscope"></i> Supported Diagnoses</a>
-          <hr/>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet"><i class="fab fa-github"></i> GitHub Project</a>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet/discussions/categories/polls"><i class="fas fa-vote-yea"></i> Vote on Features</a>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet/wiki"><i class="fas fa-book"></i> Documentation</a>
-          <hr/>
-          <a href="#">
-            <label class="switch">
-                <input type="checkbox" id="explicitToggle" checked>
-                <span class="slider"></span>
-                <span class="label-text">Hide Explicit Imagery</span>
-            </label>
-          </a>
-          <!--<button class="btn btn-primary w-100 mt-3">Upgrade</button>-->
-        </div>
+    <footer class="foot">
+      <p><strong>LesNet is a research tool, not a diagnostic device.</strong> It cannot tell you whether a spot is
+        cancer. If a spot is new, changing, bleeding, itchy or worrying you, see a doctor or dermatologist whatever
+        this page says.</p>
+      <p class="foot-meta">Open source under MPL-2.0. <a href="https://github.com/Thomasbehan/LesNet" rel="noopener">Read the code and the model card on GitHub</a>.</p>
+    </footer>
 
-        <!-- Collapsible Sidebar for Mobile -->
-        <div class="col-md-2 sidebar collapse d-md-none" id="navbarNav">
-          <a href="/"><img class="logo img-responsive" src="{{request.static_url('lesnet:static/logo-with-text.png') }}" alt="LesNet"></a>
-          <hr/>
-          <a href="/"><i class="fas fa-image"></i>Image Analyser</a>
-          <a href="/supported-diagnoses"><i class="fas fa-stethoscope"></i> Supported Diagnoses</a>
-          <hr/>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet"><i class="fab fa-github"></i> GitHub Project</a>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet/discussions/categories/polls"><i class="fas fa-vote-yea"></i> Vote on Features</a>
-          <a target="_blank" href="https://github.com/Thomasbehan/LesNet/wiki"><i class="fas fa-book"></i> Documentation</a>
-          <hr/>
-          <a href="#">
-            <label class="switch">
-                <input type="checkbox" id="explicitToggle" checked>
-                <span class="slider"></span>
-                <span class="label-text">Hide Explicit Imagery</span>
-            </label>
-          </a>
-        </div>
-
-        <!-- Main Content -->
-        <div class="col-md-10 main-content">
-          {% block content %}
-          {% endblock %}
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Mobile bottom navigation -->
-    <nav class="tabbar">
-      <a href="/" class="active"><i class="fas fa-wand-magic-sparkles"></i>Analyse</a>
-      <a href="/supported-diagnoses"><i class="fas fa-stethoscope"></i>Diagnoses</a>
-      <a target="_blank" href="https://github.com/Thomasbehan/LesNet"><i class="fab fa-github"></i>GitHub</a>
-    </nav>
-
-    <!-- Scripts -->
-    {% block scripts %}
-
-    <script src="//code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="{{ request.static_url('lesnet:static/js/explicit-image-handler.js') }}"></script>
-
-    {% endblock %}
-
+    {% block scripts %}{% endblock %}
   </body>
 </html>
