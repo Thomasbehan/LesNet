@@ -24,18 +24,14 @@ RUN pip install --upgrade pip setuptools wheel
 COPY . /app/
 RUN pip install -e .
 
-# Bake in the JEPA medium model the demo serves by default (LESNET_JEPA_HOME, default
-# models/jepa). The app can self-heal by fetching it at runtime, but that would make the first
-# request after a cold start pull 318 MB and very likely time out — so fetch it at build time.
-RUN mkdir -p models/jepa && \
-    curl -fsSL https://github.com/Thomasbehan/LesNet/releases/download/v5.0.0/lesnet-jepa-medium.tar.gz \
-    | tar xz -C models/jepa && \
-    test -f models/jepa/medium/jepa_config.json
-
-# Construct the served predictor at BUILD time. A missing dependency or a bad artifact then fails
-# the build loudly instead of surfacing as a 500 on the first user request in production.
+# Bake the served model into the image AND construct the predictor at BUILD time. _get_predictor()
+# downloads the default variant (small, ~165 MB RSS — it leaves real headroom on a 512 MB instance,
+# where medium's ~435 MB did not) from ModelConfig.JEPA_URLS, the single source of truth for the
+# release URL. Fetching at runtime instead would make the first request after a cold start pull
+# the model and time out; a missing dependency or bad artifact fails the build here, loudly.
 RUN python -c "import lesnet.views.api as api; p = api._get_predictor(); \
-print('predictor OK:', type(p).__name__, p.encoder.precision)"
+print('predictor OK:', api.JEPA_VARIANT, type(p).__name__, p.encoder.precision)" && \
+    test -f models/jepa/small/jepa_config.json
 
 # Run as a non-root user; it still owns /app so the runtime self-heal path can write there.
 RUN useradd -ms /bin/bash appuser && chown -R appuser /app /opt/venv

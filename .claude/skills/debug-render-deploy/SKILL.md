@@ -28,13 +28,14 @@ Do not guess from the code alone — pull the actual logs:
 | First request after a cold start times out | Model downloaded at runtime (`_ensure_jepa_model` pulls ~318 MB) | Bake the model into the image at build time |
 | Build OOM / timeout | `tensorflow==2.21.0` in base requires; the demo path no longer needs it | Consider a minimal `[serve]` extra — but confirm from the build log first |
 | 503 `model_unavailable` | Artifacts missing at `LESNET_JEPA_HOME` (default `models/jepa`) | Check the Dockerfile fetch step actually produced `models/jepa/<variant>/jepa_config.json` |
+| `/predict` → **502 with an empty body**, log shows `Instance … restarted`; browser shows a JSON parse error | **OOM kill** (free plan = 512 MB). A full-res phone photo decoded + colour-corrected in float64 needs >1 GB; on top of medium's ~435 MB model it was killed on every real upload (Nov 2026) | `load_upload()` decodes at ≤256 px (JPEG `draft` + `thumbnail`) and the default variant is `small` (~165 MB). Reproduce with a 4032×3024 JPEG, never only a 256 px ISIC thumbnail |
 
 ## Which predictor the app loads
 
 `lesnet/views/api.py` → `_get_predictor()`, in precedence order:
 
 1. `LESNET_JEPA_ARTIFACTS` set → load that directory directly
-2. otherwise (default) → JEPA family, variant `LESNET_JEPA_VARIANT` (default `medium`), from
+2. otherwise (default) → JEPA family, variant `LESNET_JEPA_VARIANT` (default `small`), from
    `LESNET_JEPA_HOME` (default `models/jepa`), self-healing via `ModelConfig.JEPA_URLS`
 3. `LESNET_USE_TF=1` → the legacy TensorFlow `TriagePredictor`
 
@@ -46,11 +47,11 @@ Run the exact command from the Dockerfile, then load the predictor the way the c
 with no environment overrides:
 
 ```bash
-mkdir -p /tmp/dc/models/jepa
-curl -fsSL <release-url>/lesnet-jepa-medium.tar.gz | tar xz -C /tmp/dc/models/jepa
-test -f /tmp/dc/models/jepa/medium/jepa_config.json
+# the Dockerfile's build step: downloads ModelConfig.JEPA_URLS[small] and builds the predictor
 LESNET_JEPA_HOME=/tmp/dc/models/jepa python -c "
-import lesnet.views.api as api; print(api._get_predictor())"
+import lesnet.views.api as api; p = api._get_predictor(); print(api.JEPA_VARIANT, p.encoder.precision)"
+test -f /tmp/dc/models/jepa/small/jepa_config.json
+# then POST a full-size phone photo (not a 256 px thumbnail) and watch RSS stay well under 512 MB
 ```
 
 A green CI run does **not** prove the deployment works: CI never builds the Dockerfile and never
