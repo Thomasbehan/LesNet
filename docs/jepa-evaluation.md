@@ -7,6 +7,33 @@ full debugging cycle to learn (§4) and is now the rule.
 
 LesNet is a research/triage tool, **not** a diagnostic device.
 
+## v5.1 (November 2026) — Small becomes the demo model
+
+Re-measured on the **whole** held-out test split (n=5,913 benign/malignant, grouped), not a 400-image
+sample, through the served predictor:
+
+| Small | Triage probe fit on | ROC-AUC | pAUC@80%TPR | Sens | Spec | Missed cancers | False alarms | dx top-3 | Abstain |
+|---|---|---|---|---|---|---|---|---|---|
+| v5.0.0 (released) | 5,000 rows | 0.967 | 0.176 | 0.924 | 0.923 | 174 | 272 | 0.855 | 2.1% |
+| **v5.1.0** | **all 25,659 train/val rows** | **0.974** | **0.181** | **0.925** | **0.943** | **170** | **201** | 0.855 | 2.1% |
+
+Same encoder, same OOD gate, same diagnosis head — only the triage probe was refit
+(`build_jepa_family.py --heads-only --probe-per-class 100000`). It cuts false alarms by 26% at
+unchanged sensitivity. Refitting the *diagnosis* head on all rows was also tried and made top-3
+worse (0.855 → 0.825), so v5.1 keeps the v5.0.0 diagnosis head.
+
+The n=400 figures below were optimistic by ~0.007 AUC; read them as the v5.0.0 record.
+
+Why not a bigger or newer backbone? [`backbone-bakeoff.md`](backbone-bakeoff.md) compares ten
+openly-licensed encoders (DINOv2 ± registers, PE-Core, SigLIP 2) under identical frozen-feature heads:
+all land within 0.0035 ROC-AUC of each other, and the best (SigLIP 2 B/16, 0.9866) needs ~450 MB —
+the same memory regime that OOM-killed the 512 MB demo. More training data for the heads bought
+more than any backbone swap. The next real lever is fine-tuning, not a different frozen encoder.
+
+Why Small for the demo: a 12 MP phone photo used to peak at **1,433 MB** RSS with Medium (decoded at
+full resolution, colour-corrected in float64) and was OOM-killed on every upload. With the upload
+now decoded at the model's 256 px input, Small peaks at **199 MB** and Medium at 469 MB.
+
 ## The family
 
 All three backbones are **DINOv2** (Meta), code and weights **Apache-2.0**, so the result is

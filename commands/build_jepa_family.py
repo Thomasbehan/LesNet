@@ -65,6 +65,10 @@ def main():
     parser.add_argument('--probe-per-class', type=int, default=2500)
     parser.add_argument('--head-max-fit', type=int, default=3000)
     parser.add_argument('--eval-n', type=int, default=600)
+    parser.add_argument('--head-min-per-class', type=int, default=0,
+                        help="Drop diagnoses with fewer train/val rows than this from the diagnosis head.")
+    parser.add_argument('--heads-only', action='store_true',
+                        help="Reuse the variant's existing encoder + ONNX export; refit heads and re-evaluate.")
     parser.add_argument('--skip-existing', action='store_true')
     args = parser.parse_args()
 
@@ -85,13 +89,21 @@ def main():
         started = time.time()
         record = {'variant': variant, 'backbone': FAMILY[variant][1], 'licence': 'Apache-2.0'}
         try:
-            checkpoint, _config, params = make_encoder_checkpoint(
-                variant, out_dir, args.image_size, args.adapt_from or None)
-            record['params_m'] = round(params / 1e6, 1)
+            if args.heads_only:
+                if not (out_dir / 'export').exists():
+                    raise FileNotFoundError(f'--heads-only needs an existing export under {out_dir}')
+                previous = summary.get(variant, {})
+                for key in ('params_m', 'export'):
+                    if key in previous:
+                        record[key] = previous[key]
+            else:
+                checkpoint, _config, params = make_encoder_checkpoint(
+                    variant, out_dir, args.image_size, args.adapt_from or None)
+                record['params_m'] = round(params / 1e6, 1)
 
-            print('  exporting ONNX tiers + measuring RSS', flush=True)
-            tiers = export_tiers(checkpoint, out_dir / 'export', measure_rss=True)
-            record['export'] = tiers
+                print('  exporting ONNX tiers + measuring RSS', flush=True)
+                tiers = export_tiers(checkpoint, out_dir / 'export', measure_rss=True)
+                record['export'] = tiers
 
             if args.ood_neg:
                 target = out_dir / 'ood_neg'
@@ -99,7 +111,8 @@ def main():
                     shutil.copytree(args.ood_neg, target)
 
             print('  fitting diagnosis head on int8 embeddings', flush=True)
-            build_demo_head(out_dir, args.manifest, max_fit=args.head_max_fit)
+            build_demo_head(out_dir, args.manifest, max_fit=args.head_max_fit,
+                            min_per_class=args.head_min_per_class)
             print('  fitting balanced malignant/triage probe', flush=True)
             build_malignant_probe(out_dir, args.manifest, per_class=args.probe_per_class)
             if args.ood_neg:
