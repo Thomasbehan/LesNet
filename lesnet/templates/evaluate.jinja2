@@ -1,44 +1,56 @@
 {% extends "layout.jinja2" %}
 
 {% block content %}
-<!-- Upload view -->
-<section class="view active" id="view-upload">
-  <div class="lede">
-    <img class="hero-logo" src="{{ request.static_url('lesnet:static/min/logo.png') }}" alt="LesNet">
-    <h1>Understand your skin.</h1>
-    <p class="tagline">Upload a dermoscopic photo for instant, cautious triage guidance and its most likely diagnoses.</p>
-    <div class="cta-row">
-      <button type="button" class="cta" id="browse-btn">Upload a photo</button>
-      <button type="button" class="cta ghost" id="camera-btn">Use camera</button>
-    </div>
-    <p class="hint">or drop an image anywhere</p>
-  </div>
-  <form id="upload-form" enctype="multipart/form-data" hidden>
-    <input type="file" id="image" name="image" accept="image/*">
-    <input type="file" id="camera" accept="image/*" capture="environment">
-  </form>
-</section>
+<div class="check" id="check" data-state="idle">
 
-<!-- Result view -->
-<section class="view resultview" id="view-result">
-  <button class="back-btn" id="back-btn"><i class="fas fa-arrow-left"></i> New photo</button>
-  <div class="result-wrap">
-    <div class="shot" id="preview-container">
-      <img id="preview-image" alt="Selected lesion">
-      <div class="scan"></div>
-    </div>
-    <div>
-      <div id="loading" class="analyzing" style="display:none;"><div class="ring"></div><span>Analysing…</span></div>
-      <div id="analysis-result"></div>
-    </div>
-  </div>
-</section>
+  <header class="headline">
+    <h1 id="intro-title">Is this skin spot worth showing a doctor?</h1>
+    <p class="lead">Take or choose a close-up photo of one spot. LesNet compares it with tens of thousands of
+      dermatology images and tells you how cautious to be.</p>
+  </header>
 
-<!-- Drop-anywhere veil -->
-<div class="dropveil" id="dropveil" aria-hidden="true">
-  <div class="ring2"><i class="fas fa-arrow-down"></i></div>
-  <p>Drop to analyse</p>
+  <section class="tips" aria-label="How to take a good photo">
+    <ol class="steps">
+      <li><strong>Get close.</strong> Fill most of the frame with the spot, about a hand's width away.</li>
+      <li><strong>Get light.</strong> Daylight or a bright lamp, no flash glare, and keep it in focus.</li>
+      <li><strong>One spot per photo.</strong> Centre it. Hair and rulers in shot are fine.</li>
+    </ol>
+
+    <p class="privacy">Your photo is analysed and then discarded. It is not stored or used for training.</p>
+  </section>
+
+  <section class="stage" aria-live="polite" aria-busy="false" id="stage">
+    <!-- The lens: drop target when idle, the photo when analysing / showing a result -->
+    <div class="lens" id="lens">
+      <img id="lens-photo" alt="" hidden>
+      <button type="button" class="lens-empty" id="lens-pick">
+        <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true"><path d="M17 12l3-5h8l3 5h7a4 4 0 014 4v20a4 4 0 01-4 4H10a4 4 0 01-4-4V16a4 4 0 014-4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><circle cx="24" cy="26" r="8" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>
+        <span class="lens-cta">Choose a photo</span>
+        <span class="lens-sub">or drop one here</span>
+      </button>
+      <svg class="lens-progress" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48.5"/></svg>
+    </div>
+
+    <div class="actions" id="actions">
+      <button type="button" class="btn primary" id="btn-camera">Take a photo</button>
+      <button type="button" class="btn" id="btn-pick">Choose a photo</button>
+    </div>
+
+    <div class="status" id="status" hidden>
+      <p class="status-line" id="status-line">Checking your photo…</p>
+      <p class="status-sub" id="status-sub"></p>
+    </div>
+
+    <div class="result" id="result" hidden tabindex="-1"></div>
+
+    <input type="file" id="file-pick" accept="image/*" hidden>
+    <input type="file" id="file-camera" accept="image/*" capture="environment" hidden>
+  </section>
 </div>
 
-<script src="{{ request.static_url('lesnet:static/js/file-upload.js') }}"></script>
+<div class="dropveil" id="dropveil" aria-hidden="true"><p>Drop the photo to check it</p></div>
 {% endblock content %}
+
+{% block scripts %}
+<script src="{{ request.static_url('lesnet:static/js/check.js') }}" defer></script>
+{% endblock %}
